@@ -1,0 +1,12 @@
+POST http://127.0.0.1:3001/api/update_deployment
+Content-Type: application/json
+
+{
+  "deployment_name":"kabiai",
+  "container_name":"kabiai",
+  "new_image":"kaibai-image",
+  "new_tag":"asdfasd"
+}
+
+
+

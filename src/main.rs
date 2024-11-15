@@ -39,7 +39,7 @@ async fn main() {
                     ])
                     .max_age(3600),
             )
-            .service(web::scope("/").configure(deployment_config))
+            .service(web::scope("/api").configure(deployment_config))
     })
     .workers(2)
     .bind(gen_server_url())

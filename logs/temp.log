@@ -1,0 +1,122 @@
+2024-11-15 17:28:02.3140578 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-15 17:28:02.315581  [INFO] starting 2 workers
+2024-11-15 17:28:02.3156146 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-15 17:28:02.3156281 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-15 17:28:02.3156585 [TRACE] starting server worker 0
+2024-11-15 17:28:02.3165506 [TRACE] starting server worker 1
+2024-11-15 17:28:02.3167143 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-15 17:28:02.3171058 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-15 17:28:02.31711   [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-15 17:28:02.3171951 [TRACE] setting up OS signal listener
+2024-11-15 17:28:05.2130737 [TRACE] registering event source with poller: token=Token(1902108634368), interests=READABLE | WRITABLE
+2024-11-15 17:28:05.2133265 [TRACE] start flags: Flags(0x0)
+2024-11-15 17:28:05.2133929 [TRACE] start timers:
+2024-11-15 17:28:05.2134059 [TRACE]   head timer is inactive
+2024-11-15 17:28:05.2134085 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.2134171 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.2135119 [TRACE] end timers:
+2024-11-15 17:28:05.2135626 [TRACE]   head timer is active and due to expire in 4603.066 milliseconds
+2024-11-15 17:28:05.213576  [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.2135782 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.2135973 [TRACE] end flags: Flags(STARTED)
+2024-11-15 17:28:05.2136836 [TRACE] start flags: Flags(STARTED)
+2024-11-15 17:28:05.2136959 [TRACE] start timers:
+2024-11-15 17:28:05.213699  [TRACE]   head timer is active and due to expire in 4602.915 milliseconds
+2024-11-15 17:28:05.2137015 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.2137045 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.2140239 [TRACE] Length read: 119
+2024-11-15 17:28:05.2155471 [INFO] k8s cmd : kubectl set image deployment/kabiai kabiai=kaibai-image:asdfasd
+2024-11-15 17:28:05.2935858 [TRACE] end timers:
+2024-11-15 17:28:05.2936102 [TRACE]   head timer is inactive
+2024-11-15 17:28:05.2936132 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.2936156 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.2936266 [TRACE] end flags: Flags(STARTED)
+2024-11-15 17:28:05.293654  [TRACE] start flags: Flags(STARTED)
+2024-11-15 17:28:05.293656  [TRACE] start timers:
+2024-11-15 17:28:05.2936582 [TRACE]   head timer is inactive
+2024-11-15 17:28:05.2936599 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.2936613 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.29368   [TRACE] end timers:
+2024-11-15 17:28:05.2936814 [TRACE]   head timer is inactive
+2024-11-15 17:28:05.2936833 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.2936854 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.2936877 [TRACE] end flags: Flags(STARTED)
+2024-11-15 17:28:05.532353  [TRACE] start flags: Flags(STARTED)
+2024-11-15 17:28:05.5323749 [TRACE] start timers:
+2024-11-15 17:28:05.5323771 [TRACE]   head timer is inactive
+2024-11-15 17:28:05.5323788 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.5323798 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.5327191 [TRACE] start flags: Flags(STARTED | SHUTDOWN)
+2024-11-15 17:28:05.5327244 [TRACE] start timers:
+2024-11-15 17:28:05.5327255 [TRACE]   head timer is inactive
+2024-11-15 17:28:05.5327266 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:28:05.5327277 [TRACE]   shutdown timer is inactive
+2024-11-15 17:28:05.5327531 [TRACE] end flags: Flags(STARTED | SHUTDOWN)
+2024-11-15 17:28:05.532761  [TRACE] deregistering event source from poller
+2024-11-15 17:29:10.4498128 [INFO] SIGINT received; starting forced shutdown
+2024-11-15 17:29:10.4498715 [TRACE] deregistering event source from poller
+2024-11-15 17:29:10.4499076 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-15 17:29:10.449913  [INFO] accept thread stopped
+2024-11-15 17:29:10.449939  [INFO] shutting down idle worker
+2024-11-15 17:29:10.4499743 [INFO] shutting down idle worker
+2024-11-15 17:29:17.2201346 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-15 17:29:17.2218052 [INFO] starting 2 workers
+2024-11-15 17:29:17.2218334 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-15 17:29:17.221853  [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-15 17:29:17.2218858 [TRACE] starting server worker 0
+2024-11-15 17:29:17.2226155 [TRACE] starting server worker 1
+2024-11-15 17:29:17.2226536 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-15 17:29:17.2229123 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-15 17:29:17.2229195 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-15 17:29:17.2229618 [TRACE] setting up OS signal listener
+2024-11-15 17:29:22.0705943 [TRACE] registering event source with poller: token=Token(3059444050048), interests=READABLE | WRITABLE
+2024-11-15 17:29:22.0707252 [TRACE] start flags: Flags(0x0)
+2024-11-15 17:29:22.0707513 [TRACE] start timers:
+2024-11-15 17:29:22.0707542 [TRACE]   head timer is inactive
+2024-11-15 17:29:22.0707565 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.0707586 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.0708153 [TRACE] end timers:
+2024-11-15 17:29:22.0708255 [TRACE]   head timer is active and due to expire in 4651.8047 milliseconds
+2024-11-15 17:29:22.0708286 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.0708296 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.0708395 [TRACE] end flags: Flags(STARTED)
+2024-11-15 17:29:22.0708725 [TRACE] start flags: Flags(STARTED)
+2024-11-15 17:29:22.0708746 [TRACE] start timers:
+2024-11-15 17:29:22.0708759 [TRACE]   head timer is active and due to expire in 4651.7485 milliseconds
+2024-11-15 17:29:22.0708766 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.0708775 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.0710975 [TRACE] Length read: 119
+2024-11-15 17:29:22.0717752 [INFO] k8s cmd : kubectl set image deployment/kabiai kabiai=kaibai-image:asdfasd
+2024-11-15 17:29:22.2159772 [TRACE] end timers:
+2024-11-15 17:29:22.216009  [TRACE]   head timer is inactive
+2024-11-15 17:29:22.2160121 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.2160151 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.2160275 [TRACE] end flags: Flags(STARTED)
+2024-11-15 17:29:22.216106  [TRACE] start flags: Flags(STARTED)
+2024-11-15 17:29:22.2161148 [TRACE] start timers:
+2024-11-15 17:29:22.2161183 [TRACE]   head timer is inactive
+2024-11-15 17:29:22.2161215 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.2161242 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.2161621 [TRACE] end timers:
+2024-11-15 17:29:22.2161647 [TRACE]   head timer is inactive
+2024-11-15 17:29:22.2161672 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.2161694 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.2161761 [TRACE] end flags: Flags(STARTED)
+2024-11-15 17:29:22.4089687 [TRACE] start flags: Flags(STARTED)
+2024-11-15 17:29:22.4089896 [TRACE] start timers:
+2024-11-15 17:29:22.4089921 [TRACE]   head timer is inactive
+2024-11-15 17:29:22.4089934 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.4089944 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.4092381 [TRACE] start flags: Flags(STARTED | SHUTDOWN)
+2024-11-15 17:29:22.4092431 [TRACE] start timers:
+2024-11-15 17:29:22.4092444 [TRACE]   head timer is inactive
+2024-11-15 17:29:22.4092453 [TRACE]   keep-alive timer is inactive
+2024-11-15 17:29:22.4092463 [TRACE]   shutdown timer is inactive
+2024-11-15 17:29:22.4092687 [TRACE] end flags: Flags(STARTED | SHUTDOWN)
+2024-11-15 17:29:22.4092765 [TRACE] deregistering event source from poller
+2024-11-15 17:31:17.2292398 [INFO] SIGINT received; starting forced shutdown
+2024-11-15 17:31:17.2294206 [INFO] shutting down idle worker
+2024-11-15 17:31:17.2294389 [TRACE] deregistering event source from poller
+2024-11-15 17:31:17.2295104 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-15 17:31:17.229542  [INFO] accept thread stopped
+2024-11-15 17:31:17.2295518 [INFO] shutting down idle worker
