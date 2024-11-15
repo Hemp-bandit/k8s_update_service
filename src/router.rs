@@ -47,8 +47,6 @@ impl ShellUtil {
         let output = Command::new("sh")
             .arg("-c")
             .arg(shell_str)
-            // .stdout(std::process::Stdio::piped())
-            // .stderr(std::process::Stdio::piped())
             .spawn();
 
         match output {
