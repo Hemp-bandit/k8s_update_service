@@ -9,6 +9,9 @@ use fast_log::{
     Config,
 };
 use log::info;
+use utoipa::OpenApi;
+use utoipa_swagger_ui::{SwaggerUi, Url};
+use utoipa_actix_web::{scope, AppExt};
 
 mod response;
 mod router;
@@ -26,20 +29,38 @@ async fn main() {
         );
     fast_log::init(log_conf).unwrap();
 
+    #[derive(OpenApi)]
+    #[openapi(paths(router::get_user))]
+    struct ApiDoc1;
+
     let _ = HttpServer::new(move || {
-        App::new()
-            .wrap(
-                Cors::default()
-                    .allow_any_origin()
-                    .allowed_methods(vec!["GET", "POST", "DELETE"])
-                    .allowed_headers(vec![
-                        http::header::AUTHORIZATION,
-                        http::header::ACCEPT,
-                        http::header::CONTENT_TYPE,
-                    ])
-                    .max_age(3600),
-            )
-            .service(web::scope("/api").configure(deployment_config))
+
+        let (app, api) =   App::new()
+        .into_utoipa_app()
+        .service(
+            scope::scope("/api")
+            .service(scope::scope("/v1").service(router::update_deployment))
+        );
+
+        app.service(SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", api))
+
+        // App::new()
+        //     .wrap(
+        //         Cors::default()
+        //             .allow_any_origin()
+        //             .allowed_methods(vec!["GET", "POST", "DELETE"])
+        //             .allowed_headers(vec![
+        //                 http::header::AUTHORIZATION,
+        //                 http::header::ACCEPT,
+        //                 http::header::CONTENT_TYPE,
+        //             ])
+        //             .max_age(3600),
+        //     )
+        //     .service(web::scope("/api").configure(deployment_config))
+        //     .service(SwaggerUi::new("/swagger-ui/{_:.*}").urls(vec![(
+        //         Url::new("api1", "/api-docs/openapi1.json"),
+        //         ApiDoc1::openapi(),
+        //     )]))
     })
     .workers(2)
     .bind(gen_server_url())

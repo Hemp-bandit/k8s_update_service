@@ -1,10 +1,15 @@
 use crate::response::ResponseBody;
-use actix_web::{post, web, Responder};
+use actix_web::{
+    get, post,
+    web::{self, get, Json},
+    Responder,
+};
 use log::info;
 use serde::{Deserialize, Serialize};
 use tokio::process::{Child, Command};
+use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 struct DeployInfo {
     deployment_name: String,
     container_name: String,
@@ -12,6 +17,14 @@ struct DeployInfo {
     new_tag: String,
 }
 
+
+#[utoipa::path(
+    post,
+    path="/update_deployment",
+    responses(
+        (status = 200, description = "Hello from api 1")
+    )
+)]
 #[post("/update_deployment")]
 pub async fn update_deployment(config: web::Json<DeployInfo>) -> impl Responder {
     let res = ResponseBody {
@@ -40,14 +53,32 @@ pub async fn update_deployment(config: web::Json<DeployInfo>) -> impl Responder 
     res
 }
 
+#[derive(utoipa::ToSchema)]
+struct User {
+    id: i32,
+}
+
+#[utoipa::path(
+     get,
+     path = "/test-links",
+     responses(
+         (status = 200, description = "success response", body = User)
+     ),
+ )]
+pub fn get_user() -> Json<User> {
+    Json(User { id: 1 })
+}
+
+#[get("/api1/hello")]
+pub async fn hello1() -> String {
+    "hello from api 1".to_string()
+}
+
 pub struct ShellUtil;
 impl ShellUtil {
     /// 创建shell环境
     pub fn spawn_new_command(shell_str: String) -> Child {
-        let output = Command::new("sh")
-            .arg("-c")
-            .arg(shell_str)
-            .spawn();
+        let output = Command::new("sh").arg("-c").arg(shell_str).spawn();
 
         match output {
             Ok(child) => child,

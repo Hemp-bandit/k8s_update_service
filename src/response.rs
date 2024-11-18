@@ -1,7 +1,8 @@
 use actix_web::{body::BoxBody, http::header::ContentType, HttpResponse, Responder};
 use serde::Serialize;
+use utoipa::ToSchema;
 
-#[derive(Serialize)]
+#[derive(Serialize,ToSchema)]
 pub struct ResponseBody<T> {
     pub rsp_code: i8,
     pub rsp_msg: String,
