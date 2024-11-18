@@ -1,0 +1,10 @@
+@startjson
+title 用户表
+{
+"id":"用户id",
+"type":[1,2], // 1: 商家 2 :普通用户
+"roles":["关联角色id..."],
+"status":[0,1], // 1 : 启用 0 : 禁用
+"pass":"密码"
+}
+@endjson

@@ -1,0 +1,9 @@
+@startjson
+
+title 角色表
+{
+"id":"角色id",
+"access":["权限id。。。"],
+"status":[0,1] // 1 : 启用 0 : 禁用
+}
+@endjson

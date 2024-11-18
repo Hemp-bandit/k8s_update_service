@@ -30,7 +30,7 @@ async fn main() {
     #[derive(OpenApi)]
     #[openapi(
         tags(
-            (name = "test", description = "asdfasd management endpoints.")
+            (name = "kaibai_user_service", description = " kaibai 用户服务")
         )
     )]
     struct ApiDoc;
@@ -40,7 +40,7 @@ async fn main() {
             .into_utoipa_app()
             .openapi(ApiDoc::openapi())
             .service(utoipa_actix_web::scope("/api/todo").configure(router::configure()))
-            .openapi_service(|api| Scalar::with_url("/scalar", api))
+            .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
     })
     .workers(2)
