@@ -1252,3 +1252,1042 @@
 2024-11-18 17:34:08.1657244 [INFO] shutting down idle worker
 2024-11-18 17:34:08.1657347 [INFO] shutting down idle worker
 2024-11-18 17:34:08.1657538 [INFO] accept thread stopped
+2024-11-18 18:00:35.8419766 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 18:00:35.8435599 [INFO] starting 2 workers
+2024-11-18 18:00:35.8435885 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 18:00:35.8436031 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 18:00:35.8436339 [TRACE] starting server worker 0
+2024-11-18 18:00:35.8461781 [TRACE] starting server worker 1
+2024-11-18 18:00:35.846194  [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:00:35.8472959 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 18:00:35.8473068 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:00:35.8473623 [TRACE] setting up OS signal listener
+2024-11-18 18:00:44.8358954 [TRACE] registering event source with poller: token=Token(3107676719360), interests=READABLE | WRITABLE
+2024-11-18 18:00:44.8362091 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:00:44.8362457 [TRACE] start timers:
+2024-11-18 18:00:44.8362715 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8363429 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8363605 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8364668 [TRACE] end timers:
+2024-11-18 18:00:44.8365134 [TRACE]   head timer is active and due to expire in 4509.672 milliseconds
+2024-11-18 18:00:44.8365183 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8365212 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8365386 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:00:44.8366224 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:00:44.836625  [TRACE] start timers:
+2024-11-18 18:00:44.836628  [TRACE]   head timer is active and due to expire in 4509.535 milliseconds
+2024-11-18 18:00:44.8366299 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8366316 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.838323  [TRACE] end timers:
+2024-11-18 18:00:44.8383327 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8383368 [TRACE]   keep-alive timer is active and due to expire in 4507.827 milliseconds
+2024-11-18 18:00:44.8383383 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8383432 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:44.8389892 [TRACE] registering event source with poller: token=Token(3107676836608), interests=READABLE | WRITABLE
+2024-11-18 18:00:44.8390572 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:00:44.8390613 [TRACE] start timers:
+2024-11-18 18:00:44.839063  [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8390645 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8390658 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8390798 [TRACE] end timers:
+2024-11-18 18:00:44.8390834 [TRACE]   head timer is active and due to expire in 4508.213 milliseconds
+2024-11-18 18:00:44.8390845 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8390855 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.839089  [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:00:44.8494917 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:44.8495154 [TRACE] start timers:
+2024-11-18 18:00:44.8495176 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8495239 [TRACE]   keep-alive timer is active and due to expire in 4496.642 milliseconds
+2024-11-18 18:00:44.8495251 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8496296 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:00:44.8504863 [TRACE] registering event source with poller: token=Token(3107676815744), interests=READABLE | WRITABLE
+2024-11-18 18:00:44.8505497 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:00:44.8505527 [TRACE] start timers:
+2024-11-18 18:00:44.850554  [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8505552 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8505565 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8505688 [TRACE] end timers:
+2024-11-18 18:00:44.8505719 [TRACE]   head timer is active and due to expire in 4996.7246 milliseconds
+2024-11-18 18:00:44.8505728 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8505734 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8505764 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:00:44.8506544 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:00:44.850659  [TRACE] start timers:
+2024-11-18 18:00:44.8506627 [TRACE]   head timer is active and due to expire in 4496.633 milliseconds
+2024-11-18 18:00:44.8506649 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.850667  [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.851494  [TRACE] end timers:
+2024-11-18 18:00:44.8514999 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8515026 [TRACE]   keep-alive timer is active and due to expire in 4995.793 milliseconds
+2024-11-18 18:00:44.8515036 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8515066 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:44.8515419 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:00:44.851543  [TRACE] start timers:
+2024-11-18 18:00:44.8515443 [TRACE]   head timer is active and due to expire in 4995.75 milliseconds
+2024-11-18 18:00:44.8515455 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8515464 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.853117  [TRACE] end timers:
+2024-11-18 18:00:44.8531251 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8531287 [TRACE]   keep-alive timer is active and due to expire in 4993.035 milliseconds
+2024-11-18 18:00:44.8531299 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8531334 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:44.8531611 [TRACE] registering event source with poller: token=Token(3107676873344), interests=READABLE | WRITABLE
+2024-11-18 18:00:44.8531845 [TRACE] registering event source with poller: token=Token(3107676898048), interests=READABLE | WRITABLE
+2024-11-18 18:00:44.8532076 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:00:44.8532094 [TRACE] start timers:
+2024-11-18 18:00:44.8532107 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8532119 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8532129 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8532212 [TRACE] end timers:
+2024-11-18 18:00:44.8532233 [TRACE]   head timer is active and due to expire in 4992.94 milliseconds
+2024-11-18 18:00:44.8532243 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8532257 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8532285 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:00:44.8532569 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:00:44.8532613 [TRACE] start timers:
+2024-11-18 18:00:44.8532622 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8532629 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8532637 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8532685 [TRACE] end timers:
+2024-11-18 18:00:44.8532701 [TRACE]   head timer is active and due to expire in 4992.892 milliseconds
+2024-11-18 18:00:44.8532712 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.853272  [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8532776 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:00:44.853317  [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:00:44.8533199 [TRACE] start timers:
+2024-11-18 18:00:44.8533212 [TRACE]   head timer is active and due to expire in 4992.8413 milliseconds
+2024-11-18 18:00:44.8533224 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.8533239 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8572612 [TRACE] end timers:
+2024-11-18 18:00:44.857281  [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8572878 [TRACE]   keep-alive timer is active and due to expire in 4990.011 milliseconds
+2024-11-18 18:00:44.8572895 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8572981 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:44.8813599 [TRACE] end timers:
+2024-11-18 18:00:44.8813854 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8813933 [TRACE]   keep-alive timer is active and due to expire in 4964.772 milliseconds
+2024-11-18 18:00:44.8813945 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8814054 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:44.8814341 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:00:44.8814508 [TRACE] start timers:
+2024-11-18 18:00:44.8814525 [TRACE]   head timer is active and due to expire in 4964.71 milliseconds
+2024-11-18 18:00:44.8814542 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:00:44.881455  [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.882112  [TRACE] end timers:
+2024-11-18 18:00:44.8821188 [TRACE]   head timer is inactive
+2024-11-18 18:00:44.8821216 [TRACE]   keep-alive timer is active and due to expire in 4964.0415 milliseconds
+2024-11-18 18:00:44.8821228 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:44.8821259 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:45.0094253 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:45.009449  [TRACE] start timers:
+2024-11-18 18:00:45.0094516 [TRACE]   head timer is inactive
+2024-11-18 18:00:45.0094581 [TRACE]   keep-alive timer is active and due to expire in 4836.708 milliseconds
+2024-11-18 18:00:45.0094592 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:45.0095762 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:00:45.0097824 [TRACE] end timers:
+2024-11-18 18:00:45.0097862 [TRACE]   head timer is inactive
+2024-11-18 18:00:45.009788  [TRACE]   keep-alive timer is active and due to expire in 4836.375 milliseconds
+2024-11-18 18:00:45.0097891 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:45.0097945 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:45.0154309 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:45.0154517 [TRACE] start timers:
+2024-11-18 18:00:45.0154539 [TRACE]   head timer is inactive
+2024-11-18 18:00:45.0154599 [TRACE]   keep-alive timer is active and due to expire in 4830.706 milliseconds
+2024-11-18 18:00:45.0154614 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:45.0155743 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:00:45.0161947 [TRACE] end timers:
+2024-11-18 18:00:45.0162026 [TRACE]   head timer is inactive
+2024-11-18 18:00:45.0162061 [TRACE]   keep-alive timer is active and due to expire in 4829.958 milliseconds
+2024-11-18 18:00:45.0162073 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:45.0162114 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:49.8585006 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:49.8585006 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:49.8585494 [TRACE] start timers:
+2024-11-18 18:00:49.8585533 [TRACE]   head timer is inactive
+2024-11-18 18:00:49.8585575 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:00:49.8585595 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:49.8585674 [TRACE] timer timed out; closing connection
+2024-11-18 18:00:49.8585951 [TRACE] start timers:
+2024-11-18 18:00:49.8586025 [TRACE]   head timer is inactive
+2024-11-18 18:00:49.8586094 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:00:49.8586136 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:49.8586314 [TRACE] timer timed out; closing connection
+2024-11-18 18:00:49.8587187 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:00:49.8587408 [TRACE] deregistering event source from poller
+2024-11-18 18:00:49.8587933 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:49.8587982 [TRACE] start timers:
+2024-11-18 18:00:49.8588    [TRACE]   head timer is inactive
+2024-11-18 18:00:49.858802  [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:00:49.8588037 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:49.8588063 [TRACE] timer timed out; closing connection
+2024-11-18 18:00:49.8588413 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:00:49.8588487 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:00:49.8588533 [TRACE] deregistering event source from poller
+2024-11-18 18:00:49.8588617 [TRACE] deregistering event source from poller
+2024-11-18 18:00:49.8592063 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:49.8592189 [TRACE] start timers:
+2024-11-18 18:00:49.859222  [TRACE]   head timer is inactive
+2024-11-18 18:00:49.8592254 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:00:49.8592294 [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:49.8592357 [TRACE] timer timed out; closing connection
+2024-11-18 18:00:49.8593548 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:00:49.8593942 [TRACE] deregistering event source from poller
+2024-11-18 18:00:49.8594439 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:00:49.8594481 [TRACE] start timers:
+2024-11-18 18:00:49.8594507 [TRACE]   head timer is inactive
+2024-11-18 18:00:49.8594537 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:00:49.859456  [TRACE]   shutdown timer is inactive
+2024-11-18 18:00:49.8594625 [TRACE] timer timed out; closing connection
+2024-11-18 18:00:49.8595396 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:00:49.8595456 [TRACE] deregistering event source from poller
+2024-11-18 18:01:05.111608  [TRACE] registering event source with poller: token=Token(3107700940416), interests=READABLE | WRITABLE
+2024-11-18 18:01:05.111702  [TRACE] start flags: Flags(0x0)
+2024-11-18 18:01:05.1117124 [TRACE] start timers:
+2024-11-18 18:01:05.1117146 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.111716  [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1117171 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1117456 [TRACE] end timers:
+2024-11-18 18:01:05.1117531 [TRACE]   head timer is active and due to expire in 4735.545 milliseconds
+2024-11-18 18:01:05.1117555 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1117562 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1117608 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:01:05.1118009 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:01:05.1118041 [TRACE] start timers:
+2024-11-18 18:01:05.1118056 [TRACE]   head timer is active and due to expire in 4735.489 milliseconds
+2024-11-18 18:01:05.1118064 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1118071 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1124924 [TRACE] end timers:
+2024-11-18 18:01:05.1124982 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1125019 [TRACE]   keep-alive timer is active and due to expire in 4734.794 milliseconds
+2024-11-18 18:01:05.1125036 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1125077 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.113246  [TRACE] registering event source with poller: token=Token(3107676898048), interests=READABLE | WRITABLE
+2024-11-18 18:01:05.1132834 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:01:05.1132857 [TRACE] start timers:
+2024-11-18 18:01:05.113287  [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1132881 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1132892 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1132989 [TRACE] end timers:
+2024-11-18 18:01:05.1133019 [TRACE]   head timer is active and due to expire in 4732.8623 milliseconds
+2024-11-18 18:01:05.1133029 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1133037 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1133059 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:01:05.1226788 [TRACE] registering event source with poller: token=Token(3107676836608), interests=READABLE | WRITABLE
+2024-11-18 18:01:05.1228973 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:01:05.1229076 [TRACE] start timers:
+2024-11-18 18:01:05.12291   [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1229132 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1229159 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1229615 [TRACE] end timers:
+2024-11-18 18:01:05.1229683 [TRACE] registering event source with poller: token=Token(3107676815744), interests=READABLE | WRITABLE
+2024-11-18 18:01:05.1229717 [TRACE]   head timer is active and due to expire in 4724.327 milliseconds
+2024-11-18 18:01:05.1229736 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1229754 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.122983  [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:01:05.1230207 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:01:05.1230263 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.1230273 [TRACE] start timers:
+2024-11-18 18:01:05.1230283 [TRACE] start timers:
+2024-11-18 18:01:05.1230285 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1230299 [TRACE]   keep-alive timer is active and due to expire in 4724.2646 milliseconds
+2024-11-18 18:01:05.1230314 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1230318 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1230343 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1230371 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1230574 [TRACE] end timers:
+2024-11-18 18:01:05.1230647 [TRACE]   head timer is active and due to expire in 4723.099 milliseconds
+2024-11-18 18:01:05.1230671 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1230688 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1230756 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:01:05.1231373 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:01:05.1231488 [TRACE] start timers:
+2024-11-18 18:01:05.1231517 [TRACE]   head timer is active and due to expire in 4723.011 milliseconds
+2024-11-18 18:01:05.1231537 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1231555 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1232119 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:01:05.1241978 [TRACE] end timers:
+2024-11-18 18:01:05.1242141 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1242181 [TRACE]   keep-alive timer is active and due to expire in 4721.9463 milliseconds
+2024-11-18 18:01:05.1242211 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1242252 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.1242821 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:01:05.1242859 [TRACE] start timers:
+2024-11-18 18:01:05.1242875 [TRACE]   head timer is active and due to expire in 4721.875 milliseconds
+2024-11-18 18:01:05.1242884 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1242898 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1280663 [TRACE] end timers:
+2024-11-18 18:01:05.128083  [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1280891 [TRACE]   keep-alive timer is active and due to expire in 4719.2085 milliseconds
+2024-11-18 18:01:05.1280904 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1280971 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.1282246 [TRACE] registering event source with poller: token=Token(3107676805120), interests=READABLE | WRITABLE
+2024-11-18 18:01:05.1283282 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:01:05.1283542 [TRACE] start timers:
+2024-11-18 18:01:05.1283553 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1283562 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1283926 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1284062 [TRACE] end timers:
+2024-11-18 18:01:05.1284096 [TRACE]   head timer is active and due to expire in 4718.8857 milliseconds
+2024-11-18 18:01:05.1284104 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1284112 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1284202 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:01:05.1285441 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:01:05.1285697 [TRACE] start timers:
+2024-11-18 18:01:05.1285728 [TRACE]   head timer is active and due to expire in 4718.722 milliseconds
+2024-11-18 18:01:05.1285744 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1285756 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1302334 [TRACE] end timers:
+2024-11-18 18:01:05.1302442 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1302482 [TRACE]   keep-alive timer is active and due to expire in 4715.916 milliseconds
+2024-11-18 18:01:05.1302504 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1302563 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.1579793 [TRACE] end timers:
+2024-11-18 18:01:05.1580184 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1580326 [TRACE]   keep-alive timer is active and due to expire in 4689.2715 milliseconds
+2024-11-18 18:01:05.1580347 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1580485 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.1580851 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:01:05.1580862 [TRACE] start timers:
+2024-11-18 18:01:05.1580893 [TRACE]   head timer is active and due to expire in 4689.2056 milliseconds
+2024-11-18 18:01:05.1580901 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:01:05.1580908 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.1589522 [TRACE] end timers:
+2024-11-18 18:01:05.1589603 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.1589648 [TRACE]   keep-alive timer is active and due to expire in 4688.3315 milliseconds
+2024-11-18 18:01:05.1589659 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.15897   [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.2394211 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.2394632 [TRACE] start timers:
+2024-11-18 18:01:05.2394682 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.2394845 [TRACE]   keep-alive timer is active and due to expire in 4607.8213 milliseconds
+2024-11-18 18:01:05.2394895 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.239735  [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:01:05.2401453 [TRACE] end timers:
+2024-11-18 18:01:05.2401549 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.2401598 [TRACE]   keep-alive timer is active and due to expire in 4607.137 milliseconds
+2024-11-18 18:01:05.2401621 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.2401697 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.2469349 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:05.2469821 [TRACE] start timers:
+2024-11-18 18:01:05.2469848 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.2469975 [TRACE]   keep-alive timer is active and due to expire in 4600.306 milliseconds
+2024-11-18 18:01:05.2469995 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.2471721 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:01:05.2478569 [TRACE] end timers:
+2024-11-18 18:01:05.2478626 [TRACE]   head timer is inactive
+2024-11-18 18:01:05.2478676 [TRACE]   keep-alive timer is active and due to expire in 4599.429 milliseconds
+2024-11-18 18:01:05.2478686 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:05.2478737 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:06.9895877 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:06.9896135 [TRACE] start timers:
+2024-11-18 18:01:06.9896157 [TRACE]   head timer is inactive
+2024-11-18 18:01:06.9896222 [TRACE]   keep-alive timer is active and due to expire in 2857.676 milliseconds
+2024-11-18 18:01:06.9896239 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:06.9897451 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:01:06.9899404 [TRACE] end timers:
+2024-11-18 18:01:06.9899455 [TRACE]   head timer is inactive
+2024-11-18 18:01:06.9899521 [TRACE]   keep-alive timer is active and due to expire in 4857.347 milliseconds
+2024-11-18 18:01:06.9899533 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:06.9899566 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:09.8539402 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:09.8539692 [TRACE] start timers:
+2024-11-18 18:01:09.8539741 [TRACE]   head timer is inactive
+2024-11-18 18:01:09.85398   [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:01:09.8539835 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:09.8539919 [TRACE] timer timed out; closing connection
+2024-11-18 18:01:09.854113  [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:09.8541233 [TRACE] start timers:
+2024-11-18 18:01:09.8541279 [TRACE]   head timer is inactive
+2024-11-18 18:01:09.8541331 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:01:09.8541371 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:09.854145  [TRACE] timer timed out; closing connection
+2024-11-18 18:01:09.85415   [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:01:09.8541659 [TRACE] deregistering event source from poller
+2024-11-18 18:01:09.8542158 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:09.8542179 [TRACE] start timers:
+2024-11-18 18:01:09.8542202 [TRACE]   head timer is inactive
+2024-11-18 18:01:09.8542222 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:01:09.8542239 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:09.8542259 [TRACE] timer timed out; closing connection
+2024-11-18 18:01:09.8542604 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:01:09.8542637 [TRACE] deregistering event source from poller
+2024-11-18 18:01:09.8542923 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:01:09.8543075 [TRACE] deregistering event source from poller
+2024-11-18 18:01:09.8544407 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:09.8544477 [TRACE] start timers:
+2024-11-18 18:01:09.85445   [TRACE]   head timer is inactive
+2024-11-18 18:01:09.8544524 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:01:09.8544541 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:09.854459  [TRACE] timer timed out; closing connection
+2024-11-18 18:01:09.8545196 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:01:09.8545313 [TRACE] deregistering event source from poller
+2024-11-18 18:01:11.855496  [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:01:11.8555224 [TRACE] start timers:
+2024-11-18 18:01:11.8555246 [TRACE]   head timer is inactive
+2024-11-18 18:01:11.8555271 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:01:11.8555284 [TRACE]   shutdown timer is inactive
+2024-11-18 18:01:11.8555325 [TRACE] timer timed out; closing connection
+2024-11-18 18:01:11.8556358 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:01:11.8556496 [TRACE] deregistering event source from poller
+2024-11-18 18:05:53.294324  [INFO] SIGINT received; starting forced shutdown
+2024-11-18 18:05:53.2944139 [TRACE] deregistering event source from poller
+2024-11-18 18:05:53.2944565 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 18:05:53.2944583 [INFO] accept thread stopped
+2024-11-18 18:05:53.2945473 [INFO] shutting down idle worker
+2024-11-18 18:05:53.2945718 [INFO] shutting down idle worker
+2024-11-18 18:07:11.5979168 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 18:07:11.5994482 [INFO] starting 2 workers
+2024-11-18 18:07:11.5994747 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 18:07:11.5994924 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 18:07:11.5995261 [TRACE] starting server worker 0
+2024-11-18 18:07:11.6017279 [TRACE] starting server worker 1
+2024-11-18 18:07:11.6017381 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:07:11.6028502 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:07:11.6028853 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 18:07:11.6029617 [TRACE] setting up OS signal listener
+2024-11-18 18:07:14.0287747 [TRACE] registering event source with poller: token=Token(1284385331072), interests=READABLE | WRITABLE
+2024-11-18 18:07:14.0287816 [TRACE] registering event source with poller: token=Token(1284385288704), interests=READABLE | WRITABLE
+2024-11-18 18:07:14.0289649 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:14.0289651 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:14.0289789 [TRACE] start timers:
+2024-11-18 18:07:14.0289796 [TRACE] start timers:
+2024-11-18 18:07:14.0289829 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0289846 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0289853 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0289868 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0289888 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0289889 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0290501 [TRACE] end timers:
+2024-11-18 18:07:14.0290626 [TRACE]   head timer is active and due to expire in 4573.782 milliseconds
+2024-11-18 18:07:14.0290627 [TRACE] end timers:
+2024-11-18 18:07:14.0290637 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0290663 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0290665 [TRACE]   head timer is active and due to expire in 4572.6426 milliseconds
+2024-11-18 18:07:14.0290677 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0290695 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.029075  [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:14.0290751 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:14.0291203 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:14.0291225 [TRACE] start timers:
+2024-11-18 18:07:14.0291237 [TRACE]   head timer is active and due to expire in 4572.5845 milliseconds
+2024-11-18 18:07:14.0291245 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0291253 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0300426 [TRACE] end timers:
+2024-11-18 18:07:14.0300499 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0300528 [TRACE]   keep-alive timer is active and due to expire in 4571.6567 milliseconds
+2024-11-18 18:07:14.030054  [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0300571 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.0378185 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.0378403 [TRACE] start timers:
+2024-11-18 18:07:14.0378424 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0378469 [TRACE]   keep-alive timer is active and due to expire in 4563.864 milliseconds
+2024-11-18 18:07:14.0378487 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0379565 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:07:14.0381891 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:14.0382036 [TRACE] start timers:
+2024-11-18 18:07:14.0382068 [TRACE]   head timer is active and due to expire in 4564.6323 milliseconds
+2024-11-18 18:07:14.0382084 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0382098 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0386635 [TRACE] end timers:
+2024-11-18 18:07:14.0386695 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0386724 [TRACE]   keep-alive timer is active and due to expire in 4564.167 milliseconds
+2024-11-18 18:07:14.0386736 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0386769 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.0387045 [TRACE] registering event source with poller: token=Token(1284385718016), interests=READABLE | WRITABLE
+2024-11-18 18:07:14.0387382 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:14.0387395 [TRACE] start timers:
+2024-11-18 18:07:14.0387402 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.038741  [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0387417 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0387475 [TRACE] end timers:
+2024-11-18 18:07:14.0387489 [TRACE]   head timer is active and due to expire in 4564.0894 milliseconds
+2024-11-18 18:07:14.0387496 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.038752  [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0387534 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:14.0387928 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:14.0387937 [TRACE] start timers:
+2024-11-18 18:07:14.0387948 [TRACE]   head timer is active and due to expire in 4564.043 milliseconds
+2024-11-18 18:07:14.0387955 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0387964 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0417669 [TRACE] end timers:
+2024-11-18 18:07:14.0417781 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0417818 [TRACE]   keep-alive timer is active and due to expire in 4559.9277 milliseconds
+2024-11-18 18:07:14.041783  [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0417878 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.0418146 [TRACE] registering event source with poller: token=Token(1284385716480), interests=READABLE | WRITABLE
+2024-11-18 18:07:14.0418347 [TRACE] registering event source with poller: token=Token(1284385717248), interests=READABLE | WRITABLE
+2024-11-18 18:07:14.0418493 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:14.0418514 [TRACE] start timers:
+2024-11-18 18:07:14.0418534 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0418542 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0418551 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0418615 [TRACE] end timers:
+2024-11-18 18:07:14.041863  [TRACE]   head timer is active and due to expire in 4559.845 milliseconds
+2024-11-18 18:07:14.0418638 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0418645 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0418714 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:14.0418746 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:14.0418792 [TRACE] start timers:
+2024-11-18 18:07:14.04188   [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0418807 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0418814 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0418841 [TRACE] end timers:
+2024-11-18 18:07:14.0418853 [TRACE]   head timer is active and due to expire in 4559.823 milliseconds
+2024-11-18 18:07:14.0418868 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0418875 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0418887 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:14.0419331 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:14.0419373 [TRACE] start timers:
+2024-11-18 18:07:14.0419385 [TRACE]   head timer is active and due to expire in 4559.7695 milliseconds
+2024-11-18 18:07:14.0419392 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0419399 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0436887 [TRACE] end timers:
+2024-11-18 18:07:14.043699  [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0437043 [TRACE]   keep-alive timer is active and due to expire in 4559.136 milliseconds
+2024-11-18 18:07:14.043706  [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0437113 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.0685269 [TRACE] end timers:
+2024-11-18 18:07:14.0685448 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0685506 [TRACE]   keep-alive timer is active and due to expire in 4533.161 milliseconds
+2024-11-18 18:07:14.0685518 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.068559  [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.0685759 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:14.0685777 [TRACE] start timers:
+2024-11-18 18:07:14.068579  [TRACE]   head timer is active and due to expire in 4533.1294 milliseconds
+2024-11-18 18:07:14.0685797 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:14.0685804 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.0691824 [TRACE] end timers:
+2024-11-18 18:07:14.0691887 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.0691911 [TRACE]   keep-alive timer is active and due to expire in 4532.5176 milliseconds
+2024-11-18 18:07:14.069192  [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.069195  [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.1984945 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.198521  [TRACE] start timers:
+2024-11-18 18:07:14.198523  [TRACE]   head timer is inactive
+2024-11-18 18:07:14.1985299 [TRACE]   keep-alive timer is active and due to expire in 4403.183 milliseconds
+2024-11-18 18:07:14.1985313 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.1986588 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:07:14.1988539 [TRACE] end timers:
+2024-11-18 18:07:14.1988585 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.1988612 [TRACE]   keep-alive timer is active and due to expire in 4902.848 milliseconds
+2024-11-18 18:07:14.1988631 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.1988664 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.2020159 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:14.2020281 [TRACE] start timers:
+2024-11-18 18:07:14.2020297 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.2020332 [TRACE]   keep-alive timer is active and due to expire in 4899.677 milliseconds
+2024-11-18 18:07:14.2020342 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.2021101 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:07:14.2025725 [TRACE] end timers:
+2024-11-18 18:07:14.2025787 [TRACE]   head timer is inactive
+2024-11-18 18:07:14.2025812 [TRACE]   keep-alive timer is active and due to expire in 4899.1274 milliseconds
+2024-11-18 18:07:14.2025825 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:14.2025857 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:18.602895  [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:18.6029208 [TRACE] start timers:
+2024-11-18 18:07:18.6029231 [TRACE]   head timer is inactive
+2024-11-18 18:07:18.6029265 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:07:18.6029282 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:18.6029336 [TRACE] timer timed out; closing connection
+2024-11-18 18:07:18.603079  [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:07:18.6031556 [TRACE] deregistering event source from poller
+2024-11-18 18:07:18.6032805 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:18.6032873 [TRACE] start timers:
+2024-11-18 18:07:18.6032892 [TRACE]   head timer is inactive
+2024-11-18 18:07:18.6032921 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:07:18.6032937 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:18.6032985 [TRACE] timer timed out; closing connection
+2024-11-18 18:07:18.6033918 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:07:18.6034126 [TRACE] deregistering event source from poller
+2024-11-18 18:07:18.6183315 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:18.6183452 [TRACE] start timers:
+2024-11-18 18:07:18.6183473 [TRACE]   head timer is inactive
+2024-11-18 18:07:18.6183497 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:07:18.6183514 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:18.6183594 [TRACE] timer timed out; closing connection
+2024-11-18 18:07:18.6185048 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:07:18.6185702 [TRACE] deregistering event source from poller
+2024-11-18 18:07:18.6186368 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:18.6186459 [TRACE] start timers:
+2024-11-18 18:07:18.6186499 [TRACE]   head timer is inactive
+2024-11-18 18:07:18.6186535 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:07:18.6186566 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:18.6187413 [TRACE] timer timed out; closing connection
+2024-11-18 18:07:18.6188586 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:07:18.6188939 [TRACE] deregistering event source from poller
+2024-11-18 18:07:19.1020444 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:19.1020756 [TRACE] start timers:
+2024-11-18 18:07:19.1020791 [TRACE]   head timer is inactive
+2024-11-18 18:07:19.1020836 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:07:19.102086  [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:19.1020917 [TRACE] timer timed out; closing connection
+2024-11-18 18:07:19.102249  [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:07:19.1022787 [TRACE] deregistering event source from poller
+2024-11-18 18:07:49.8823416 [TRACE] registering event source with poller: token=Token(1284385717632), interests=READABLE | WRITABLE
+2024-11-18 18:07:49.8823653 [TRACE] registering event source with poller: token=Token(1284385716864), interests=READABLE | WRITABLE
+2024-11-18 18:07:49.882423  [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:49.8824296 [TRACE] start timers:
+2024-11-18 18:07:49.8824315 [TRACE]   head timer is inactive
+2024-11-18 18:07:49.8824327 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:49.8824338 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:49.8824586 [TRACE] end timers:
+2024-11-18 18:07:49.8824637 [TRACE]   head timer is active and due to expire in 4719.2485 milliseconds
+2024-11-18 18:07:49.8824645 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:49.8824654 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:49.8824638 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:07:49.8824693 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:49.8824728 [TRACE] start timers:
+2024-11-18 18:07:49.8824781 [TRACE]   head timer is inactive
+2024-11-18 18:07:49.8824824 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:49.8824869 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:49.8825196 [TRACE] end timers:
+2024-11-18 18:07:49.8825277 [TRACE]   head timer is active and due to expire in 4720.314 milliseconds
+2024-11-18 18:07:49.8825321 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:49.8825361 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:49.8825435 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:07:49.8826468 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:49.8826755 [TRACE] start timers:
+2024-11-18 18:07:49.8826828 [TRACE]   head timer is active and due to expire in 4720.1577 milliseconds
+2024-11-18 18:07:49.8826871 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:49.8826911 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:49.8831373 [TRACE] end timers:
+2024-11-18 18:07:49.8831579 [TRACE]   head timer is inactive
+2024-11-18 18:07:49.8831652 [TRACE]   keep-alive timer is active and due to expire in 4719.676 milliseconds
+2024-11-18 18:07:49.8831697 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:49.8831783 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:54.08512   [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:54.0851513 [TRACE] start timers:
+2024-11-18 18:07:54.0851545 [TRACE]   head timer is inactive
+2024-11-18 18:07:54.0851632 [TRACE]   keep-alive timer is active and due to expire in 517.67993 milliseconds
+2024-11-18 18:07:54.0851665 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:54.0853419 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:07:54.0855772 [TRACE] end timers:
+2024-11-18 18:07:54.0855854 [TRACE]   head timer is inactive
+2024-11-18 18:07:54.0855892 [TRACE]   keep-alive timer is active and due to expire in 4517.2505 milliseconds
+2024-11-18 18:07:54.0855911 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:54.0855959 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:54.6116141 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:07:54.611692  [TRACE] start timers:
+2024-11-18 18:07:54.6117012 [TRACE]   head timer is active and has reached deadline
+2024-11-18 18:07:54.6117066 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:07:54.6117113 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:54.6117228 [TRACE] timed out on slow request; replying with 408 and closing connection
+2024-11-18 18:07:54.6119441 [TRACE] end flags: Flags(STARTED | FINISHED | SHUTDOWN)
+2024-11-18 18:07:54.611987  [TRACE] deregistering event source from poller
+2024-11-18 18:07:55.7564884 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:07:55.756513  [TRACE] start timers:
+2024-11-18 18:07:55.7565159 [TRACE]   head timer is inactive
+2024-11-18 18:07:55.7565226 [TRACE]   keep-alive timer is active and due to expire in 2846.3196 milliseconds
+2024-11-18 18:07:55.7565244 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:55.7566445 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:07:55.7569801 [TRACE] end timers:
+2024-11-18 18:07:55.7569939 [TRACE]   head timer is inactive
+2024-11-18 18:07:55.7569982 [TRACE]   keep-alive timer is active and due to expire in 4845.8413 milliseconds
+2024-11-18 18:07:55.7569999 [TRACE]   shutdown timer is inactive
+2024-11-18 18:07:55.7570054 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:00.6143036 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:00.6143614 [TRACE] start timers:
+2024-11-18 18:08:00.6145601 [TRACE]   head timer is inactive
+2024-11-18 18:08:00.6146313 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:08:00.614655  [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:00.6148211 [TRACE] timer timed out; closing connection
+2024-11-18 18:08:00.6151168 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:08:00.6151643 [TRACE] deregistering event source from poller
+2024-11-18 18:08:18.3910473 [TRACE] registering event source with poller: token=Token(1284385717632), interests=READABLE | WRITABLE
+2024-11-18 18:08:18.3911676 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:08:18.3911949 [TRACE] start timers:
+2024-11-18 18:08:18.3911986 [TRACE]   head timer is inactive
+2024-11-18 18:08:18.3912006 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:18.3912023 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:18.3912608 [TRACE] end timers:
+2024-11-18 18:08:18.3912786 [TRACE]   head timer is active and due to expire in 4711.5645 milliseconds
+2024-11-18 18:08:18.3912811 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:18.3912837 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:18.3912912 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:08:18.3913626 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:08:18.391373  [TRACE] start timers:
+2024-11-18 18:08:18.3913764 [TRACE]   head timer is active and due to expire in 4711.4624 milliseconds
+2024-11-18 18:08:18.3913782 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:18.3913799 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:18.3917099 [TRACE] end timers:
+2024-11-18 18:08:18.3917162 [TRACE]   head timer is inactive
+2024-11-18 18:08:18.3917199 [TRACE]   keep-alive timer is active and due to expire in 4711.1196 milliseconds
+2024-11-18 18:08:18.391721  [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:18.3917242 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:18.3945942 [TRACE] registering event source with poller: token=Token(1284385716480), interests=READABLE | WRITABLE
+2024-11-18 18:08:18.3946396 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:08:18.3946432 [TRACE] start timers:
+2024-11-18 18:08:18.3946449 [TRACE]   head timer is inactive
+2024-11-18 18:08:18.3946462 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:18.3946475 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:18.3946596 [TRACE] end timers:
+2024-11-18 18:08:18.3946633 [TRACE]   head timer is active and due to expire in 4707.047 milliseconds
+2024-11-18 18:08:18.3946644 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:18.3946652 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:18.3946679 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:08:23.1044315 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:23.1044315 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:08:23.1044564 [TRACE] start timers:
+2024-11-18 18:08:23.104459  [TRACE]   head timer is inactive
+2024-11-18 18:08:23.1044615 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:08:23.1044627 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:23.1044682 [TRACE] timer timed out; closing connection
+2024-11-18 18:08:23.1045266 [TRACE] start timers:
+2024-11-18 18:08:23.1045308 [TRACE]   head timer is active and has reached deadline
+2024-11-18 18:08:23.104533  [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:23.1045348 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:23.1045416 [TRACE] timed out on slow request; replying with 408 and closing connection
+2024-11-18 18:08:23.1045436 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:08:23.1045556 [TRACE] deregistering event source from poller
+2024-11-18 18:08:23.1046632 [TRACE] end flags: Flags(STARTED | FINISHED | SHUTDOWN)
+2024-11-18 18:08:23.1046815 [TRACE] deregistering event source from poller
+2024-11-18 18:08:28.3182367 [INFO] SIGINT received; starting forced shutdown
+2024-11-18 18:08:28.3182827 [TRACE] deregistering event source from poller
+2024-11-18 18:08:28.3183105 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 18:08:28.3183126 [INFO] accept thread stopped
+2024-11-18 18:08:28.3183139 [INFO] shutting down idle worker
+2024-11-18 18:08:28.3183171 [INFO] shutting down idle worker
+2024-11-18 18:08:34.6920099 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 18:08:34.693657  [INFO] starting 2 workers
+2024-11-18 18:08:34.6936842 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 18:08:34.6937016 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 18:08:34.6937313 [TRACE] starting server worker 0
+2024-11-18 18:08:34.6946327 [TRACE] starting server worker 1
+2024-11-18 18:08:34.6946929 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:08:34.6950498 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 18:08:34.6950526 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:08:34.6951112 [TRACE] setting up OS signal listener
+2024-11-18 18:08:36.7988204 [TRACE] registering event source with poller: token=Token(1995175816448), interests=READABLE | WRITABLE
+2024-11-18 18:08:36.7990282 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:08:36.799054  [TRACE] start timers:
+2024-11-18 18:08:36.7990709 [TRACE]   head timer is inactive
+2024-11-18 18:08:36.7990735 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:36.7990836 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:36.7991883 [TRACE] end timers:
+2024-11-18 18:08:36.7992056 [TRACE]   head timer is active and due to expire in 4895.453 milliseconds
+2024-11-18 18:08:36.7992074 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:36.7992089 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:36.7992301 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:08:36.7997859 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:08:36.7998011 [TRACE] start timers:
+2024-11-18 18:08:36.7998051 [TRACE]   head timer is active and due to expire in 4894.8433 milliseconds
+2024-11-18 18:08:36.7998066 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:36.799808  [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:36.8001177 [TRACE] end timers:
+2024-11-18 18:08:36.8001241 [TRACE]   head timer is inactive
+2024-11-18 18:08:36.8001261 [TRACE]   keep-alive timer is active and due to expire in 4894.521 milliseconds
+2024-11-18 18:08:36.8001273 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:36.8001306 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:41.6989951 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:41.699019  [TRACE] start timers:
+2024-11-18 18:08:41.6990213 [TRACE]   head timer is inactive
+2024-11-18 18:08:41.6990248 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:08:41.6990263 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:41.6990307 [TRACE] timer timed out; closing connection
+2024-11-18 18:08:41.6991238 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:08:41.6991386 [TRACE] deregistering event source from poller
+2024-11-18 18:08:42.1857577 [TRACE] registering event source with poller: token=Token(1995175858048), interests=READABLE | WRITABLE
+2024-11-18 18:08:42.1858619 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:08:42.1858744 [TRACE] start timers:
+2024-11-18 18:08:42.1858768 [TRACE]   head timer is inactive
+2024-11-18 18:08:42.1858781 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:42.1858825 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:42.1859111 [TRACE] end timers:
+2024-11-18 18:08:42.1859178 [TRACE]   head timer is active and due to expire in 4509.1284 milliseconds
+2024-11-18 18:08:42.1859187 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:42.1859203 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:42.1859254 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:08:42.1859554 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:08:42.1859587 [TRACE] start timers:
+2024-11-18 18:08:42.18596   [TRACE]   head timer is active and due to expire in 4509.0835 milliseconds
+2024-11-18 18:08:42.1859608 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:42.1859616 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:42.1862099 [TRACE] end timers:
+2024-11-18 18:08:42.1862146 [TRACE]   head timer is inactive
+2024-11-18 18:08:42.1862163 [TRACE]   keep-alive timer is active and due to expire in 4508.827 milliseconds
+2024-11-18 18:08:42.1862171 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:42.1862238 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:42.1906334 [TRACE] registering event source with poller: token=Token(1995175819008), interests=READABLE | WRITABLE
+2024-11-18 18:08:42.1907442 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:08:42.1907554 [TRACE] start timers:
+2024-11-18 18:08:42.1907588 [TRACE]   head timer is inactive
+2024-11-18 18:08:42.1907601 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:42.1907611 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:42.1908    [TRACE] end timers:
+2024-11-18 18:08:42.1908054 [TRACE]   head timer is active and due to expire in 4503.844 milliseconds
+2024-11-18 18:08:42.1908076 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:42.1908084 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:42.1908139 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:08:46.7085542 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:08:46.7085565 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:08:46.7085795 [TRACE] start timers:
+2024-11-18 18:08:46.7085848 [TRACE]   head timer is active and has reached deadline
+2024-11-18 18:08:46.7085861 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:08:46.708588  [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:46.7085929 [TRACE] start timers:
+2024-11-18 18:08:46.7085945 [TRACE] timed out on slow request; replying with 408 and closing connection
+2024-11-18 18:08:46.7085952 [TRACE]   head timer is inactive
+2024-11-18 18:08:46.7086047 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:08:46.7086059 [TRACE]   shutdown timer is inactive
+2024-11-18 18:08:46.708611  [TRACE] timer timed out; closing connection
+2024-11-18 18:08:46.7087062 [TRACE] end flags: Flags(STARTED | FINISHED | SHUTDOWN)
+2024-11-18 18:08:46.7087065 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:08:46.7087183 [TRACE] deregistering event source from poller
+2024-11-18 18:08:46.7087193 [TRACE] deregistering event source from poller
+2024-11-18 18:10:54.6411973 [INFO] SIGINT received; starting forced shutdown
+2024-11-18 18:10:54.6413808 [TRACE] deregistering event source from poller
+2024-11-18 18:10:54.6414389 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 18:10:54.641444  [INFO] accept thread stopped
+2024-11-18 18:10:54.6414466 [INFO] shutting down idle worker
+2024-11-18 18:10:54.6415459 [INFO] shutting down idle worker
+2024-11-18 18:11:18.730723  [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 18:11:18.7324789 [INFO] starting 2 workers
+2024-11-18 18:11:18.732511  [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 18:11:18.7325308 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 18:11:18.7325654 [TRACE] starting server worker 0
+2024-11-18 18:11:18.7336054 [TRACE] starting server worker 1
+2024-11-18 18:11:18.733659  [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:11:18.7339979 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 18:11:18.7340017 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:11:18.7340494 [TRACE] setting up OS signal listener
+2024-11-18 18:11:22.5988276 [TRACE] registering event source with poller: token=Token(2491020920192), interests=READABLE | WRITABLE
+2024-11-18 18:11:22.5988269 [TRACE] registering event source with poller: token=Token(2491020767872), interests=READABLE | WRITABLE
+2024-11-18 18:11:22.5989982 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:11:22.598999  [TRACE] start flags: Flags(0x0)
+2024-11-18 18:11:22.5990127 [TRACE] start timers:
+2024-11-18 18:11:22.5990135 [TRACE] start timers:
+2024-11-18 18:11:22.5990164 [TRACE]   head timer is inactive
+2024-11-18 18:11:22.5990174 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:11:22.5990183 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:22.5990196 [TRACE]   head timer is inactive
+2024-11-18 18:11:22.599021  [TRACE]   keep-alive timer is inactive
+2024-11-18 18:11:22.5990225 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:22.5990792 [TRACE] end timers:
+2024-11-18 18:11:22.5990793 [TRACE] end timers:
+2024-11-18 18:11:22.5990896 [TRACE]   head timer is active and due to expire in 4634.536 milliseconds
+2024-11-18 18:11:22.5990905 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:11:22.5990927 [TRACE]   head timer is active and due to expire in 4634.908 milliseconds
+2024-11-18 18:11:22.5990938 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:11:22.5990973 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:22.5991007 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:22.5991071 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:11:22.5991099 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:11:22.5991418 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:11:22.5991427 [TRACE] start timers:
+2024-11-18 18:11:22.5991442 [TRACE]   head timer is active and due to expire in 4634.475 milliseconds
+2024-11-18 18:11:22.5991448 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:11:22.5991454 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:22.599446  [TRACE] end timers:
+2024-11-18 18:11:22.5994516 [TRACE]   head timer is inactive
+2024-11-18 18:11:22.5994532 [TRACE]   keep-alive timer is active and due to expire in 4634.166 milliseconds
+2024-11-18 18:11:22.5994544 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:22.5994565 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:23.5731482 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:23.57317   [TRACE] start timers:
+2024-11-18 18:11:23.5731724 [TRACE]   head timer is inactive
+2024-11-18 18:11:23.5731781 [TRACE]   keep-alive timer is active and due to expire in 3660.4446 milliseconds
+2024-11-18 18:11:23.573179  [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:23.5732934 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:11:23.573417  [TRACE] end timers:
+2024-11-18 18:11:23.5734204 [TRACE]   head timer is inactive
+2024-11-18 18:11:23.5734222 [TRACE]   keep-alive timer is active and due to expire in 4660.1973 milliseconds
+2024-11-18 18:11:23.5734233 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:23.5734265 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:26.2945206 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:26.2945412 [TRACE] start timers:
+2024-11-18 18:11:26.2945434 [TRACE]   head timer is inactive
+2024-11-18 18:11:26.2945496 [TRACE]   keep-alive timer is active and due to expire in 1939.0731 milliseconds
+2024-11-18 18:11:26.2945509 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:26.2946593 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:11:26.294918  [TRACE] end timers:
+2024-11-18 18:11:26.2949261 [TRACE]   head timer is inactive
+2024-11-18 18:11:26.2949288 [TRACE]   keep-alive timer is active and due to expire in 4938.691 milliseconds
+2024-11-18 18:11:26.2949297 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:26.2949333 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:27.2402578 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:11:27.2402904 [TRACE] start timers:
+2024-11-18 18:11:27.2402936 [TRACE]   head timer is active and has reached deadline
+2024-11-18 18:11:27.240299  [TRACE]   keep-alive timer is inactive
+2024-11-18 18:11:27.2403003 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:27.2403043 [TRACE] timed out on slow request; replying with 408 and closing connection
+2024-11-18 18:11:27.2404797 [TRACE] end flags: Flags(STARTED | FINISHED | SHUTDOWN)
+2024-11-18 18:11:27.2405261 [TRACE] deregistering event source from poller
+2024-11-18 18:11:27.6604028 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:27.6604244 [TRACE] start timers:
+2024-11-18 18:11:27.6604264 [TRACE]   head timer is inactive
+2024-11-18 18:11:27.6604326 [TRACE]   keep-alive timer is active and due to expire in 3573.1902 milliseconds
+2024-11-18 18:11:27.6604337 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:27.6605423 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:11:27.660653  [TRACE] end timers:
+2024-11-18 18:11:27.6606567 [TRACE]   head timer is inactive
+2024-11-18 18:11:27.6606591 [TRACE]   keep-alive timer is active and due to expire in 4572.961 milliseconds
+2024-11-18 18:11:27.6606604 [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:27.6606641 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:32.2433828 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:11:32.2434117 [TRACE] start timers:
+2024-11-18 18:11:32.2434146 [TRACE]   head timer is inactive
+2024-11-18 18:11:32.2434183 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:11:32.24342   [TRACE]   shutdown timer is inactive
+2024-11-18 18:11:32.2434266 [TRACE] timer timed out; closing connection
+2024-11-18 18:11:32.2436975 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:11:32.2437583 [TRACE] deregistering event source from poller
+2024-11-18 18:15:23.2255185 [INFO] SIGINT received; starting forced shutdown
+2024-11-18 18:15:23.2255833 [TRACE] deregistering event source from poller
+2024-11-18 18:15:23.2256205 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 18:15:23.2256252 [INFO] accept thread stopped
+2024-11-18 18:15:23.2256261 [INFO] shutting down idle worker
+2024-11-18 18:15:23.2256262 [INFO] shutting down idle worker
+2024-11-18 18:15:30.435985  [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 18:15:30.4374828 [INFO] starting 2 workers
+2024-11-18 18:15:30.4375079 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 18:15:30.4375231 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 18:15:30.4375592 [TRACE] starting server worker 0
+2024-11-18 18:15:30.4388204 [TRACE] starting server worker 1
+2024-11-18 18:15:30.4388719 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:15:30.4393416 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 18:15:30.4393483 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:15:30.4394067 [TRACE] setting up OS signal listener
+2024-11-18 18:15:32.8971365 [TRACE] registering event source with poller: token=Token(1176033143936), interests=READABLE | WRITABLE
+2024-11-18 18:15:32.8972747 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:15:32.8973515 [TRACE] start timers:
+2024-11-18 18:15:32.8973622 [TRACE]   head timer is inactive
+2024-11-18 18:15:32.8973649 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:15:32.897367  [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:32.8974247 [TRACE] end timers:
+2024-11-18 18:15:32.8974342 [TRACE]   head timer is active and due to expire in 4541.409 milliseconds
+2024-11-18 18:15:32.8974351 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:15:32.8974358 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:32.8974434 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:15:32.8974864 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:15:32.8974874 [TRACE] start timers:
+2024-11-18 18:15:32.8974888 [TRACE]   head timer is active and due to expire in 4541.35 milliseconds
+2024-11-18 18:15:32.8974897 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:15:32.8974907 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:32.8978259 [TRACE] end timers:
+2024-11-18 18:15:32.8978315 [TRACE]   head timer is inactive
+2024-11-18 18:15:32.8978342 [TRACE]   keep-alive timer is active and due to expire in 4541.0054 milliseconds
+2024-11-18 18:15:32.8978352 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:32.8978389 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:15:32.9010941 [TRACE] registering event source with poller: token=Token(1176033180160), interests=READABLE | WRITABLE
+2024-11-18 18:15:32.9013789 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:15:32.9013885 [TRACE] start timers:
+2024-11-18 18:15:32.9013905 [TRACE]   head timer is inactive
+2024-11-18 18:15:32.9013918 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:15:32.9013929 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:32.901443  [TRACE] end timers:
+2024-11-18 18:15:32.9014504 [TRACE]   head timer is active and due to expire in 4537.891 milliseconds
+2024-11-18 18:15:32.9014547 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:15:32.9014558 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:32.9014615 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:15:33.9286409 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:15:33.9286802 [TRACE] start timers:
+2024-11-18 18:15:33.9286824 [TRACE]   head timer is inactive
+2024-11-18 18:15:33.9286898 [TRACE]   keep-alive timer is active and due to expire in 3510.1538 milliseconds
+2024-11-18 18:15:33.9286912 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:33.9288323 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:15:33.928951  [TRACE] end timers:
+2024-11-18 18:15:33.9289623 [TRACE]   head timer is inactive
+2024-11-18 18:15:33.9289641 [TRACE]   keep-alive timer is active and due to expire in 4509.8745 milliseconds
+2024-11-18 18:15:33.928965  [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:33.9289685 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:15:37.44494   [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:15:37.4449623 [TRACE] start timers:
+2024-11-18 18:15:37.4449656 [TRACE]   head timer is active and has reached deadline
+2024-11-18 18:15:37.4449673 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:15:37.4449685 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:37.4449842 [TRACE] timed out on slow request; replying with 408 and closing connection
+2024-11-18 18:15:37.4451876 [TRACE] end flags: Flags(STARTED | FINISHED | SHUTDOWN)
+2024-11-18 18:15:37.4452074 [TRACE] deregistering event source from poller
+2024-11-18 18:15:38.4505587 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:15:38.4505993 [TRACE] start timers:
+2024-11-18 18:15:38.4506046 [TRACE]   head timer is inactive
+2024-11-18 18:15:38.4506106 [TRACE]   keep-alive timer is active and has reached deadline
+2024-11-18 18:15:38.4506167 [TRACE]   shutdown timer is inactive
+2024-11-18 18:15:38.4506267 [TRACE] timer timed out; closing connection
+2024-11-18 18:15:38.450813  [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE | SHUTDOWN)
+2024-11-18 18:15:38.4508452 [TRACE] deregistering event source from poller
+2024-11-18 18:16:23.2899053 [INFO] SIGINT received; starting forced shutdown
+2024-11-18 18:16:23.289961  [TRACE] deregistering event source from poller
+2024-11-18 18:16:23.2899976 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 18:16:23.2899997 [INFO] accept thread stopped
+2024-11-18 18:16:23.2900079 [INFO] shutting down idle worker
+2024-11-18 18:16:23.2900298 [INFO] shutting down idle worker
+2024-11-18 18:17:20.2793673 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 18:17:20.2809421 [INFO] starting 2 workers
+2024-11-18 18:17:20.2809734 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 18:17:20.2809908 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 18:17:20.2810245 [TRACE] starting server worker 0
+2024-11-18 18:17:20.2824464 [TRACE] starting server worker 1
+2024-11-18 18:17:20.282456  [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:17:20.2828943 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 18:17:20.2829001 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 18:17:20.2829487 [TRACE] setting up OS signal listener
+2024-11-18 18:17:48.040592  [TRACE] registering event source with poller: token=Token(2639229078400), interests=READABLE | WRITABLE
+2024-11-18 18:17:48.0407245 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:17:48.0407377 [TRACE] start timers:
+2024-11-18 18:17:48.04074   [TRACE]   head timer is inactive
+2024-11-18 18:17:48.0407418 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:17:48.040744  [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:48.0407934 [TRACE] end timers:
+2024-11-18 18:17:48.0407996 [TRACE]   head timer is active and due to expire in 4741.622 milliseconds
+2024-11-18 18:17:48.0408004 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:17:48.0408012 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:48.0408085 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:17:48.0408412 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:17:48.0408449 [TRACE] start timers:
+2024-11-18 18:17:48.0408463 [TRACE]   head timer is active and due to expire in 4741.5703 milliseconds
+2024-11-18 18:17:48.0408473 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:17:48.0408485 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:48.041156  [TRACE] end timers:
+2024-11-18 18:17:48.0411601 [TRACE]   head timer is inactive
+2024-11-18 18:17:48.041162  [TRACE]   keep-alive timer is active and due to expire in 4741.2554 milliseconds
+2024-11-18 18:17:48.0411659 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:48.0411694 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:17:48.0414711 [TRACE] registering event source with poller: token=Token(2639229048832), interests=READABLE | WRITABLE
+2024-11-18 18:17:48.0415468 [TRACE] start flags: Flags(0x0)
+2024-11-18 18:17:48.0415539 [TRACE] start timers:
+2024-11-18 18:17:48.0415555 [TRACE]   head timer is inactive
+2024-11-18 18:17:48.0415568 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:17:48.0415577 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:48.0415744 [TRACE] end timers:
+2024-11-18 18:17:48.0415765 [TRACE]   head timer is active and due to expire in 4741.312 milliseconds
+2024-11-18 18:17:48.0415777 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:17:48.0415785 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:48.0415813 [TRACE] end flags: Flags(STARTED)
+2024-11-18 18:17:49.1436045 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:17:49.1436323 [TRACE] start timers:
+2024-11-18 18:17:49.1436352 [TRACE]   head timer is inactive
+2024-11-18 18:17:49.1436414 [TRACE]   keep-alive timer is active and due to expire in 3638.7788 milliseconds
+2024-11-18 18:17:49.1436437 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:49.143792  [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:17:49.1439723 [TRACE] end timers:
+2024-11-18 18:17:49.1439798 [TRACE]   head timer is inactive
+2024-11-18 18:17:49.143984  [TRACE]   keep-alive timer is active and due to expire in 4638.435 milliseconds
+2024-11-18 18:17:49.1439857 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:49.1439906 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:17:50.3054802 [TRACE] start flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:17:50.3055036 [TRACE] start timers:
+2024-11-18 18:17:50.3055059 [TRACE]   head timer is inactive
+2024-11-18 18:17:50.3055129 [TRACE]   keep-alive timer is active and due to expire in 3476.907 milliseconds
+2024-11-18 18:17:50.3055143 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:50.3056278 [TRACE] trying to clear an inactive timer from line 705
+2024-11-18 18:17:50.3058674 [TRACE] end timers:
+2024-11-18 18:17:50.3058746 [TRACE]   head timer is inactive
+2024-11-18 18:17:50.3058779 [TRACE]   keep-alive timer is active and due to expire in 4976.54 milliseconds
+2024-11-18 18:17:50.3058791 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:50.3058837 [TRACE] end flags: Flags(STARTED | FINISHED | KEEP_ALIVE)
+2024-11-18 18:17:52.7930363 [TRACE] start flags: Flags(STARTED)
+2024-11-18 18:17:52.7930614 [TRACE] start timers:
+2024-11-18 18:17:52.7930647 [TRACE]   head timer is active and has reached deadline
+2024-11-18 18:17:52.7930664 [TRACE]   keep-alive timer is inactive
+2024-11-18 18:17:52.7930678 [TRACE]   shutdown timer is inactive
+2024-11-18 18:17:52.7930719 [TRACE] timed out on slow request; replying with 408 and closing connection
+2024-11-18 18:17:52.7932534 [TRACE] end flags: Flags(STARTED | FINISHED | SHUTDOWN)
+2024-11-18 18:17:52.7932663 [TRACE] deregistering event source from poller
+2024-11-18 18:17:54.0931903 [INFO] SIGINT received; starting forced shutdown
+2024-11-18 18:17:54.0933307 [TRACE] deregistering event source from poller
+2024-11-18 18:17:54.0933803 [INFO] shutting down idle worker
+2024-11-18 18:17:54.0933943 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 18:17:54.093403  [INFO] accept thread stopped
+2024-11-18 18:17:54.0934059 [INFO] force shutdown worker, closing 1 connections
+2024-11-18 18:17:54.0937294 [TRACE] deregistering event source from poller

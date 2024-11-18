@@ -1,13 +1,10 @@
 use crate::response::ResponseBody;
-use actix_web::{
-    get, post,
-    web::{self, get, Json},
-    Responder,
-};
+use actix_web::{post, web, Responder};
 use log::info;
 use serde::{Deserialize, Serialize};
 use tokio::process::{Child, Command};
 use utoipa::ToSchema;
+use utoipa_actix_web::service_config::ServiceConfig;
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 struct DeployInfo {
@@ -17,12 +14,10 @@ struct DeployInfo {
     new_tag: String,
 }
 
-
 #[utoipa::path(
-    post,
-    path="/update_deployment",
+    tag = "test",
     responses(
-        (status = 200, description = "Hello from api 1")
+        (status = 200, description = "List current todo items", body=[ResponseBody<String>])
     )
 )]
 #[post("/update_deployment")]
@@ -53,27 +48,6 @@ pub async fn update_deployment(config: web::Json<DeployInfo>) -> impl Responder 
     res
 }
 
-#[derive(utoipa::ToSchema)]
-struct User {
-    id: i32,
-}
-
-#[utoipa::path(
-     get,
-     path = "/test-links",
-     responses(
-         (status = 200, description = "success response", body = User)
-     ),
- )]
-pub fn get_user() -> Json<User> {
-    Json(User { id: 1 })
-}
-
-#[get("/api1/hello")]
-pub async fn hello1() -> String {
-    "hello from api 1".to_string()
-}
-
 pub struct ShellUtil;
 impl ShellUtil {
     /// 创建shell环境
@@ -86,5 +60,11 @@ impl ShellUtil {
                 panic!("{}", e);
             }
         }
+    }
+}
+
+pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
+    |config: &mut ServiceConfig| {
+        config.service(update_deployment);
     }
 }
