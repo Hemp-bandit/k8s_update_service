@@ -120,3 +120,22 @@
 2024-11-15 17:31:17.2295104 [DEBUG] paused accepting connections on 0.0.0.0:3001
 2024-11-15 17:31:17.229542  [INFO] accept thread stopped
 2024-11-15 17:31:17.2295518 [INFO] shutting down idle worker
+2024-11-18 16:03:11.780926276 [INFO] server is on, addr http://0.0.0.0:3001
+2024-11-18 16:03:11.819039287 [INFO] starting 2 workers
+2024-11-18 16:03:11.819056657 [INFO] Actix runtime found; starting in Actix runtime
+2024-11-18 16:03:11.830039229 [INFO] starting service: "actix-web-service-0.0.0.0:3001", workers: 2, listening on: 0.0.0.0:3001
+2024-11-18 16:03:11.830072546 [TRACE] starting server worker 0
+2024-11-18 16:03:11.830358208 [TRACE] registering event source with poller: token=Token(1), interests=READABLE
+2024-11-18 16:03:11.87465707 [TRACE] starting server worker 1
+2024-11-18 16:03:11.875563682 [TRACE] registering event source with poller: token=Token(1), interests=READABLE
+2024-11-18 16:03:11.875718103 [TRACE] registering event source with poller: token=Token(0), interests=READABLE
+2024-11-18 16:03:11.875719687 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 16:03:11.876147996 [TRACE] setting up OS signal listener
+2024-11-18 16:03:11.887042704 [TRACE] service "actix-web-service-0.0.0.0:3001" is available
+2024-11-18 16:03:13.819172115 [TRACE] SIGINT received
+2024-11-18 16:03:13.819223978 [INFO] SIGINT received; starting forced shutdown
+2024-11-18 16:03:13.819341053 [TRACE] deregistering event source from poller
+2024-11-18 16:03:13.819360319 [INFO] shutting down idle worker
+2024-11-18 16:03:13.819388778 [DEBUG] paused accepting connections on 0.0.0.0:3001
+2024-11-18 16:03:13.819390839 [INFO] accept thread stopped
+2024-11-18 16:03:13.819416542 [INFO] shutting down idle worker

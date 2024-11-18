@@ -6,10 +6,12 @@ COPY ./Cargo.toml .
 COPY ./Cargo.lock .
 RUN cargo build --release
 
+FROM debian:stable-slim
 
-# FROM debian:bullseye-slim
-FROM rust:latest
+WORKDIR /app
+COPY --from=builder /app/target/release/k8s_update_service . 
+COPY ./run.sh .
 
-COPY --from=builder /app/target/release/k8s_update_service /bin/k8s_update_service
 EXPOSE 3001
-CMD ["k8s_update_service"]
+
+CMD ["sh","run.sh"]
