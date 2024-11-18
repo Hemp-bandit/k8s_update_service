@@ -14,7 +14,7 @@ struct DeployInfo {
 }
 
 #[utoipa::path(
-    tag = "test",
+    tag = "kaibai_user_service",
     responses(
         (status = 200, description = "List current todo items", body=[ResponseBody<String>])
     )

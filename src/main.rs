@@ -13,6 +13,9 @@ use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServable};
 mod response;
 mod router;
+mod user;
+mod role;
+mod access;
 
 #[actix_web::main]
 async fn main() {
@@ -39,7 +42,7 @@ async fn main() {
         App::new()
             .into_utoipa_app()
             .openapi(ApiDoc::openapi())
-            .service(utoipa_actix_web::scope("/api/todo").configure(router::configure()))
+            .service(utoipa_actix_web::scope("/api").configure(router::configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
     })
@@ -52,7 +55,7 @@ async fn main() {
 
 fn gen_server_url() -> String {
     let host = "0.0.0.0";
-    let url = format!("{}:{}", host, 3001);
-    info!("server is on, addr http://{}", url);
+    let url = format!("{}:{}", host, 3000);
+    info!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
     url
 }
