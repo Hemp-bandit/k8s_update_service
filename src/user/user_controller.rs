@@ -41,7 +41,6 @@ pub async fn get_user_list(
     };
 
     // data_store.db
-    println!("req_data {:?}", req_data);
 
     res
 }

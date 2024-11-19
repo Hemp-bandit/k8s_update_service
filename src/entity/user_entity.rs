@@ -1,4 +1,4 @@
-use rbatis::{crud, impl_select_page, rbdc::DateTime};
+use rbatis::{crud, impl_select_page};
 use serde::{Deserialize, Serialize};
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -17,15 +17,15 @@ pub enum Status {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserEntity {
     pub id: Option<u16>,
-    pub create_time: DateTime,
-    pub update_time: DateTime,
+    pub create_time: String,
+    pub update_time: String,
     pub name: String,
     pub phone: String,
     pub picture: String,
     pub introduce: String,
-    pub user_type: UserType,
-    pub status: Status,
+    pub user_type: u16,
+    pub status: u16,
 }
 
 crud!(UserEntity {}, "user");
-impl_select_page!(UserEntity{select_page() => "`order by create_time desc`" } );
+impl_select_page!(UserEntity{select_page() => "`order by create_time desc`" },"user" );

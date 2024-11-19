@@ -1,10 +1,8 @@
+use crate::commom::DeployInfo;
 use crate::response::ResponseBody;
 use actix_web::{post, web, Responder};
 use log::info;
-use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
-use crate::commom::DeployInfo;
 
 #[utoipa::path(
     tag = "kaibai_user_service",
@@ -31,7 +29,6 @@ pub async fn update_deployment(config: web::Json<DeployInfo>) -> impl Responder 
     res.data = cmd;
     res
 }
-
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
