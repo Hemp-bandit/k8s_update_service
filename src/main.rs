@@ -1,7 +1,5 @@
-use std::rc::Rc;
-use std::sync::{Arc, Mutex};
-use actix_web::{App, HttpServer};
 use actix_web::web::Data;
+use actix_web::{App, HttpServer};
 use fast_log::{
     consts::LogSize,
     plugin::{
@@ -10,7 +8,7 @@ use fast_log::{
     },
     Config,
 };
-use log::{error, info};
+use log::info;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use utoipa::OpenApi;
@@ -19,24 +17,22 @@ use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
 
 use env::dotenv;
 mod access;
+mod commom;
 mod entity;
 mod response;
 mod role;
 mod router;
 mod user;
 
-
 struct DataStore {
-    db: Arc<Mutex<RBatis>>,
+    pub db: RBatis,
 }
 
 #[actix_web::main]
 async fn main() {
     dotenv().expect("Failed to load .env file");
 
-
     init_log();
-
 
     #[derive(OpenApi)]
     #[openapi(
@@ -44,28 +40,29 @@ async fn main() {
     )]
     struct ApiDoc;
 
-
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let db = init_db(&database_url).await;
-    let store = Data::new(DataStore { db: Arc::new(Mutex::new(db)) });
-
+    let store = Data::new(DataStore { db });
 
     let _ = HttpServer::new(move || {
         App::new()
             .into_utoipa_app()
             .openapi(ApiDoc::openapi())
-            .service(utoipa_actix_web::scope("/api")
-                .app_data(store.clone())
-                .configure(router::configure()))
+            .service(
+                utoipa_actix_web::scope("/api/user")
+                    .app_data(store.clone())
+                    .configure(user::configure()),
+            )
+            .service(utoipa_actix_web::scope("/api/").configure(router::configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
     })
-        .workers(2)
-        .bind(gen_server_url())
-        .expect("服务启动失败")
-        .run()
-        .await;
+    .workers(2)
+    .bind(gen_server_url())
+    .expect("服务启动失败")
+    .run()
+    .await;
 }
 
 fn gen_server_url() -> String {
@@ -91,7 +88,7 @@ fn init_log() {
 async fn init_db(db_url: &str) -> RBatis {
     let rb = RBatis::new();
     if let Err(e) = rb.link(MysqlDriver {}, db_url).await {
-        panic!("db err: {}",e.to_string());
+        panic!("db err: {}", e.to_string());
     }
     rb
 }

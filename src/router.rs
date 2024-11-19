@@ -4,19 +4,12 @@ use log::info;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
-
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
-struct DeployInfo {
-    deployment_name: String,
-    container_name: String,
-    new_image: String,
-    new_tag: String,
-}
+use crate::commom::DeployInfo;
 
 #[utoipa::path(
     tag = "kaibai_user_service",
     responses(
-        (status = 200, description = "List current todo items", body=[ResponseBody<String>])
+        (status = 200, description = "List current todo items", body=ResponseBody<String>)
     )
 )]
 #[post("/update_deployment")]
