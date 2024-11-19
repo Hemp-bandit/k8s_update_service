@@ -9,6 +9,16 @@ pub struct ResponseBody<T> {
     pub data: T,
 }
 
+impl ResponseBody<String> {
+    pub fn default_as_string() -> ResponseBody <String> {
+        ResponseBody {
+            rsp_code: 0,
+            rsp_msg: "".to_string(),
+            data: "".to_string(),
+        }
+    }
+}
+
 impl<T: Serialize> Responder for ResponseBody<T> {
     type Body = BoxBody;
 
