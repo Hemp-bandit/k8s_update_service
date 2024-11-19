@@ -10,31 +10,21 @@ use fast_log::{
 use log::info;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
-use utoipa_scalar::{Scalar, Servable as ScalarServable};
+use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
+
+mod access;
+mod entity;
 mod response;
+mod role;
 mod router;
 mod user;
-mod role;
-mod access;
 
 #[actix_web::main]
 async fn main() {
-    let log_conf = Config::new()
-        .console()
-        .chan_len(Some(100000))
-        .split::<RawFile, _, _, _>(
-            "logs/",
-            KeepType::All,
-            packer::LogPacker {},
-            Rolling::new(RollingType::BySize(LogSize::MB(1))),
-        );
-    fast_log::init(log_conf).unwrap();
-
+    config_log();
     #[derive(OpenApi)]
     #[openapi(
-        tags(
-            (name = "kaibai_user_service", description = " kaibai 用户服务")
-        )
+        tags( (name = "kaibai_user_service", description = " kaibai 用户服务") )
     )]
     struct ApiDoc;
 
@@ -58,4 +48,17 @@ fn gen_server_url() -> String {
     let url = format!("{}:{}", host, 3000);
     info!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
     url
+}
+
+fn config_log() {
+    let log_conf = Config::new()
+        .console()
+        .chan_len(Some(100000))
+        .split::<RawFile, _, _, _>(
+            "logs/",
+            KeepType::All,
+            packer::LogPacker {},
+            Rolling::new(RollingType::BySize(LogSize::MB(1))),
+        );
+    fast_log::init(log_conf).unwrap();
 }
