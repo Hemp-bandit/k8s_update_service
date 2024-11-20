@@ -29,18 +29,15 @@ pub fn get_current_time_fmt() -> String {
 
 /// 检测手机号是否合法
 pub fn check_phone(phone: &str) -> bool {
-    let mut res = true;
     let max_len = 11;
     if phone.len() != max_len {
-        res = false;
         log::error!("手机号长度不对");
-        return res;
+        return false;
     }
     let r = regex!(r"^1[3-9]\d{9}$");
 
-    res = r.is_match(phone);
+    r.is_match(phone)
 
-    res
 }
 
 #[cfg(test)]

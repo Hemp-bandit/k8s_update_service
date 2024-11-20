@@ -9,6 +9,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(user_route::create_user);
         config.service(user_route::get_user_list);
         config.service(user_route::get_user_by_id);
+        config.service(user_route::update_user_by_id);
     }
 }
 
@@ -17,6 +18,15 @@ pub struct UserCreateData {
     pub name: String,
     pub password: String,
     pub phone: String,
+    pub picture: Option<String>,
+    pub introduce: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserUpdateData {
+    pub name: Option<String>,
+    pub password: Option<String>,
+    pub phone: Option<String>,
     pub picture: Option<String>,
     pub introduce: Option<String>,
 }

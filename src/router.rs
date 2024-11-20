@@ -1,7 +1,6 @@
 use crate::common::DeployInfo;
 use crate::response::ResponseBody;
 use actix_web::{post, web, Responder};
-use log::info;
 use utoipa_actix_web::service_config::ServiceConfig;
 
 #[utoipa::path(

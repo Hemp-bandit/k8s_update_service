@@ -3,11 +3,7 @@ use actix_web::{App, HttpServer};
 use fast_log::plugin::file_split::DateType;
 use fast_log::plugin::packer::LogPacker;
 use fast_log::{
-    consts::LogSize,
-    plugin::{
-        file_split::{KeepType, RawFile, Rolling, RollingType},
-        packer,
-    },
+    plugin::file_split::{KeepType, Rolling, RollingType},
     Config,
 };
 use log::info;
