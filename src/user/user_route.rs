@@ -1,6 +1,6 @@
 use super::UserCreateData;
 use crate::{
-    common::{get_current_time_fmt, CommListReq},
+    common::{check_phone, get_current_time_fmt, CommListReq},
     entity::user_entity::{Status, UserEntity, UserType},
     response::ResponseBody,
     DataStore,
@@ -18,9 +18,19 @@ pub async fn create_user(
     data_store: web::Data<DataStore>,
 ) -> impl Responder {
     let mut rsp: ResponseBody<Option<String>> = ResponseBody::default(None);
-    let db_res: Option<UserEntity> = UserEntity::select_by_name_phone(&data_store.db, &req_data.name, &req_data.phone)
-        .await
-        .expect("获取用户失败");
+    // check phone
+
+    let phone_check_res = check_phone(&req_data.phone);
+    if !phone_check_res {
+        rsp.rsp_code = 500;
+        rsp.rsp_msg = "手机号不正确".to_string();
+        return rsp;
+    }
+
+    let db_res: Option<UserEntity> =
+        UserEntity::select_by_name_phone(&data_store.db, &req_data.name, &req_data.phone)
+            .await
+            .expect("获取用户失败");
 
     if db_res.is_some() {
         rsp.rsp_msg = "用户已存在".to_string();

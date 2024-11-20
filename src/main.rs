@@ -1,5 +1,7 @@
 use actix_web::web::Data;
 use actix_web::{App, HttpServer};
+use fast_log::plugin::file_split::DateType;
+use fast_log::plugin::packer::LogPacker;
 use fast_log::{
     consts::LogSize,
     plugin::{
@@ -73,16 +75,14 @@ fn gen_server_url() -> String {
 }
 
 fn init_log() {
-    let log_conf = Config::new()
-        .console()
-        .chan_len(Some(100000))
-        .split::<RawFile, _, _, _>(
-            "logs/",
-            KeepType::All,
-            packer::LogPacker {},
-            Rolling::new(RollingType::BySize(LogSize::MB(1))),
-        );
-    fast_log::init(log_conf).unwrap();
+    fast_log::init(Config::new().chan_len(Some(100000)).console().file_split(
+        "logs/",
+        Rolling::new(RollingType::ByDate(DateType::Day)),
+        KeepType::KeepNum(2),
+        LogPacker {},
+    ))
+    .unwrap();
+    log::logger().flush();
 }
 
 async fn init_db(db_url: &str) -> RBatis {
