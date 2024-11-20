@@ -17,7 +17,7 @@ use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
 
 use env::dotenv;
 mod access;
-mod commom;
+mod common;
 mod entity;
 mod response;
 mod role;

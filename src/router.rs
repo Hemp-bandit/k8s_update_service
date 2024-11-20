@@ -1,4 +1,4 @@
-use crate::commom::DeployInfo;
+use crate::common::DeployInfo;
 use crate::response::ResponseBody;
 use actix_web::{post, web, Responder};
 use log::info;
@@ -12,21 +12,16 @@ use utoipa_actix_web::service_config::ServiceConfig;
 )]
 #[post("/update_deployment")]
 pub async fn update_deployment(config: web::Json<DeployInfo>) -> impl Responder {
-    let mut res = ResponseBody {
-        rsp_code: 0,
-        rsp_msg: "".to_string(),
-        data: "".to_string(),
-    };
+    let mut res: ResponseBody<Option<String>> = ResponseBody::default(None);
 
     println!("req data {:#?}", config);
     //  "kubectl set image deployment/<deployment_name> <container_name>=<new_image>:<new_tag>"
-    let cmd = format!(
+    let cmd: String = format!(
         "kubectl set image deployment/{} {}={}:{}",
         config.deployment_name, config.container_name, config.new_image, config.new_tag
     );
 
-    info!("k8s cmd : {}", cmd);
-    res.data = cmd;
+    res.data = Some(cmd);
     res
 }
 

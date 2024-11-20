@@ -4,17 +4,17 @@ use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct ResponseBody<T> {
-    pub rsp_code: i8,
+    pub rsp_code: i16,
     pub rsp_msg: String,
     pub data: T,
 }
 
-impl ResponseBody<String> {
-    pub fn default_as_string() -> ResponseBody <String> {
+impl<T> ResponseBody<T> {
+    pub fn default(data: Option<T>) -> ResponseBody<Option<T>> {
         ResponseBody {
             rsp_code: 0,
             rsp_msg: "".to_string(),
-            data: "".to_string(),
+            data,
         }
     }
 }
