@@ -12,3 +12,6 @@ pub struct RoleEntity {
 }
 
 crud!(RoleEntity {}, "role");
+impl_select_page!(RoleEntity{select_page() => "`where status=1 order by create_time desc`" }, "user" );
+impl_select!( RoleEntity{ select_by_id(id:i32) -> Option => "`where id = #{id} and status=1`" }, "role" );
+impl_select!( RoleEntity{ select_by_name(name:&str) -> Option => "`where name = #{name} and status=1`" }, "role" );
