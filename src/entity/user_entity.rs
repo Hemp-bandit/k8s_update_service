@@ -1,19 +1,6 @@
 use rbatis::{crud, impl_select, impl_select_page};
 use serde::{Deserialize, Serialize};
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Eq, PartialEq, Debug)]
-#[serde(rename = "Enum")]
-pub enum UserType {
-    BIZ = 0,
-    CLIENT = 1,
-}
-#[derive(serde::Serialize, serde::Deserialize, Clone, Eq, PartialEq, Debug)]
-#[serde(rename = "Enum")]
-pub enum Status {
-    ACTIVE = 1,
-    DEACTIVE = 0,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserEntity {
     pub id: Option<u16>,

@@ -3,6 +3,19 @@ use lazy_regex::regex;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename = "Enum")]
+pub enum UserType {
+    BIZ = 0,
+    CLIENT = 1,
+}
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename = "Enum")]
+pub enum Status {
+    ACTIVE = 1,
+    DEACTIVE = 0,
+}
+
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct DeployInfo {
     pub deployment_name: String,
@@ -37,7 +50,6 @@ pub fn check_phone(phone: &str) -> bool {
     let r = regex!(r"^1[3-9]\d{9}$");
 
     r.is_match(phone)
-
 }
 
 #[cfg(test)]

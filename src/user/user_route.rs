@@ -1,7 +1,7 @@
 use super::{UserCreateData, UserUpdateData};
 use crate::{
-    common::{check_phone, get_current_time_fmt, CommListReq},
-    entity::user_entity::{Status, UserEntity, UserType},
+    common::{check_phone, get_current_time_fmt, CommListReq, Status, UserType},
+    entity::user_entity::UserEntity,
     response::ResponseBody,
     DataStore,
 };
@@ -9,7 +9,7 @@ use actix_web::{get, post, web, Responder};
 use rbatis::{Page, PageRequest};
 
 #[utoipa::path(
-    tag = "kaibai_user_service",
+    tag = "user",
     responses( (status = 200) )
 )]
 #[post("/create_user")]
@@ -69,7 +69,7 @@ pub async fn create_user(
 }
 
 #[utoipa::path(
-    tag = "kaibai_user_service",
+    tag = "user",
     responses( (status = 200) )
 )]
 #[post("/get_user_list")]
@@ -94,7 +94,7 @@ pub async fn get_user_list(
 }
 
 #[utoipa::path(
-    tag = "kaibai_user_service",
+    tag = "user",
     params(("id", description = "user id") ),
     responses( (status = 200) )
 )]
@@ -116,7 +116,7 @@ pub async fn get_user_by_id(
 }
 
 #[utoipa::path(
-    tag = "kaibai_user_service",
+    tag = "user",
     params(("id", description = "user id") ),
     responses( (status = 200) )
 )]

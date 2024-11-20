@@ -19,7 +19,6 @@ mod common;
 mod entity;
 mod response;
 mod role;
-mod router;
 mod user;
 
 struct DataStore {
@@ -34,7 +33,10 @@ async fn main() {
 
     #[derive(OpenApi)]
     #[openapi(
-        tags( (name = "kaibai_user_service", description = " kaibai 用户服务"))
+        tags( 
+            (name = "user", description = "user 接口"),
+            (name = "role", description = "role 接口")
+        )
     )]
     struct ApiDoc;
 
@@ -47,12 +49,14 @@ async fn main() {
         App::new()
             .into_utoipa_app()
             .openapi(ApiDoc::openapi())
+            .app_data(store.clone())
             .service(
-                utoipa_actix_web::scope("/api/user")
-                    .app_data(store.clone())
-                    .configure(user::configure()),
+                utoipa_actix_web::scope("/api/user") .configure(user::configure()),
             )
-            .service(utoipa_actix_web::scope("/api/").configure(router::configure()))
+            .service(
+                utoipa_actix_web::scope("/api/role").configure(role::configure()),
+            )
+            // .service(utoipa_actix_web::scope("/api/").configure(router::configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
     })
