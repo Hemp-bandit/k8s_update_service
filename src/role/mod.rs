@@ -8,6 +8,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
         config.service(role_route::create_role);
         config.service(role_route::get_role_list);
+        config.service(role_route::update_role_by_id);
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -27,5 +28,5 @@ pub struct RoleListQuery {
 pub struct RoleUpdateData {
     pub id: i32,
     pub name: Option<String>,
-    pub status: Option<i16>,
+    pub status: Option<i8>,
 }

@@ -20,6 +20,16 @@ pub enum Status {
     DEACTIVE = 0,
 }
 
+impl Status {
+    pub fn from(val: i8) -> Status {
+        match val {
+            0 => Status::DEACTIVE,
+            1 => Status::ACTIVE,
+            _ => Status::DEACTIVE,
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct DeployInfo {
     pub deployment_name: String,

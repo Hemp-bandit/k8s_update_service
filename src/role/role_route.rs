@@ -1,8 +1,4 @@
-use actix_web::{
-    post,
-    web::{self, Json},
-    Responder,
-};
+use actix_web::{post, web, Responder};
 use rbatis::{Page, PageRequest};
 
 use super::{CreateRoleData, RoleListQuery, RoleUpdateData};
@@ -89,8 +85,12 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
         }
         Some(mut role) => {
             role.name = req_data.name.clone().unwrap_or(role.name);
-            role.status = req_data.status.clone().unwrap_or(role.status);
 
+            if let Some(status) = req_data.status.clone() {
+                // 任何非法值会将状态置为无效
+                let st = Status::from(status);
+                role.status = st as i16;
+            }
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
             tx.commit().await.expect("msg");
