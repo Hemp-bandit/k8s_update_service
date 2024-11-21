@@ -1,7 +1,4 @@
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
 use actix_web::middleware::{Compress, Logger};
-use actix_web::web::Data;
 use actix_web::{App, HttpServer};
 use log::info;
 use rbatis::RBatis;
@@ -12,6 +9,7 @@ use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
 use env_logger;
 use env::dotenv;
 
+
 mod access;
 mod common;
 mod entity;
@@ -19,9 +17,13 @@ mod response;
 mod role;
 mod user;
 
-struct DataStore {
-    pub db: Arc<RBatis>,
+
+
+lazy_static::lazy_static! {
+    static ref RB:RBatis=RBatis::new();
 }
+
+
 #[actix_web::main]
 async fn main() {
     dotenv().expect("Failed to load .env file");
@@ -39,19 +41,16 @@ async fn main() {
 
     env_logger::init();
 
-    let db: RBatis = RBatis::new();
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    if let Err(e) = db.link(MysqlDriver {}, &database_url).await {
+    if let Err(e) = RB.link(MysqlDriver {}, &database_url).await {
           panic!("db err: {}", e.to_string());
     }
-
-    let store = Data::new(db);
+    // RB.get_pool().unwrap().set_max_open_conns(10).await;
 
     let _ = HttpServer::new(move || {
         App::new()
             .into_utoipa_app()
             .openapi(ApiDoc::openapi())
-            .app_data(store.clone())
             .service(
                 utoipa_actix_web::scope("/api/user") .configure(user::configure()),
             )
@@ -65,8 +64,6 @@ async fn main() {
             .wrap(Logger::new("%a %{User-Agent}i"))       
     })
     .keep_alive(None)
-    .workers(14)
-    .client_request_timeout(Duration::from_millis(500))
     .shutdown_timeout(5)
     .bind(gen_server_url())
     .expect("服务启动失败")
@@ -80,17 +77,3 @@ fn gen_server_url() -> String {
     info!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
     url
 }
-
-// fn init_log() {
-    // fast_log::init(Config::new().chan_len(Some(100000)).console().file_split(
-    //     "logs/",
-    //     Rolling::new(RollingType::ByDate(DateType::Day)),
-    //     KeepType::KeepNum(2),
-    //     LogPacker {},
-    // ))
-    // .unwrap();
-    // log::logger().flush();
-
-
-    // fast_log::init(Config::new().console().chan_len(Some(100000))).unwrap();
-// }

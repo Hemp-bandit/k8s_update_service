@@ -1,9 +1,11 @@
 use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
-use rbatis::{Error, RBatis};
+use rbatis::Error;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+use crate::RB;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename = "Enum")]
@@ -54,9 +56,8 @@ pub fn check_phone(phone: &str) -> bool {
     r.is_match(phone)
 }
 
-
-pub async fn get_transaction_tx(db: &RBatis) -> Result<RBatisTxExecutorGuard, Error> {
-    let tx = db.acquire_begin().await.unwrap();
+pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
+    let tx = RB.acquire_begin().await.unwrap();
     let tx: RBatisTxExecutorGuard = tx.defer_async(|mut tx| async move {
         if tx.done {
             log::info!("transaction [{}] complete.", tx.tx_id);

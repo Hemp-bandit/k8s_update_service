@@ -6,10 +6,10 @@ mod user_route;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
-        // config.service(user_route::create_user);
-        // config.service(user_route::get_user_list);
-        // config.service(user_route::get_user_by_id);
-        // config.service(user_route::update_user_by_id);
+        config.service(user_route::create_user);
+        config.service(user_route::get_user_list);
+        config.service(user_route::get_user_by_id);
+        config.service(user_route::update_user_by_id);
     }
 }
 
