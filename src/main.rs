@@ -1,19 +1,17 @@
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use actix_web::middleware::{Compress, Logger};
 use actix_web::web::Data;
 use actix_web::{App, HttpServer};
-use fast_log::plugin::file_split::DateType;
-use fast_log::plugin::packer::LogPacker;
-use fast_log::{
-    plugin::file_split::{KeepType, Rolling, RollingType},
-    Config,
-};
 use log::info;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
-
+use env_logger;
 use env::dotenv;
+
 mod access;
 mod common;
 mod entity;
@@ -22,14 +20,12 @@ mod role;
 mod user;
 
 struct DataStore {
-    pub db: RBatis,
+    pub db: Arc<RBatis>,
 }
-
 #[actix_web::main]
 async fn main() {
     dotenv().expect("Failed to load .env file");
 
-    init_log();
 
     #[derive(OpenApi)]
     #[openapi(
@@ -40,10 +36,16 @@ async fn main() {
     )]
     struct ApiDoc;
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    let db = init_db(&database_url).await;
-    let store = Data::new(DataStore { db });
+    env_logger::init();
+
+    let db: RBatis = RBatis::new();
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    if let Err(e) = db.link(MysqlDriver {}, &database_url).await {
+          panic!("db err: {}", e.to_string());
+    }
+
+    let store = Data::new(db);
 
     let _ = HttpServer::new(move || {
         App::new()
@@ -56,11 +58,16 @@ async fn main() {
             .service(
                 utoipa_actix_web::scope("/api/role").configure(role::configure()),
             )
-            // .service(utoipa_actix_web::scope("/api/").configure(router::configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
+            .wrap(Compress::default())
+            .wrap(Logger::default())
+            .wrap(Logger::new("%a %{User-Agent}i"))       
     })
-    .workers(2)
+    .keep_alive(None)
+    .workers(14)
+    .client_request_timeout(Duration::from_millis(500))
+    .shutdown_timeout(5)
     .bind(gen_server_url())
     .expect("服务启动失败")
     .run()
@@ -74,21 +81,16 @@ fn gen_server_url() -> String {
     url
 }
 
-fn init_log() {
-    fast_log::init(Config::new().chan_len(Some(100000)).console().file_split(
-        "logs/",
-        Rolling::new(RollingType::ByDate(DateType::Day)),
-        KeepType::KeepNum(2),
-        LogPacker {},
-    ))
-    .unwrap();
-    log::logger().flush();
-}
+// fn init_log() {
+    // fast_log::init(Config::new().chan_len(Some(100000)).console().file_split(
+    //     "logs/",
+    //     Rolling::new(RollingType::ByDate(DateType::Day)),
+    //     KeepType::KeepNum(2),
+    //     LogPacker {},
+    // ))
+    // .unwrap();
+    // log::logger().flush();
 
-async fn init_db(db_url: &str) -> RBatis {
-    let rb = RBatis::new();
-    if let Err(e) = rb.link(MysqlDriver {}, db_url).await {
-        panic!("db err: {}", e.to_string());
-    }
-    rb
-}
+
+    // fast_log::init(Config::new().console().chan_len(Some(100000))).unwrap();
+// }

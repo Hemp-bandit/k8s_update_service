@@ -6,7 +6,7 @@ mod role_route;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
-        config.service(role_route::create_role);
+        // config.service(role_route::create_role);
         config.service(role_route::get_role_list);
     }
 }
