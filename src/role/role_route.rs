@@ -6,7 +6,7 @@ use crate::{
     common::{get_current_time_fmt, get_transaction_tx, Status},
     entity::role_entity::RoleEntity,
     response::ResponseBody,
-    DataStore,
+    RB,
 };
 
 #[utoipa::path(
@@ -14,10 +14,7 @@ use crate::{
   responses( (status = 200) )
 )]
 #[post("/create_role")]
-async fn create_role(
-    req_data: web::Json<CreateRoleData>,
-    data_store: web::Data<DataStore>,
-) -> impl Responder {
+async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
     let mut res: ResponseBody<Option<String>> = ResponseBody::default(None);
 
     let new_role = RoleEntity {
@@ -29,20 +26,20 @@ async fn create_role(
         status: Status::ACTIVE as i16,
     };
 
-    let mut tx = get_transaction_tx(&data_store.db).await.unwrap();
+    let mut tx = get_transaction_tx().await.unwrap();
     let insert_res = RoleEntity::insert(&tx, &new_role).await;
     tx.commit().await.expect("commit error");
 
     if let Err(rbs::Error::E(error)) = insert_res {
-        res.rsp_code = 500;
-        res.rsp_msg = "创建角色失败".to_string();
+        res.code = 500;
+        res.msg = "创建角色失败".to_string();
         log::error!(" 创建角色失败 {}", error);
         tx.rollback().await.expect("rollback error");
         return res;
     }
 
-    res.rsp_code = 0;
-    res.rsp_msg = "角色创建成功".to_string();
+    res.code = 0;
+    res.msg = "角色创建成功".to_string();
     res
 }
 
@@ -51,25 +48,22 @@ async fn create_role(
     responses( (status = 200) )
   )]
 #[post("/get_role_list")]
-async fn get_role_list(
-    req_data: web::Json<RoleListQuery>,
-    data_store: web::Data<DataStore>,
-) -> impl Responder {
+async fn get_role_list(req_data: web::Json<RoleListQuery>) -> impl Responder {
+    let ex_db = RB.acquire().await.expect("msg");
     let db_res: Page<RoleEntity> = match &req_data.name {
         Some(name) => RoleEntity::select_page_by_name(
-            &data_store.db,
+            &ex_db,
             &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
             &name,
         )
         .await
         .expect("msg"),
         None => RoleEntity::select_page(
-            &data_store.db,
+            &ex_db,
             &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
         )
         .await
         .expect("msg"),
     };
-
     ResponseBody::default(Some(db_res))
 }

@@ -2,8 +2,7 @@ use super::{UserCreateData, UserUpdateData};
 use crate::{
     common::{check_phone, get_current_time_fmt, get_transaction_tx, CommListReq, Status, UserType},
     entity::user_entity::UserEntity,
-    response::ResponseBody,
-    DataStore,
+    response::ResponseBody, RB,
 };
 use actix_web::{get, post, web, Responder};
 use rbatis::{Page, PageRequest};
@@ -15,15 +14,14 @@ use rbatis::{Page, PageRequest};
 #[post("/create_user")]
 pub async fn create_user(
     req_data: web::Json<UserCreateData>,
-    data_store: web::Data<DataStore>,
 ) -> impl Responder {
     let mut rsp: ResponseBody<Option<String>> = ResponseBody::default(None);
     // check phone
 
     let phone_check_res = check_phone(&req_data.phone);
     if !phone_check_res {
-        rsp.rsp_code = 500;
-        rsp.rsp_msg = "手机号不正确".to_string();
+        rsp.code = 500;
+        rsp.msg = "手机号不正确".to_string();
         return rsp;
     }
 
@@ -40,19 +38,19 @@ pub async fn create_user(
         status: Status::ACTIVE as i16,
     };
 
-    let mut tx = get_transaction_tx(&data_store.db).await.unwrap();
+    let mut tx = get_transaction_tx().await.unwrap();
     let insert_res = UserEntity::insert(&tx, &insert_user).await;
     tx.commit().await.expect("commit transaction error ");
     if let Err(rbs::Error::E(error)) = insert_res {
-        rsp.rsp_code = 500;
-        rsp.rsp_msg = "创建用户失败".to_string();
+        rsp.code = 500;
+        rsp.msg = "创建用户失败".to_string();
         log::error!(" 创建用户失败 {}", error);
         tx.rollback().await.expect("rollback error");
         return rsp;
     }
 
-    rsp.rsp_code = 0;
-    rsp.rsp_msg = "创建用户成功".to_string();
+    rsp.code = 0;
+    rsp.msg = "创建用户成功".to_string();
 
     rsp
 }
@@ -63,11 +61,11 @@ pub async fn create_user(
 )]
 #[post("/get_user_list")]
 pub async fn get_user_list(
-    data_store: web::Data<DataStore>,
     req_data: web::Json<CommListReq>,
 ) -> impl Responder {
+  let ex_db = RB.acquire().await.expect("msg");
     let db_res: Page<UserEntity> = UserEntity::select_page(
-        &data_store.db,
+        &ex_db,
         &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
     )
     .await
@@ -84,12 +82,11 @@ pub async fn get_user_list(
 #[get("/{id}")]
 pub async fn get_user_by_id(
     id: web::Path<i32>,
-    data_store: web::Data<DataStore>,
 ) -> impl Responder {
     let mut res: ResponseBody<Option<UserEntity>> = ResponseBody::default(None);
-
+    let ex_db = RB.acquire().await.expect("msg");
     let user_id = id.into_inner();
-    let db_res: Option<UserEntity> = UserEntity::select_by_id(&data_store.db, user_id)
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
         .await
         .expect("查询用户失败");
 
@@ -106,7 +103,6 @@ pub async fn get_user_by_id(
 #[post("/{id}")]
 pub async fn update_user_by_id(
     id: web::Path<i32>,
-    data_store: web::Data<DataStore>,
     req_data: web::Json<UserUpdateData>,
 ) -> impl Responder {
     let mut res: ResponseBody<Option<String>> = ResponseBody::default(None);
@@ -114,21 +110,23 @@ pub async fn update_user_by_id(
     if let Some(new_phone) = &req_data.phone {
         let phone_check_res = check_phone(new_phone);
         if !phone_check_res {
-            res.rsp_code = 500;
-            res.rsp_msg = "手机号不正确".to_string();
+            res.code = 500;
+            res.msg = "手机号不正确".to_string();
             return res;
         }
     }
 
+    let ex_db = RB.acquire().await.expect("msg");
+
     let user_id = id.into_inner();
-    let db_res: Option<UserEntity> = UserEntity::select_by_id(&data_store.db, user_id)
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
         .await
         .expect("查询用户失败");
 
     match db_res {
         None => {
-            res.rsp_code = 500;
-            res.rsp_msg = "用户不存在".to_string();
+            res.code = 500;
+            res.msg = "用户不存在".to_string();
             return res;
         }
         Some(mut db_user) => {
@@ -139,19 +137,19 @@ pub async fn update_user_by_id(
             db_user.picture = req_data.picture.clone();
             db_user.phone = req_data.phone.clone().unwrap_or(db_user.phone);
 
-            let mut tx = get_transaction_tx(&data_store.db).await.unwrap();
+            let mut tx = get_transaction_tx().await.unwrap();
             let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
                 log::error!("更新用户失败, {}", error);
-                res.rsp_code = 500;
-                res.rsp_msg = "更新用户失败".to_string();
+                res.code = 500;
+                res.msg = "更新用户失败".to_string();
                 tx.rollback().await.expect("msg");
                 return res;
             }
         }
     }
-    res.rsp_code = 0;
-    res.rsp_msg = "更新用户成功".to_string();
+    res.code = 0;
+    res.msg = "更新用户成功".to_string();
     res
 }
