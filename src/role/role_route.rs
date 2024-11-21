@@ -1,7 +1,11 @@
-use actix_web::{post, web, Responder};
+use actix_web::{
+    post,
+    web::{self, Json},
+    Responder,
+};
 use rbatis::{Page, PageRequest};
 
-use super::{CreateRoleData, RoleListQuery};
+use super::{CreateRoleData, RoleListQuery, RoleUpdateData};
 use crate::{
     common::{get_current_time_fmt, get_transaction_tx, Status},
     entity::role_entity::RoleEntity,
@@ -66,4 +70,39 @@ async fn get_role_list(req_data: web::Json<RoleListQuery>) -> impl Responder {
         .expect("msg"),
     };
     ResponseBody::default(Some(db_res))
+}
+
+#[utoipa::path(
+    tag = "role",
+    responses( (status = 200) )
+  )]
+#[post("/update_role_by_id")]
+pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Responder {
+    let ex_db = RB.acquire().await.expect("get db ex error");
+    let db_role = RoleEntity::select_by_id(&ex_db, req_data.id.clone())
+        .await
+        .expect("角色不存在");
+
+    match db_role {
+        None => {
+            return ResponseBody::error("角色不存在");
+        }
+        Some(mut role) => {
+            role.name = req_data.name.clone().unwrap_or(role.name);
+            role.status = req_data.status.clone().unwrap_or(role.status);
+
+            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
+            tx.commit().await.expect("msg");
+
+            if let Err(rbs::Error::E(error)) = update_res {
+                log::error!("更新用户失败, {}", error);
+                let res = ResponseBody::error("更新角色失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
+    }
+
+    ResponseBody::default(Some("角色更新成功".to_string()))
 }

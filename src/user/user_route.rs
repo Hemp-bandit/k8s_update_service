@@ -1,8 +1,11 @@
 use super::{UserCreateData, UserUpdateData};
 use crate::{
-    common::{check_phone, get_current_time_fmt, get_transaction_tx, CommListReq, Status, UserType},
+    common::{
+        check_phone, get_current_time_fmt, get_transaction_tx, CommListReq, Status, UserType,
+    },
     entity::user_entity::UserEntity,
-    response::ResponseBody, RB,
+    response::ResponseBody,
+    RB,
 };
 use actix_web::{get, post, web, Responder};
 use rbatis::{Page, PageRequest};
@@ -12,16 +15,11 @@ use rbatis::{Page, PageRequest};
     responses( (status = 200) )
 )]
 #[post("/create_user")]
-pub async fn create_user(
-    req_data: web::Json<UserCreateData>,
-) -> impl Responder {
-    let mut rsp: ResponseBody<Option<String>> = ResponseBody::default(None);
-    // check phone
+pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder {
 
     let phone_check_res = check_phone(&req_data.phone);
     if !phone_check_res {
-        rsp.code = 500;
-        rsp.msg = "手机号不正确".to_string();
+        let rsp: ResponseBody<Option<String>> = ResponseBody::error("手机号不正确");
         return rsp;
     }
 
@@ -42,17 +40,13 @@ pub async fn create_user(
     let insert_res = UserEntity::insert(&tx, &insert_user).await;
     tx.commit().await.expect("commit transaction error ");
     if let Err(rbs::Error::E(error)) = insert_res {
-        rsp.code = 500;
-        rsp.msg = "创建用户失败".to_string();
+        let rsp = ResponseBody::error("创建用户失败");
         log::error!(" 创建用户失败 {}", error);
         tx.rollback().await.expect("rollback error");
         return rsp;
     }
 
-    rsp.code = 0;
-    rsp.msg = "创建用户成功".to_string();
-
-    rsp
+    ResponseBody::success("创建用户成功")
 }
 
 #[utoipa::path(
@@ -60,10 +54,8 @@ pub async fn create_user(
     responses( (status = 200) )
 )]
 #[post("/get_user_list")]
-pub async fn get_user_list(
-    req_data: web::Json<CommListReq>,
-) -> impl Responder {
-  let ex_db = RB.acquire().await.expect("msg");
+pub async fn get_user_list(req_data: web::Json<CommListReq>) -> impl Responder {
+    let ex_db = RB.acquire().await.expect("msg");
     let db_res: Page<UserEntity> = UserEntity::select_page(
         &ex_db,
         &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
@@ -80,19 +72,14 @@ pub async fn get_user_list(
     responses( (status = 200) )
 )]
 #[get("/{id}")]
-pub async fn get_user_by_id(
-    id: web::Path<i32>,
-) -> impl Responder {
-    let mut res: ResponseBody<Option<UserEntity>> = ResponseBody::default(None);
+pub async fn get_user_by_id(id: web::Path<i32>) -> impl Responder {
     let ex_db = RB.acquire().await.expect("msg");
     let user_id = id.into_inner();
     let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
         .await
         .expect("查询用户失败");
 
-    res.data = db_res;
-
-    res
+    ResponseBody::default(Some(db_res))
 }
 
 #[utoipa::path(
@@ -105,13 +92,10 @@ pub async fn update_user_by_id(
     id: web::Path<i32>,
     req_data: web::Json<UserUpdateData>,
 ) -> impl Responder {
-    let mut res: ResponseBody<Option<String>> = ResponseBody::default(None);
-
     if let Some(new_phone) = &req_data.phone {
         let phone_check_res = check_phone(new_phone);
         if !phone_check_res {
-            res.code = 500;
-            res.msg = "手机号不正确".to_string();
+            let res: ResponseBody<Option<String>> = ResponseBody::error("手机号不正确");
             return res;
         }
     }
@@ -125,9 +109,7 @@ pub async fn update_user_by_id(
 
     match db_res {
         None => {
-            res.code = 500;
-            res.msg = "用户不存在".to_string();
-            return res;
+            return ResponseBody::error("用户不存在");
         }
         Some(mut db_user) => {
             db_user.update_time = get_current_time_fmt();
@@ -142,14 +124,11 @@ pub async fn update_user_by_id(
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
                 log::error!("更新用户失败, {}", error);
-                res.code = 500;
-                res.msg = "更新用户失败".to_string();
+                let res = ResponseBody::error("更新用户失败");
                 tx.rollback().await.expect("msg");
                 return res;
             }
         }
     }
-    res.code = 0;
-    res.msg = "更新用户成功".to_string();
-    res
+    ResponseBody::success("更新用户成功")
 }

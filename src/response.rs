@@ -17,6 +17,22 @@ impl<T> ResponseBody<T> {
             data,
         }
     }
+
+    pub fn error(msg: &str) -> ResponseBody<Option<T>> {
+        ResponseBody {
+            code: 500,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
+
+    pub fn success(msg: &str) -> ResponseBody<Option<T>> {
+        ResponseBody {
+            code: 0,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
 }
 
 impl<T: Serialize> Responder for ResponseBody<T> {
