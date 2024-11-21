@@ -9,9 +9,9 @@ RUN cargo build --release
 FROM debian:stable-slim
 
 WORKDIR /app
-COPY --from=builder /app/target/release/k8s_update_service . 
+COPY --from=builder /app/target/release/kaibai_user_service . 
 COPY ./run.sh .
-
-EXPOSE 3001
+COPY .env .
+EXPOSE 3000
 
 CMD ["sh","run.sh"]

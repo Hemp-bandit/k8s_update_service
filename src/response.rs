@@ -1,21 +1,28 @@
-use actix_web::{body::BoxBody, http::header::ContentType, HttpResponse, Responder};
+use actix_web::{body::BoxBody, HttpResponse, Responder};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 #[derive(Serialize, Deserialize, ToSchema)]
 pub struct ResponseBody<T> {
-    pub rsp_code: i8,
-    pub rsp_msg: String,
+    pub code: i16,
+    pub msg: String,
     pub data: T,
+}
+
+impl<T> ResponseBody<T> {
+    pub fn default(data: Option<T>) -> ResponseBody<Option<T>> {
+        ResponseBody {
+            code: 0,
+            msg: "".to_string(),
+            data,
+        }
+    }
 }
 
 impl<T: Serialize> Responder for ResponseBody<T> {
     type Body = BoxBody;
 
     fn respond_to(self, _req: &actix_web::HttpRequest) -> actix_web::HttpResponse<Self::Body> {
-        let body = serde_json::to_string(&self).unwrap();
-        HttpResponse::Ok()
-            .content_type(ContentType::json())
-            .body(body)
+        HttpResponse::Ok().force_close().json(&self)
     }
 }
