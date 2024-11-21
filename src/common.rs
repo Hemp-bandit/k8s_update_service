@@ -1,5 +1,7 @@
 use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
+use rbatis::executor::RBatisTxExecutorGuard;
+use rbatis::{Error, RBatis};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -26,7 +28,7 @@ pub struct DeployInfo {
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct CommListReq {
-    pub offset: u16,
+    pub page_no: u16,
     pub take: u16,
 }
 
@@ -50,6 +52,25 @@ pub fn check_phone(phone: &str) -> bool {
     let r = regex!(r"^1[3-9]\d{9}$");
 
     r.is_match(phone)
+}
+
+
+pub async fn get_transaction_tx(db: &RBatis) -> Result<RBatisTxExecutorGuard, Error> {
+    let tx = db.acquire_begin().await.unwrap();
+    let tx: RBatisTxExecutorGuard = tx.defer_async(|mut tx| async move {
+        if tx.done {
+            log::info!("transaction [{}] complete.", tx.tx_id);
+        } else {
+            let r = tx.rollback().await;
+            if let Err(e) = r {
+                log::error!("transaction [{}] rollback fail={}", tx.tx_id, e);
+            } else {
+                log::info!("transaction [{}] rollback", tx.tx_id);
+            }
+        }
+    });
+    log::info!("transaction [{}] start", tx.tx.as_ref().unwrap().tx_id);
+    Ok(tx)
 }
 
 #[cfg(test)]

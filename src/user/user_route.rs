@@ -1,6 +1,6 @@
 use super::{UserCreateData, UserUpdateData};
 use crate::{
-    common::{check_phone, get_current_time_fmt, CommListReq, Status, UserType},
+    common::{check_phone, get_current_time_fmt, get_transaction_tx, CommListReq, Status, UserType},
     entity::user_entity::UserEntity,
     response::ResponseBody,
     DataStore,
@@ -27,17 +27,6 @@ pub async fn create_user(
         return rsp;
     }
 
-    let db_res: Option<UserEntity> =
-        UserEntity::select_by_name_phone(&data_store.db, &req_data.name, &req_data.phone)
-            .await
-            .expect("获取用户失败");
-
-    if db_res.is_some() {
-        rsp.rsp_msg = "用户已存在".to_string();
-        rsp.rsp_code = 500;
-        return rsp;
-    }
-
     let insert_user = UserEntity {
         id: None,
         create_time: get_current_time_fmt(),
@@ -51,7 +40,7 @@ pub async fn create_user(
         status: Status::ACTIVE as i16,
     };
 
-    let mut tx = data_store.db.acquire_begin().await.unwrap();
+    let mut tx = get_transaction_tx(&data_store.db).await.unwrap();
     let insert_res = UserEntity::insert(&tx, &insert_user).await;
     tx.commit().await.expect("commit transaction error ");
     if let Err(rbs::Error::E(error)) = insert_res {
@@ -79,18 +68,12 @@ pub async fn get_user_list(
 ) -> impl Responder {
     let db_res: Page<UserEntity> = UserEntity::select_page(
         &data_store.db,
-        &PageRequest::new(req_data.offset as u64, req_data.take as u64),
+        &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
     )
     .await
     .expect("msg");
 
-    let res: ResponseBody<Page<UserEntity>> = ResponseBody {
-        rsp_code: 0,
-        rsp_msg: "".to_string(),
-        data: db_res,
-    };
-
-    res
+    ResponseBody::default(Some(db_res))
 }
 
 #[utoipa::path(
@@ -156,7 +139,7 @@ pub async fn update_user_by_id(
             db_user.picture = req_data.picture.clone();
             db_user.phone = req_data.phone.clone().unwrap_or(db_user.phone);
 
-            let mut tx = data_store.db.acquire_begin().await.unwrap();
+            let mut tx = get_transaction_tx(&data_store.db).await.unwrap();
             let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
