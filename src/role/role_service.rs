@@ -1,11 +1,14 @@
 use actix_web::{post, web, Responder};
 use rbatis::{Page, PageRequest};
 
-use super::{CreateRoleData, RoleListQuery, RoleUpdateData};
+use super::{BindAccessData, CreateRoleData, RoleListQuery, RoleUpdateData};
 use crate::{
+    access::check_access_by_id,
     common::{get_current_time_fmt, get_transaction_tx, Status},
-    entity::role_entity::RoleEntity,
+    entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
     response::ResponseBody,
+    role::check_role_by_id,
+    user::check_user,
     RB,
 };
 
@@ -15,7 +18,9 @@ use crate::{
 )]
 #[post("/create_role")]
 async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
-    let mut res: ResponseBody<Option<String>> = ResponseBody::default(None);
+    if check_user(req_data.create_by).await.is_none() {
+        return ResponseBody::error("用户不存在");
+    }
 
     let new_role = RoleEntity {
         id: None,
@@ -31,16 +36,13 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
     tx.commit().await.expect("commit error");
 
     if let Err(rbs::Error::E(error)) = insert_res {
-        res.code = 500;
-        res.msg = "创建角色失败".to_string();
+        let res = ResponseBody::error("创建角色失败");
         log::error!(" 创建角色失败 {}", error);
         tx.rollback().await.expect("rollback error");
         return res;
     }
 
-    res.code = 0;
-    res.msg = "角色创建成功".to_string();
-    res
+    ResponseBody::success("角色创建成功")
 }
 
 #[utoipa::path(
@@ -74,18 +76,13 @@ async fn get_role_list(req_data: web::Json<RoleListQuery>) -> impl Responder {
   )]
 #[post("/update_role_by_id")]
 pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Responder {
-    let ex_db = RB.acquire().await.expect("get db ex error");
-    let db_role = RoleEntity::select_by_id(&ex_db, req_data.id.clone())
-        .await
-        .expect("角色不存在");
-
-    match db_role {
+    match check_role_by_id(req_data.id).await {
         None => {
             return ResponseBody::error("角色不存在");
         }
         Some(mut role) => {
             role.name = req_data.name.clone().unwrap_or(role.name);
-
+            role.update_time = get_current_time_fmt();
             if let Some(status) = req_data.status.clone() {
                 // 任何非法值会将状态置为无效
                 let st = Status::from(status);
@@ -104,5 +101,38 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
         }
     }
 
-    ResponseBody::default(Some("角色更新成功".to_string()))
+    ResponseBody::success("角色更新成功")
+}
+
+#[utoipa::path(
+    tag = "role",
+    responses( (status = 200) )
+  )]
+#[post("/bind_access")]
+pub async fn bind_access(req_data: web::Json<BindAccessData>) -> impl Responder {
+    let db_role = check_role_by_id(req_data.role_id).await;
+    let db_access = check_access_by_id(req_data.access_id).await;
+    if db_role.is_none() {
+        return ResponseBody::error("角色不存在");
+    }
+    if db_access.is_none() {
+        return ResponseBody::error("权限不存在");
+    }
+
+    let new_role_access = RoleAccessEntity {
+        id: None,
+        role_id: req_data.role_id.clone(),
+        access_id: req_data.access_id.clone(),
+    };
+
+    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let insert_res = RoleAccessEntity::insert(&tx, &new_role_access).await;
+    tx.commit().await.expect("msg");
+    if let Err(rbs::Error::E(error)) = insert_res {
+        log::error!("绑定权限失败, {}", error);
+        let res = ResponseBody::error("绑定权限失败");
+        tx.rollback().await.expect("msg");
+        return res;
+    }
+    ResponseBody::success("绑定成功")
 }

@@ -1,6 +1,5 @@
 use actix_web::middleware::{Compress, Logger};
 use actix_web::{App, HttpServer};
-use log::info;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use utoipa::OpenApi;
@@ -18,7 +17,6 @@ mod role;
 mod user;
 
 
-
 lazy_static::lazy_static! {
     static ref RB:RBatis=RBatis::new();
 }
@@ -33,7 +31,8 @@ async fn main() {
     #[openapi(
         tags( 
             (name = "user", description = "user 接口"),
-            (name = "role", description = "role 接口")
+            (name = "role", description = "role 接口"),
+            (name = "access", description = "权限 接口")
         )
     )]
     struct ApiDoc;
@@ -57,6 +56,9 @@ async fn main() {
             .service(
                 utoipa_actix_web::scope("/api/role").configure(role::configure()),
             )
+            .service(
+                utoipa_actix_web::scope("/api/access").configure(access::configure()),
+            )
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
             .wrap(Compress::default())
@@ -74,6 +76,6 @@ async fn main() {
 fn gen_server_url() -> String {
     let host = "0.0.0.0";
     let url = format!("{}:{}", host, 3000);
-    info!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
+    println!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
     url
 }
