@@ -1,13 +1,15 @@
-use super::{UserCreateData, UserUpdateData};
+use super::{BindRoleData, UserCreateData, UserUpdateData};
 use crate::{
     common::{
         check_phone, get_current_time_fmt, get_transaction_tx, CommListReq, Status, UserType,
     },
-    entity::user_entity::UserEntity,
+    entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
+    role::check_role_by_id,
+    user::{check_user, check_user_role},
     RB,
 };
-use actix_web::{get, post, web, Responder};
+use actix_web::{delete, get, post, web, Responder};
 use rbatis::{Page, PageRequest};
 
 #[utoipa::path(
@@ -16,7 +18,6 @@ use rbatis::{Page, PageRequest};
 )]
 #[post("/create_user")]
 pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder {
-
     let phone_check_res = check_phone(&req_data.phone);
     if !phone_check_res {
         let rsp: ResponseBody<Option<String>> = ResponseBody::error("手机号不正确");
@@ -131,4 +132,107 @@ pub async fn update_user_by_id(
         }
     }
     ResponseBody::success("更新用户成功")
+}
+
+#[utoipa::path(
+    tag = "user",
+    responses( (status = 200) )
+  )]
+#[post("/bind_role")]
+pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
+    let db_role = check_role_by_id(req_data.role_id).await;
+    let db_user = check_user(req_data.user_id).await;
+    if db_role.is_none() {
+        return ResponseBody::error("角色不存在");
+    }
+    if db_user.is_none() {
+        return ResponseBody::error("用户不存在");
+    }
+
+    let db_role = check_user_role(req_data.role_id.clone(), req_data.user_id.clone()).await;
+    if !db_role.is_empty() {
+        return ResponseBody::error("角色已绑定");
+    }
+
+
+    let new_user_role = UserRoleEntity {
+        id: None,
+        role_id: req_data.role_id.clone(),
+        user_id: req_data.user_id.clone(),
+    };
+
+    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let insert_res = UserRoleEntity::insert(&tx, &new_user_role).await;
+    tx.commit().await.expect("msg");
+    if let Err(rbs::Error::E(error)) = insert_res {
+        log::error!("绑定角色失败, {}", error);
+        let res = ResponseBody::error("绑定角色失败");
+        tx.rollback().await.expect("msg");
+        return res;
+    }
+
+    ResponseBody::success("绑定成功")
+}
+
+
+
+#[utoipa::path(
+    tag = "user",
+    responses( (status = 200) )
+  )]
+#[get("/user_binds/{id}")]
+pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
+    let id = parma.into_inner();
+    let db_role = check_user(id.clone()).await;
+    if db_role.is_none() {
+        return ResponseBody {
+            code: 500,
+            msg: "用户不存在".to_string(),
+            data: None,
+        };
+    }
+
+    let ex = RB.acquire().await.expect("msg");
+    let search_res = UserRoleEntity::select_by_column(&ex, "user_id", id)
+        .await
+        .expect("msg");
+
+    let res: ResponseBody<Option<Vec<UserRoleEntity>>> = ResponseBody::default(Some(search_res));
+
+    res
+}
+
+
+#[utoipa::path(
+    tag = "user",
+    responses( (status = 200) )
+  )]
+#[delete("/un_bind_role")]
+pub async fn un_bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
+    let db_role = check_role_by_id(req_data.role_id).await;
+    let db_user = check_user(req_data.user_id).await;
+    if db_role.is_none() {
+        return ResponseBody::error("角色不存在");
+    }
+    if db_user.is_none() {
+        return ResponseBody::error("用户不存在");
+    }
+
+    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let delete_res = UserRoleEntity::delete_by_role_and_user(
+        &tx,
+        req_data.role_id.clone(),
+        req_data.user_id.clone(),
+    )
+    .await;
+
+    tx.commit().await.expect("msg");
+    if let Err(rbs::Error::E(error)) = delete_res {
+        log::error!("解除绑定角色失败, {error}");
+        let res = ResponseBody::error("解除绑定角色失败");
+        tx.rollback().await.expect("msg");
+        return res;
+    }
+
+    ResponseBody::success("解除绑定成功")
 }

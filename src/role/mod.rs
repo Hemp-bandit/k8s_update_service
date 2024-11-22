@@ -22,7 +22,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateRoleData {
     pub name: String,
-    pub create_by: i16,
+    pub create_by: i32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]

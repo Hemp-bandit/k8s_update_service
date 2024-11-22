@@ -27,7 +27,7 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder 
         update_time: get_current_time_fmt(),
         name: req_data.name.clone(),
         create_by: req_data.create_by,
-        status: Status::ACTIVE as i16,
+        status: Status::ACTIVE as i8,
     };
 
     let mut tx = get_transaction_tx().await.unwrap();
@@ -85,7 +85,7 @@ pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl 
             if let Some(status) = req_data.status.clone() {
                 // 任何非法值会将状态置为无效
                 let st = Status::from(status);
-                access.status = st as i16;
+                access.status = st as i8;
             }
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;

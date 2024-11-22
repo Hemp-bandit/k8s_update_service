@@ -28,7 +28,7 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
         update_time: get_current_time_fmt(),
         name: req_data.name.clone(),
         create_by: req_data.create_by,
-        status: Status::ACTIVE as i16,
+        status: Status::ACTIVE as i8,
     };
 
     let mut tx = get_transaction_tx().await.unwrap();
@@ -86,7 +86,7 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
             if let Some(status) = req_data.status.clone() {
                 // 任何非法值会将状态置为无效
                 let st = Status::from(status);
-                role.status = st as i16;
+                role.status = st as i8;
             }
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
@@ -171,8 +171,8 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     tag = "role",
     responses( (status = 200) )
   )]
-#[delete("/un_bind_access")]
-pub async fn un_bind_access(req_data: web::Json<BindAccessData>) -> impl Responder {
+#[delete("/un_bind_role")]
+pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder {
     let db_role = check_role_by_id(req_data.role_id).await;
     let db_access = check_access_by_id(req_data.access_id).await;
     if db_role.is_none() {
