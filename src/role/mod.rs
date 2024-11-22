@@ -16,7 +16,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(role_service::update_role_by_id);
         config.service(role_service::bind_access);
         config.service(role_service::get_role_binds);
-        config.service(role_service::un_bind_access);
+        config.service(role_service::un_bind_role);
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
