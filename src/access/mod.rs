@@ -1,4 +1,3 @@
-use rbatis::rbdc::db;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;

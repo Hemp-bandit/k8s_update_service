@@ -1,4 +1,4 @@
-use actix_web::{post, web, Responder};
+use actix_web::{delete, get, post, web, Responder};
 use rbatis::{Page, PageRequest};
 
 use super::{BindAccessData, CreateRoleData, RoleListQuery, RoleUpdateData};
@@ -7,7 +7,7 @@ use crate::{
     common::{get_current_time_fmt, get_transaction_tx, Status},
     entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
     response::ResponseBody,
-    role::check_role_by_id,
+    role::{check_role_access, check_role_by_id},
     user::check_user,
     RB,
 };
@@ -118,6 +118,10 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> impl Responder 
     if db_access.is_none() {
         return ResponseBody::error("权限不存在");
     }
+    let db_access = check_role_access(req_data.role_id.clone(), req_data.access_id.clone()).await;
+    if !db_access.is_empty() {
+        return ResponseBody::error("权限已绑定");
+    }
 
     let new_role_access = RoleAccessEntity {
         id: None,
@@ -135,4 +139,63 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> impl Responder 
         return res;
     }
     ResponseBody::success("绑定成功")
+}
+
+#[utoipa::path(
+    tag = "role",
+    responses( (status = 200) )
+  )]
+#[get("/role_binds/{id}")]
+pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
+    let id = parma.into_inner();
+    let db_role = check_role_by_id(id.clone()).await;
+    if db_role.is_none() {
+        return ResponseBody {
+            code: 500,
+            msg: "角色不存在".to_string(),
+            data: None,
+        };
+    }
+
+    let ex = RB.acquire().await.expect("msg");
+    let search_res = RoleAccessEntity::select_by_column(&ex, "role_id", id)
+        .await
+        .expect("msg");
+
+    let res: ResponseBody<Option<Vec<RoleAccessEntity>>> = ResponseBody::default(Some(search_res));
+
+    res
+}
+
+#[utoipa::path(
+    tag = "role",
+    responses( (status = 200) )
+  )]
+#[delete("/un_bind_access")]
+pub async fn un_bind_access(req_data: web::Json<BindAccessData>) -> impl Responder {
+    let db_role = check_role_by_id(req_data.role_id).await;
+    let db_access = check_access_by_id(req_data.access_id).await;
+    if db_role.is_none() {
+        return ResponseBody::error("角色不存在");
+    }
+    if db_access.is_none() {
+        return ResponseBody::error("权限不存在");
+    }
+
+    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let delete_res = RoleAccessEntity::delete_by_role_and_access(
+        &tx,
+        req_data.role_id.clone(),
+        req_data.access_id.clone(),
+    )
+    .await;
+    tx.commit().await.expect("msg");
+    if let Err(rbs::Error::E(error)) = delete_res {
+        log::error!("解除绑定权限失败, {error}");
+        let res = ResponseBody::error("解除绑定权限失败");
+        tx.rollback().await.expect("msg");
+        return res;
+    }
+
+    ResponseBody::success("解除绑定成功")
 }

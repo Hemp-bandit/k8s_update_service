@@ -4,7 +4,6 @@ use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-
 use crate::RB;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

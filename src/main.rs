@@ -25,8 +25,7 @@ lazy_static::lazy_static! {
 #[actix_web::main]
 async fn main() {
     dotenv().expect("Failed to load .env file");
-
-
+    env_logger::init();
     #[derive(OpenApi)]
     #[openapi(
         tags( 
@@ -37,8 +36,6 @@ async fn main() {
     )]
     struct ApiDoc;
 
-
-    env_logger::init();
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     if let Err(e) = RB.link(MysqlDriver {}, &database_url).await {
