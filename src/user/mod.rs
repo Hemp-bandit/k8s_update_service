@@ -5,6 +5,7 @@ use utoipa_actix_web::service_config::ServiceConfig;
 use crate::{entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity}, RB};
 
 mod user_service;
+mod auth_service;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
@@ -16,6 +17,9 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(user_service::bind_role);
         config.service(user_service::un_bind_role);
         config.service(user_service::get_role_binds);
+
+        
+        config.service(auth_service::get_user_permission);
 
     }
 }

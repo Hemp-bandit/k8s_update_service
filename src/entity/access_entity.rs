@@ -3,12 +3,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccessEntity {
-    pub id: Option<u16>,
+    pub id: Option<i32>,
     pub create_time: String,
     pub update_time: String,
     pub name: String,
     pub create_by: i32, // 创建的用户id
     pub status: i8,
+    pub value: u64,
 }
 
 crud!(AccessEntity {}, "access");

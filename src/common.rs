@@ -1,10 +1,10 @@
+use crate::RB;
 use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
-use crate::RB;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename = "Enum")]
@@ -83,9 +83,33 @@ pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
     Ok(tx)
 }
 
+pub fn gen_access_value(bit: u64) -> u64 {
+    let mod_val = bit % 31;
+    let last_number = 1 << (mod_val.min(31) - 1);
+    last_number
+}
+
+pub fn marge_access(arr: Vec<u64>) -> u64 {
+    let mut res = 0;
+    arr.into_iter().for_each(|val| {
+        res += val;
+    });
+    res
+}
+
+pub fn has_access(auth: u64, access: Vec<u64>) -> bool {
+    let mut res = false;
+    access.into_iter().for_each(|val| {
+        res = val & auth > 0;
+    });
+    res
+}
+
 #[cfg(test)]
 mod test {
     use crate::common::check_phone;
+
+    use super::gen_access_value;
 
     #[test]
     fn test_check_phone_length_less() {
@@ -113,5 +137,15 @@ mod test {
         let phone = "15717827650";
         let res = check_phone(phone);
         assert_eq!(res, true);
+    }
+    #[test]
+    fn test_access_value() {
+        // let role_p = [64, 1024];
+        // let role: u32 = 64 + 1024;
+        // role_p.map(|val| println!("res {}", val & role));
+
+        let rs = gen_access_value(9999999);
+        println!("res=== {rs}");
+
     }
 }

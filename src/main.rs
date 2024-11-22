@@ -31,7 +31,8 @@ async fn main() {
         tags( 
             (name = "user", description = "user 接口"),
             (name = "role", description = "role 接口"),
-            (name = "access", description = "权限 接口")
+            (name = "access", description = "权限接口"),
+            (name = "auth", description = "验权接口")
         )
     )]
     struct ApiDoc;

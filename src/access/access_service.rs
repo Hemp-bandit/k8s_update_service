@@ -4,7 +4,7 @@ use rbatis::{Page, PageRequest};
 use super::{AccessListQuery, AccessUpdateData, CreateAccessData};
 use crate::{
     access::check_access_by_id,
-    common::{get_current_time_fmt, get_transaction_tx, Status},
+    common::{gen_access_value, get_current_time_fmt, get_transaction_tx, Status},
     entity::access_entity::AccessEntity,
     response::ResponseBody,
     user::check_user,
@@ -21,24 +21,41 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder 
         return ResponseBody::error("用户不存在");
     }
 
-    let new_role = AccessEntity {
+    let new_access = AccessEntity {
         id: None,
         create_time: get_current_time_fmt(),
         update_time: get_current_time_fmt(),
         name: req_data.name.clone(),
         create_by: req_data.create_by,
         status: Status::ACTIVE as i8,
+        value: 0,
     };
 
     let mut tx = get_transaction_tx().await.unwrap();
-    let insert_res = AccessEntity::insert(&tx, &new_role).await;
+    let insert_res = AccessEntity::insert(&tx, &new_access).await;
     tx.commit().await.expect("commit error");
+    match insert_res {
+        Err(rbs::Error::E(error)) => {
+            let res = ResponseBody::error("创建权限失败");
+            log::error!(" 创建权限失败 {}", error);
+            tx.rollback().await.expect("rollback error");
+            return res;
+        }
+        Ok(res) => {
+            let permission = gen_access_value(res.last_insert_id.as_u64().unwrap_or(0));
+            let mut update_access = new_access.clone();
+            update_access.id = Some(res.last_insert_id.as_i64().unwrap_or(0).try_into().unwrap());
+            update_access.value = permission;
+            update_access.update_time = get_current_time_fmt();
 
-    if let Err(rbs::Error::E(error)) = insert_res {
-        let res = ResponseBody::error("创建权限失败");
-        log::error!(" 创建权限失败 {}", error);
-        tx.rollback().await.expect("rollback error");
-        return res;
+            let update_res = AccessEntity::update_by_column(&tx, &update_access, "id").await;
+            if let Err(rbs::Error::E(error)) = update_res {
+                let res = ResponseBody::error("更新权限值失败");
+                log::error!(" 更新权限值失败 {}", error);
+                tx.rollback().await.expect("rollback error");
+                return res;
+            }
+        }
     }
 
     ResponseBody::success("权限创建成功")
