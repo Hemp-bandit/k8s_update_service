@@ -154,7 +154,6 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
         return ResponseBody::error("角色已绑定");
     }
 
-
     let new_user_role = UserRoleEntity {
         id: None,
         role_id: req_data.role_id.clone(),
@@ -173,8 +172,6 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
 
     ResponseBody::success("绑定成功")
 }
-
-
 
 #[utoipa::path(
     tag = "user",
@@ -201,7 +198,6 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
 
     res
 }
-
 
 #[utoipa::path(
     tag = "user",

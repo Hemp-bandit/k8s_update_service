@@ -57,6 +57,9 @@ async fn main() {
             .service(
                 utoipa_actix_web::scope("/api/access").configure(access::configure()),
             )
+            .service(
+                utoipa_actix_web::scope("/api/auth").configure(user::auth_configure()),
+            )
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
             .wrap(Compress::default())

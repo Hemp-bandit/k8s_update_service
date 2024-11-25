@@ -2,10 +2,13 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
-use crate::{entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity}, RB};
+use crate::{
+    entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
+    RB,
+};
 
-mod user_service;
 mod auth_service;
+mod user_service;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
@@ -13,17 +16,19 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(user_service::get_user_list);
         config.service(user_service::get_user_by_id);
         config.service(user_service::update_user_by_id);
-        
+
         config.service(user_service::bind_role);
         config.service(user_service::un_bind_role);
         config.service(user_service::get_role_binds);
-
-        
-        config.service(auth_service::get_user_permission);
-
     }
 }
 
+pub fn auth_configure() -> impl FnOnce(&mut ServiceConfig) {
+    |config: &mut ServiceConfig| {
+        config.service(auth_service::login);
+        config.service(auth_service::get_user_permission);
+    }
+}
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserCreateData {
     pub name: String,
@@ -42,7 +47,6 @@ pub struct UserUpdateData {
     pub introduce: Option<String>,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct BindRoleData {
     pub role_id: i32,
@@ -54,8 +58,14 @@ pub struct RoidS {
     pub role_id: i32,
 }
 
-
-
+/**
+ * 后台登陆
+ */
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct LoginData {
+    pub name: String,
+    pub password: String,
+}
 
 pub async fn check_user(user_id: i32) -> Option<UserEntity> {
     let ex_db = RB.acquire().await.expect("msg");
@@ -69,7 +79,7 @@ pub async fn check_user(user_id: i32) -> Option<UserEntity> {
 pub async fn check_user_role(role_id: i32, user_id: i32) -> Vec<UserRoleEntity> {
     let ex_db = RB.acquire().await.expect("get db ex error");
     let db_res: Vec<UserRoleEntity> =
-    UserRoleEntity::find_by_role_and_user(&ex_db, role_id.into(), user_id)
+        UserRoleEntity::find_by_role_and_user(&ex_db, role_id.into(), user_id)
             .await
             .expect("角色关系查询失败");
     db_res
