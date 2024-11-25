@@ -1,0 +1,25 @@
+name: CI
+on:
+  pull_request:
+    branches: ["master"]
+    types: [closed]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: pull repo
+        shell: bash
+        run: |
+          echo "git clone "
+          git clone  https://github.com/Hemp-bandit/kaibai_user_service .
+          ls -al
+      - name: build_img
+        run: bash build.sh build_img
+      - name: login_ali
+        shell: bash
+        run: |
+          bash build.sh login_ali
+      - name: push_img
+        run: bash build.sh push_img
+      - name: update_img
+        run: bash build.sh update_img

@@ -114,5 +114,6 @@ pub fn check_is_login_redis(user_name: String) -> bool {
         }
         Ok(res) => res,
     };
+    // TODO: 添加自动刷新
     is_login
 }
