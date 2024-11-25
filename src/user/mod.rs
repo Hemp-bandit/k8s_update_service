@@ -8,7 +8,7 @@ use crate::{
     RB,
 };
 
-mod auth_service;
+pub mod auth_service;
 mod user_service;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {

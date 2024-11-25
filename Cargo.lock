@@ -1263,6 +1263,7 @@ dependencies = [
  "derive_more 1.0.0",
  "env",
  "env_logger",
+ "futures-util",
  "hmac",
  "jwt",
  "lazy-regex",

@@ -1,10 +1,11 @@
-use std::sync::{Mutex};
-
+use std::sync::Mutex;
 use actix_web::middleware::{Compress, Logger};
 use actix_web::{App, HttpServer};
+use common::JWT;
+use middleware::JwtAuth;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
-use redis::{ Connection};
+use redis::Connection;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
@@ -18,6 +19,7 @@ mod entity;
 mod response;
 mod role;
 mod user;
+mod middleware;
 
 
 #[derive(OpenApi)]
@@ -27,6 +29,10 @@ mod user;
         (name = "role", description = "role 接口"),
         (name = "access", description = "权限接口"),
         (name = "auth", description = "验权接口")
+    ),
+    modifiers(&JWT),
+    security(
+        ("JWT" = ["edit:items", "read:items"])
     )
 )]
 struct ApiDoc;
@@ -87,7 +93,8 @@ async fn main() {
             .into_app()
             .wrap(Compress::default())
             .wrap(Logger::default())
-            .wrap(Logger::new("%a %{User-Agent}i"))       
+            .wrap(Logger::new("%a %{User-Agent}i"))
+            .wrap(JwtAuth)
     })
     .keep_alive(None)
     .shutdown_timeout(5)

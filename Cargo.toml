@@ -36,4 +36,5 @@ redis-macros = "0.4.2"
 jwt = "0.16.0"
 sha2 = "0.10.8"
 hmac = "0.12.1"
+futures-util = "0.3.31"
 

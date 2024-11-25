@@ -1,15 +1,22 @@
+use std::env::var;
+
 use crate::{user::RedisLoginData, RB};
 use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{
+    openapi::{
+        self,
+        security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+    },
+    Modify, ToSchema,
+};
 
 use hmac::{Hmac, Mac};
-use jwt::{Header, SignWithKey, Token, VerifyWithKey};
+use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
-use std::collections::BTreeMap;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename = "Enum")]
@@ -46,6 +53,25 @@ pub struct DeployInfo {
 pub struct CommListReq {
     pub page_no: u16,
     pub take: u16,
+}
+
+#[derive(Debug, Serialize)]
+pub struct JWT;
+
+impl Modify for JWT {
+    fn modify(&self, openapi: &mut openapi::OpenApi) {
+        if let Some(schema) = openapi.components.as_mut() {
+            schema.add_security_scheme(
+                "JWT",
+                SecurityScheme::Http(
+                    HttpBuilder::new()
+                        .scheme(HttpAuthScheme::Bearer)
+                        .bearer_format("JWT")
+                        .build(),
+                ),
+            );
+        }
+    }
 }
 
 /**
@@ -129,17 +155,21 @@ pub fn gen_jwt_token(login_data: RedisLoginData) -> String {
     token_str
 }
 
-pub fn jwt_token_to_data(jwt_token: String) -> RedisLoginData {
+pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
+    log::debug!("jwt_token {jwt_token}");
+    if jwt_token.is_empty() {
+        return None;
+    }
     let jwt_secret =
-        std::env::var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
-    let key: Hmac<Sha256> = Hmac::new_from_slice(jwt_secret.as_bytes()).unwrap();
+        var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
+    let key: Hmac<Sha256> =
+        Hmac::new_from_slice(jwt_secret.as_bytes()).expect("解析jwt token 失败");
     let claims: RedisLoginData = jwt_token.verify_with_key(&key).expect("msg");
-    claims
+    Some(claims)
 }
 
 #[cfg(test)]
 mod test {
-    use hmac::digest::typenum::assert_type_eq;
 
     use crate::{common::check_phone, user::RedisLoginData};
 
@@ -205,6 +235,6 @@ mod test {
             id: 123,
         };
         let user_info = jwt_token_to_data(token);
-        assert_eq!(login_data, user_info);
+        assert_eq!(login_data, user_info.unwrap());
     }
 }

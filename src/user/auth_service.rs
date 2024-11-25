@@ -1,9 +1,3 @@
-use actix_web::{get, post, web, Responder};
-use rbs::to_value;
-use redis::Commands;
-use serde::{Deserialize, Serialize};
-use utoipa::openapi::request_body;
-
 use crate::{
     access::AccessValueData,
     common::{gen_jwt_token, get_current_timestamp},
@@ -12,6 +6,10 @@ use crate::{
     user::{check_user, RedisLoginData},
     RB, REDIS,
 };
+use actix_web::{get, post, web, Responder};
+use rbs::to_value;
+use redis::Commands;
+use serde::{Deserialize, Serialize};
 
 use super::LoginData;
 
