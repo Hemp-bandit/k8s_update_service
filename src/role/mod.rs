@@ -45,6 +45,11 @@ pub struct BindAccessData {
     pub access_id: i32,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct AccessData {
+    pub access_id: i32,
+}
+
 pub async fn check_role_by_id(id: i32) -> Option<RoleEntity> {
     let ex_db = RB.acquire().await.expect("get db ex error");
     let db_role = RoleEntity::select_by_id(&ex_db, id.into())

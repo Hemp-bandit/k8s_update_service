@@ -34,6 +34,12 @@ pub struct AccessUpdateData {
     pub status: Option<i8>,
 }
 
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct AccessValueData {
+    pub value: u64,
+}
+
 pub async fn check_access_by_id(id: i32) -> Option<AccessEntity> {
     let ex_db = RB.acquire().await.expect("get db ex error");
     AccessEntity::select_by_id(&ex_db, id.clone())

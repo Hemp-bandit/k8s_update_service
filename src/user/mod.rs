@@ -49,6 +49,13 @@ pub struct BindRoleData {
     pub user_id: i32,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct RoidS {
+    pub role_id: i32,
+}
+
+
+
 
 pub async fn check_user(user_id: i32) -> Option<UserEntity> {
     let ex_db = RB.acquire().await.expect("msg");
