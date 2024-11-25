@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use hmac::{Hmac, Mac};
-use jwt::SignWithKey;
+use jwt::{Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha256;
 use std::collections::BTreeMap;
 
@@ -121,26 +121,29 @@ pub fn has_access(auth: u64, access: Vec<u64>) -> bool {
 }
 
 pub fn gen_jwt_token(login_data: RedisLoginData) -> String {
-    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
+    let jwt_secret =
+        std::env::var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
     let key: Hmac<Sha256> = Hmac::new_from_slice(jwt_secret.as_bytes()).unwrap();
-    let mut claims = BTreeMap::new();
-    // claims.insert("sub", "someone");
-    claims.insert("value", login_data.auth);
-    claims.insert(
-        "last_login_time",
-        login_data.last_login_time.try_into().unwrap(),
-    );
-
-    let token_str = claims.sign_with_key(&key).unwrap();
+    let token_str = login_data.sign_with_key(&key).unwrap();
 
     token_str
 }
 
+pub fn jwt_token_to_data(jwt_token: String) -> RedisLoginData {
+    let jwt_secret =
+        std::env::var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
+    let key: Hmac<Sha256> = Hmac::new_from_slice(jwt_secret.as_bytes()).unwrap();
+    let claims: RedisLoginData = jwt_token.verify_with_key(&key).expect("msg");
+    claims
+}
+
 #[cfg(test)]
 mod test {
+    use hmac::digest::typenum::assert_type_eq;
+
     use crate::{common::check_phone, user::RedisLoginData};
 
-    use super::{gen_access_value, gen_jwt_token};
+    use super::{gen_access_value, gen_jwt_token, jwt_token_to_data};
 
     #[test]
     fn test_check_phone_length_less() {
@@ -183,9 +186,25 @@ mod test {
         let login_data = RedisLoginData {
             auth: 123123123123,
             last_login_time: 12312312,
-            password: "123123".to_string(),
+            name: "asdf".to_string(),
+            id: 123,
         };
-        let token = gen_jwt_token(login_data);
-        println!("token {token}");
+        let token_res = gen_jwt_token(login_data);
+        println!("token_res {token_res}");
+        let token = "eyJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoxMjMxMjMxMjMxMjMsImxhc3RfbG9naW5fdGltZSI6MTIzMTIzMTIsIm5hbWUiOiJhc2RmIiwiaWQiOjEyM30.wqZusohUbF1MsrzttbL0Zf6jgvQXlSOwO7wwsvr06aE".to_string();
+        assert_eq!(token_res, token)
+    }
+
+    #[test]
+    fn test_jwt_token_to_data() {
+        let token = "eyJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoxMjMxMjMxMjMxMjMsImxhc3RfbG9naW5fdGltZSI6MTIzMTIzMTIsIm5hbWUiOiJhc2RmIiwiaWQiOjEyM30.wqZusohUbF1MsrzttbL0Zf6jgvQXlSOwO7wwsvr06aE".to_string();
+        let login_data = RedisLoginData {
+            auth: 123123123123,
+            last_login_time: 12312312,
+            name: "asdf".to_string(),
+            id: 123,
+        };
+        let user_info = jwt_token_to_data(token);
+        assert_eq!(login_data, user_info);
     }
 }

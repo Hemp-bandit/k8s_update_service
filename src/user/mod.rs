@@ -59,11 +59,12 @@ pub struct RoidS {
     pub role_id: i32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, FromRedisValue, ToRedisArgs)]
+#[derive(Clone, Debug, Serialize, Deserialize, FromRedisValue, ToRedisArgs, PartialEq)]
 pub struct RedisLoginData {
     pub auth: u64,
     pub last_login_time: i64,
-    pub password: String
+    pub name: String,
+    pub id: i32,
 }
 
 /**

@@ -2,6 +2,7 @@ use actix_web::{get, post, web, Responder};
 use rbs::to_value;
 use redis::Commands;
 use serde::{Deserialize, Serialize};
+use utoipa::openapi::request_body;
 
 use crate::{
     access::AccessValueData,
@@ -18,6 +19,12 @@ lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
 }
 const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
+
+#[derive(Serialize, Deserialize)]
+struct PasswordData {
+    password: String,
+    id: i32,
+}
 
 #[utoipa::path(
   tag = "auth",
@@ -61,27 +68,22 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
 
     if is_login {
         let user_info: RedisLoginData = rds.get(key).expect("get user info from redis error");
-        let is_eq = user_info.password.eq(&req_data.password);
-        if !is_eq {
-            return ResponseBody::error("密码错误");
+        match check_user_pass_by_name(user_info.name.clone()).await {
+            None => {
+                return ResponseBody::error("用户不存在");
+            }
+            Some(pass_data) => {
+                if !pass_data.password.eq(&req_data.password) {
+                    return ResponseBody::error("密码错误");
+                }
+            }
         }
+
         let jwt_token = gen_jwt_token(user_info);
         return ResponseBody::default(Some(jwt_token));
     }
 
-    let ex = RB.acquire().await.expect("msg");
-    #[derive(Clone, Debug, Serialize, Deserialize)]
-    struct PasswordData {
-        password: String,
-        id: i32,
-    }
-    let db_user: Option<PasswordData> = ex
-        .query_decode(
-            "select password, id from user where user.name=?",
-            vec![to_value!(req_data.name.clone())],
-        )
-        .await
-        .expect("获取用户失败");
+    let db_user = check_user_pass_by_name(req_data.name.clone()).await;
 
     match db_user {
         None => {
@@ -96,7 +98,8 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
             let redis_data = RedisLoginData {
                 auth,
                 last_login_time: get_current_timestamp(),
-                password: req_data.password.clone(),
+                name: req_data.name.clone(),
+                id: db_user.id.clone(),
             };
 
             let _: () = rds
@@ -141,4 +144,17 @@ async fn get_user_access_val(user_id: i32) -> u64 {
         }
     }
     vals
+}
+
+async fn check_user_pass_by_name(name: String) -> Option<PasswordData> {
+    let ex = RB.acquire().await.expect("msg");
+
+    let db_user: Option<PasswordData> = ex
+        .query_decode(
+            "select password, id from user where user.name=?",
+            vec![to_value!(name)],
+        )
+        .await
+        .expect("获取用户失败");
+    db_user
 }
