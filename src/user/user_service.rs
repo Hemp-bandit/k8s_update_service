@@ -6,7 +6,7 @@ use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
     role::check_role_by_id,
-    user::{check_user, check_user_role},
+    user::{check_user_by_user_id, check_user_role},
     RB,
 };
 use actix_web::{delete, get, post, web, Responder};
@@ -141,7 +141,7 @@ pub async fn update_user_by_id(
 #[post("/bind_role")]
 pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     let db_role = check_role_by_id(req_data.role_id).await;
-    let db_user = check_user(req_data.user_id).await;
+    let db_user = check_user_by_user_id(req_data.user_id).await;
     if db_role.is_none() {
         return ResponseBody::error("角色不存在");
     }
@@ -180,7 +180,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
 #[get("/user_binds/{id}")]
 pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     let id = parma.into_inner();
-    let db_role = check_user(id.clone()).await;
+    let db_role = check_user_by_user_id(id.clone()).await;
     if db_role.is_none() {
         return ResponseBody {
             code: 500,
@@ -206,7 +206,7 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
 #[delete("/un_bind_role")]
 pub async fn un_bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     let db_role = check_role_by_id(req_data.role_id).await;
-    let db_user = check_user(req_data.user_id).await;
+    let db_user = check_user_by_user_id(req_data.user_id).await;
     if db_role.is_none() {
         return ResponseBody::error("角色不存在");
     }

@@ -27,6 +27,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
 pub fn auth_configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
         config.service(auth_service::login);
+        config.service(auth_service::logout);
         config.service(auth_service::get_user_permission);
     }
 }
@@ -76,7 +77,7 @@ pub struct LoginData {
     pub password: String,
 }
 
-pub async fn check_user(user_id: i32) -> Option<UserEntity> {
+pub async fn check_user_by_user_id(user_id: i32) -> Option<UserEntity> {
     let ex_db = RB.acquire().await.expect("msg");
     let db_user: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id.clone().into())
         .await

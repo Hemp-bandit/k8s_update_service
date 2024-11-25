@@ -7,7 +7,7 @@ use crate::{
     common::{gen_access_value, get_current_time_fmt, get_transaction_tx, Status},
     entity::access_entity::AccessEntity,
     response::ResponseBody,
-    user::check_user,
+    user::check_user_by_user_id,
     RB,
 };
 
@@ -17,7 +17,7 @@ use crate::{
 )]
 #[post("/create_access")]
 async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder {
-    if check_user(req_data.create_by).await.is_none() {
+    if check_user_by_user_id(req_data.create_by).await.is_none() {
         return ResponseBody::error("用户不存在");
     }
 

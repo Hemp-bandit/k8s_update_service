@@ -75,7 +75,7 @@ where
 fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
     let path = req.path();
     // 白名单不校验
-    let white_list: Vec<&str> = vec!["/api/auth/login", "/api/auth/logout", "/doc"];
+    let white_list: Vec<&str> = vec!["/api/auth/login", "/doc"];
     let is_in_white_list = white_list
         .iter()
         .find(|val| val.to_string() == path.to_string());
@@ -88,7 +88,6 @@ fn has_permission(req: &ServiceRequest) -> bool {
     if token.is_empty() || token.len() < 7 {
         return false;
     };
-    // eyJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoyMDk3MTUyLCJsYXN0X2xvZ2luX3RpbWUiOjE3MzI1MjI5MDcsIm5hbWUiOiIyMjIyIiwiaWQiOjV9.9Kk9R83gHVerDglyzIxYlG07GUMSET-2i621v-WZfaA
 
     let binding = token.to_owned();
     let jwt_token = binding.to_str().expect("msg").to_string();

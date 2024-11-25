@@ -8,7 +8,7 @@ use crate::{
     entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
     response::ResponseBody,
     role::{check_role_access, check_role_by_id},
-    user::check_user,
+    user::check_user_by_user_id,
     RB,
 };
 
@@ -18,7 +18,7 @@ use crate::{
 )]
 #[post("/create_role")]
 async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
-    if check_user(req_data.create_by).await.is_none() {
+    if check_user_by_user_id(req_data.create_by).await.is_none() {
         return ResponseBody::error("用户不存在");
     }
 

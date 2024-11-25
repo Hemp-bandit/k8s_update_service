@@ -1,12 +1,12 @@
 use crate::{
     access::AccessValueData,
-    common::{gen_jwt_token, get_current_timestamp},
+    common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data},
     response::ResponseBody,
     role::AccessData,
-    user::{check_user, RedisLoginData},
+    user::{check_user_by_user_id, RedisLoginData},
     RB, REDIS, REDIS_KEY,
 };
-use actix_web::{get, post, web, Responder};
+use actix_web::{get, post, web, HttpRequest, Responder};
 use rbs::to_value;
 use redis::Commands;
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ struct PasswordData {
 async fn get_user_permission(path: web::Path<i32>) -> impl Responder {
     let user_id = path.into_inner();
 
-    let check_res = check_user(user_id).await;
+    let check_res = check_user_by_user_id(user_id).await;
     if check_res.is_none() {
         return ResponseBody {
             code: 500,
@@ -106,6 +106,30 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
     }
 }
 
+#[utoipa::path(
+    tag = "auth",
+    responses( (status = 200) )
+)]
+#[post("/logout/{id}")]
+async fn logout(id: web::Path<i32>, req: HttpRequest) -> impl Responder {
+    let user_id = id.into_inner();
+    let check_res = check_user_by_user_id(user_id).await;
+    if check_res.is_none() {
+        return ResponseBody::error("用户不存在");
+    }
+    let token = req.headers().get("Authorization").expect("get token error");
+    let binding = token.to_owned();
+    let jwt_token = binding.to_str().expect("msg").to_string();
+    let slice = &jwt_token[7..];
+    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
+    if jwt_user.id != user_id {
+        return ResponseBody::error("用户不正确");
+    }
+    delete_user_from_redis(jwt_user.name);
+
+    ResponseBody::success("退出成功!")
+}
+
 async fn get_user_access_val(user_id: i32) -> u64 {
     let mut vals: u64 = 0;
     let ex = RB.acquire().await.expect("get ex error");
@@ -152,4 +176,10 @@ async fn check_user_pass_by_name(name: String) -> Option<PasswordData> {
         .await
         .expect("获取用户失败");
     db_user
+}
+
+fn delete_user_from_redis(user_name: String) {
+    let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
+    let mut rds = REDIS.lock().unwrap();
+    let _: () = rds.del(key).expect("delete error");
 }
