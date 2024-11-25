@@ -8,12 +8,12 @@ actix-cors = "0.7.0"
 actix-web = "4"
 
 chrono = "0.4.31"
+derive_more = {version = "1", features = ["full"]}
 env = "0.1.0"
 env_logger = "0.11.5"
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
-log = { version = "0.4.20", features = ["std", "serde"] }
-derive_more = { version = "1", features = ["full"] }
+log = {version = "0.4.20", features = ["std", "serde"]}
 
 serde = {version = "1.0.192", features = ["derive"]}
 serde_json = "1.0.108"
@@ -24,12 +24,10 @@ utoipa = {version = "5.2.0", features = ["actix_extras"]}
 utoipa-actix-web = "0.1"
 utoipa-scalar = {version = "0.2.0", features = ["actix-web"]}
 
-# ", default-features = false, features = ["runtime-tokio-rustls", "mysql"]
 rbatis = {version = "4.5"}
 rbdc-mysql = "4.5.0"
 rbs = {version = "4.5"}
 
-# [target.'cfg(not(target_env = "gnu"))'.dependencies]
-# tikv-jemallocator = "0.6"
-
+redis = {version = "0.27.5", features = ["tokio-comp","json"]}
+redis-macros = "0.4.2"
 # mimalloc = "0.1.43"

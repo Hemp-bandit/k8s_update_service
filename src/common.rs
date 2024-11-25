@@ -53,6 +53,16 @@ pub fn get_current_time_fmt() -> String {
     return local_dt.format("%Y-%m-%d %H:%M:%S").to_string();
 }
 
+/**
+ * 获取当前时间戳
+ * 秒
+ */
+pub fn get_current_timestamp() -> i64 {
+    let dt = Utc::now();
+    let local_dt: DateTime<Local> = dt.with_timezone(&Local);
+    local_dt.timestamp()
+}
+
 /// 检测手机号是否合法
 pub fn check_phone(phone: &str) -> bool {
     let max_len = 11;
@@ -146,6 +156,5 @@ mod test {
 
         let rs = gen_access_value(9999999);
         println!("res=== {rs}");
-
     }
 }

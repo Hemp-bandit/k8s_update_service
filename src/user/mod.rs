@@ -1,3 +1,4 @@
+use redis_macros::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
@@ -56,6 +57,12 @@ pub struct BindRoleData {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct RoidS {
     pub role_id: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, FromRedisValue, ToRedisArgs)]
+pub struct RedisLoginData {
+    pub auth: u64,
+    pub last_login_time: i64,
 }
 
 /**
