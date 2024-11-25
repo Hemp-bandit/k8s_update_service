@@ -18,7 +18,23 @@ impl<T> ResponseBody<T> {
         }
     }
 }
+impl ResponseBody<String> {
+    pub fn error(msg: &str) -> ResponseBody<Option<String>> {
+        ResponseBody {
+            code: 500,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
 
+    pub fn success(msg: &str) -> ResponseBody<Option<String>> {
+        ResponseBody {
+            code: 0,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
+}
 impl<T: Serialize> Responder for ResponseBody<T> {
     type Body = BoxBody;
 
