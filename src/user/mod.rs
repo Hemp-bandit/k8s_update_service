@@ -63,6 +63,7 @@ pub struct RoidS {
 pub struct RedisLoginData {
     pub auth: u64,
     pub last_login_time: i64,
+    pub password: String
 }
 
 /**

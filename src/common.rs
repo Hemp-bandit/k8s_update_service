@@ -1,10 +1,15 @@
-use crate::RB;
+use crate::{user::RedisLoginData, RB};
 use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+use hmac::{Hmac, Mac};
+use jwt::SignWithKey;
+use sha2::Sha256;
+use std::collections::BTreeMap;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename = "Enum")]
@@ -115,11 +120,27 @@ pub fn has_access(auth: u64, access: Vec<u64>) -> bool {
     res
 }
 
+pub fn gen_jwt_token(login_data: RedisLoginData) -> String {
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
+    let key: Hmac<Sha256> = Hmac::new_from_slice(jwt_secret.as_bytes()).unwrap();
+    let mut claims = BTreeMap::new();
+    // claims.insert("sub", "someone");
+    claims.insert("value", login_data.auth);
+    claims.insert(
+        "last_login_time",
+        login_data.last_login_time.try_into().unwrap(),
+    );
+
+    let token_str = claims.sign_with_key(&key).unwrap();
+
+    token_str
+}
+
 #[cfg(test)]
 mod test {
-    use crate::common::check_phone;
+    use crate::{common::check_phone, user::RedisLoginData};
 
-    use super::gen_access_value;
+    use super::{gen_access_value, gen_jwt_token};
 
     #[test]
     fn test_check_phone_length_less() {
@@ -156,5 +177,15 @@ mod test {
 
         let rs = gen_access_value(9999999);
         println!("res=== {rs}");
+    }
+    #[test]
+    fn get_gen_jwt() {
+        let login_data = RedisLoginData {
+            auth: 123123123123,
+            last_login_time: 12312312,
+            password: "123123".to_string(),
+        };
+        let token = gen_jwt_token(login_data);
+        println!("token {token}");
     }
 }

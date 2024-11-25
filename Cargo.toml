@@ -4,6 +4,8 @@ name = "kaibai_user_service"
 version = "0.1.0"
 
 [dependencies]
+# mimalloc = "0.1.43"
+
 actix-cors = "0.7.0"
 actix-web = "4"
 
@@ -30,4 +32,8 @@ rbs = {version = "4.5"}
 
 redis = {version = "0.27.5", features = ["tokio-comp","json"]}
 redis-macros = "0.4.2"
-# mimalloc = "0.1.43"
+
+jwt = "0.16.0"
+sha2 = "0.10.8"
+hmac = "0.12.1"
+

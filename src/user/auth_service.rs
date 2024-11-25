@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     access::AccessValueData,
-    common::get_current_timestamp,
+    common::{gen_jwt_token, get_current_timestamp},
     response::ResponseBody,
     role::AccessData,
     user::{check_user, RedisLoginData},
@@ -17,7 +17,7 @@ use super::LoginData;
 lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
 }
-const LOGIN_EX_TIME: u64 = 1000 * 60 * 24 * 10;
+const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
 
 #[utoipa::path(
   tag = "auth",
@@ -60,7 +60,13 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
     };
 
     if is_login {
-        return ResponseBody::success("登录成功");
+        let user_info: RedisLoginData = rds.get(key).expect("get user info from redis error");
+        let is_eq = user_info.password.eq(&req_data.password);
+        if !is_eq {
+            return ResponseBody::error("密码错误");
+        }
+        let jwt_token = gen_jwt_token(user_info);
+        return ResponseBody::default(Some(jwt_token));
     }
 
     let ex = RB.acquire().await.expect("msg");
@@ -87,21 +93,19 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
                 return ResponseBody::error("密码错误");
             }
             let auth: u64 = get_user_access_val(db_user.id).await;
-
             let redis_data = RedisLoginData {
                 auth,
                 last_login_time: get_current_timestamp(),
+                password: req_data.password.clone(),
             };
 
-            let set_res: () = rds
-                .set_ex(key.clone(), redis_data, LOGIN_EX_TIME)
+            let _: () = rds
+                .set_ex(key.clone(), &redis_data, LOGIN_EX_TIME)
                 .expect("set user login error");
-
-            println!("set_res {set_res:?}");
+            let jwt_token = gen_jwt_token(redis_data);
+            return ResponseBody::default(Some(jwt_token));
         }
     }
-
-    ResponseBody::success("登录成功")
 }
 
 async fn get_user_access_val(user_id: i32) -> u64 {
