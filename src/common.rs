@@ -164,8 +164,14 @@ pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
         var("JWT_SECRET").unwrap_or("QWERTYUOas;ldfj;4u1023740^&&*()_)*&^".to_string());
     let key: Hmac<Sha256> =
         Hmac::new_from_slice(jwt_secret.as_bytes()).expect("解析jwt token 失败");
-    let claims: RedisLoginData = jwt_token.verify_with_key(&key).expect("msg");
-    Some(claims)
+    let claims: Result<RedisLoginData, jwt::Error> = jwt_token.verify_with_key(&key);
+    match claims {
+        Err(err) => {
+            log::error!("{}", err.to_string());
+            return None;
+        }
+        Ok(res) => Some(res),
+    }
 }
 
 #[cfg(test)]

@@ -7,8 +7,9 @@ use actix_web::{
     Error,
 };
 use futures_util::future::LocalBoxFuture;
+use redis::Commands;
 
-use crate::common::jwt_token_to_data;
+use crate::{common::jwt_token_to_data, REDIS, REDIS_KEY};
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with
@@ -74,7 +75,7 @@ where
 fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
     let path = req.path();
     // 白名单不校验
-    let white_list: Vec<&str> = vec!["/api/auth/login", "/api/auth/logout"];
+    let white_list: Vec<&str> = vec!["/api/auth/login", "/api/auth/logout", "/doc"];
     let is_in_white_list = white_list
         .iter()
         .find(|val| val.to_string() == path.to_string());
@@ -84,26 +85,35 @@ fn has_permission(req: &ServiceRequest) -> bool {
     let value: HeaderValue = HeaderValue::from_str("").unwrap();
     let token = req.headers().get("Authorization").unwrap_or(&value);
 
-    if token.is_empty() {
+    if token.is_empty() || token.len() < 7 {
         return false;
     };
     // eyJhbGciOiJIUzI1NiJ9.eyJhdXRoIjoyMDk3MTUyLCJsYXN0X2xvZ2luX3RpbWUiOjE3MzI1MjI5MDcsIm5hbWUiOiIyMjIyIiwiaWQiOjV9.9Kk9R83gHVerDglyzIxYlG07GUMSET-2i621v-WZfaA
 
-    // let jwt_token = token.to_str().expect("msg").to_string();
-    // let jwt_token = jwt_token.replace("Bearer ", "");
     let binding = token.to_owned();
     let jwt_token = binding.to_str().expect("msg").to_string();
     let slice = &jwt_token[7..];
     log::info!("jwt {slice}");
-    // let jwt_user = jwt_token_to_data(jwt_token);
-    // log::info!("jwt_user {jwt_user:?}");
+    let jwt_user: Option<crate::user::RedisLoginData> = jwt_token_to_data(slice.to_owned());
+    log::info!("jwt_user {jwt_user:?}");
     // jwt_user.name
-    true
+    match jwt_user {
+        None => false,
+        Some(info) => check_is_login_redis(info.name),
+    }
 }
-#[test]
-fn get() {
-    let str = "Bearer 123";
-    let res = str.replace("Bearer ", "");
-    println!("res {res}");
-    assert_eq!(res, "123");
+
+pub fn check_is_login_redis(user_name: String) -> bool {
+    let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
+    let mut rds = REDIS.lock().unwrap();
+    let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
+    let is_login = match redis_login {
+        Err(err) => {
+            let detail = err.detail().expect("msg");
+            log::error!("{}", detail);
+            return false;
+        }
+        Ok(res) => res,
+    };
+    is_login
 }

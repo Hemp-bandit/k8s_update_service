@@ -39,6 +39,7 @@ struct ApiDoc;
 
 
 lazy_static::lazy_static! {
+    static ref REDIS_KEY:String = "user_service".to_string();
     static ref RB:RBatis=RBatis::new();
     static ref REDIS:Mutex<Connection> = {
         let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");

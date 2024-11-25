@@ -4,7 +4,7 @@ use crate::{
     response::ResponseBody,
     role::AccessData,
     user::{check_user, RedisLoginData},
-    RB, REDIS,
+    RB, REDIS, REDIS_KEY,
 };
 use actix_web::{get, post, web, Responder};
 use rbs::to_value;
@@ -13,9 +13,6 @@ use serde::{Deserialize, Serialize};
 
 use super::LoginData;
 
-lazy_static::lazy_static! {
-    static ref REDIS_KEY:String = "user_service".to_string();
-}
 const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
 
 #[derive(Serialize, Deserialize)]
