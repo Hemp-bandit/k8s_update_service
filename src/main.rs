@@ -1,6 +1,7 @@
 use std::sync::Mutex;
+use actix_cors::Cors;
 use actix_web::middleware::{Compress, Logger};
-use actix_web::{App, HttpServer};
+use actix_web::{http, App, HttpServer};
 use common::JWT;
 use middleware::JwtAuth;
 use rbatis::RBatis;
@@ -92,6 +93,17 @@ async fn main() {
             )
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allowed_methods(vec!["GET", "POST", "DELETE"])
+                    .allowed_headers(vec![
+                        http::header::AUTHORIZATION,
+                        http::header::ACCEPT,
+                        http::header::CONTENT_TYPE,
+                    ])
+                    .max_age(3600),
+            )
             .wrap(Compress::default())
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
