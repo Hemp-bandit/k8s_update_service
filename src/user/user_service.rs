@@ -9,9 +9,8 @@ use crate::{
     RB,
 };
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::{executor::Executor, Page};
+use rbatis::Page;
 use rbs::to_value;
-use std::borrow::Borrow;
 
 #[utoipa::path(
     tag = "user",
