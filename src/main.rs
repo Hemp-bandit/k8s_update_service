@@ -96,17 +96,16 @@ async fn main() {
             .wrap(
                 Cors::default()
                     .allow_any_origin()
-                    .allowed_methods(vec!["GET", "POST", "DELETE"])
+                    .allowed_methods(vec!["GET", "POST", "DELETE", "PUT","OPTION"])
                     .allowed_headers(vec![
                         http::header::AUTHORIZATION,
                         http::header::ACCEPT,
                         http::header::CONTENT_TYPE,
-                    ])
-                    .max_age(3600),
+                    ]),
             )
             .wrap(Compress::default())
             .wrap(Logger::default())
-            .wrap(Logger::new("%a %{User-Agent}i"))
+            .wrap(Logger::new("%a %{Referer}i"))
             .wrap(JwtAuth)
     })
     .keep_alive(None)
@@ -120,7 +119,7 @@ async fn main() {
 fn gen_server_url() -> String {
     let host = "0.0.0.0";
     let url = format!("{}:{}", host, 3000);
-    println!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
+    log::info!("server is on, addr http://127.0.0.1:3000\n doc:  http://127.0.0.1:3000/doc");
     url
 }
 
