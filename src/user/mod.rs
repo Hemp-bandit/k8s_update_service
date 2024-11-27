@@ -36,6 +36,7 @@ pub struct UserCreateData {
     pub name: String,
     pub password: String,
     pub phone: String,
+    pub user_type: i16,
     pub picture: Option<String>,
     pub introduce: Option<String>,
 }

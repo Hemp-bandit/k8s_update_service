@@ -1,9 +1,6 @@
-use std::borrow::Borrow;
 use super::{BindRoleData, UserCreateData, UserUpdateData};
 use crate::{
-    common::{
-        check_phone, get_current_time_fmt, get_transaction_tx, NameListQuery, Status, UserType,
-    },
+    common::{check_phone, get_current_time_fmt, get_transaction_tx, NameListQuery, Status},
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
     role::check_role_by_id,
@@ -12,6 +9,7 @@ use crate::{
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbatis::{Page, PageRequest};
+use std::borrow::Borrow;
 
 #[utoipa::path(
     tag = "user",
@@ -34,7 +32,7 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
         phone: req_data.phone.clone(),
         picture: req_data.picture.clone(),
         introduce: req_data.introduce.clone(),
-        user_type: UserType::BIZ as i16,
+        user_type: req_data.user_type,
         status: Status::ACTIVE as i16,
     };
 
