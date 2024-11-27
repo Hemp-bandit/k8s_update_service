@@ -17,6 +17,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(user_service::get_user_list);
         config.service(user_service::get_user_by_id);
         config.service(user_service::update_user_by_id);
+        config.service(user_service::delete_user);
 
         config.service(user_service::bind_role);
         config.service(user_service::un_bind_role);
@@ -68,6 +69,14 @@ pub struct RedisLoginData {
     pub last_login_time: i64,
     pub name: String,
     pub id: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserListQuery {
+    pub name: Option<String>,
+    pub user_type: Option<i16>,
+    pub page_no: i32,
+    pub take: i32,
 }
 
 /**

@@ -1,14 +1,16 @@
-use super::{BindRoleData, UserCreateData, UserUpdateData};
+use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::{
-    common::{check_phone, get_current_time_fmt, get_transaction_tx, NameListQuery, Status},
+    common::{check_phone, get_current_time_fmt, get_transaction_tx, Status},
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
     role::check_role_by_id,
     user::{check_user_by_user_id, check_user_role},
+    util::sql_tool::SqlTool,
     RB,
 };
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::{Page, PageRequest};
+use rbatis::{executor::Executor, Page};
+use rbs::to_value;
 use std::borrow::Borrow;
 
 #[utoipa::path(
@@ -54,25 +56,37 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
     responses( (status = 200) )
 )]
 #[post("/get_user_list")]
-pub async fn get_user_list(req_data: web::Json<NameListQuery>) -> impl Responder {
+pub async fn get_user_list(req_data: web::Json<UserListQuery>) -> impl Responder {
     let ex_db = RB.acquire().await.expect("msg");
-    let db_res: Page<UserEntity> = match req_data.name.borrow() {
-        None => UserEntity::select_page(
-            &ex_db,
-            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-        )
+    let mut tool = SqlTool::init("select * from user", "order by create_time desc");
+    if let Some(name) = &req_data.name {
+        tool.append_sql_filed("name", to_value!(name));
+    }
+    if let Some(user_type) = req_data.user_type {
+        tool.append_sql_filed("user_type", to_value!(user_type));
+    }
+    tool.append_sql_filed("status", to_value!(1));
+    let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
+    let count_sql = tool.gen_count_sql("select count(1) from user");
+    let db_res: Vec<UserEntity> = ex_db
+        .query_decode(&page_sql, tool.opt_val.clone())
         .await
-        .expect("msg"),
-        Some(name) => UserEntity::select_page_by_name(
-            &ex_db,
-            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-            &name,
-        )
+        .expect("msg");
+
+    let total: u64 = ex_db
+        .query_decode(&count_sql, tool.opt_val.clone())
         .await
-        .expect("msg"),
+        .expect("msg");
+
+    let page_res = Page {
+        records: db_res,
+        page_no: req_data.page_no as u64,
+        page_size: req_data.take as u64,
+        total,
+        do_count: true,
     };
 
-    ResponseBody::default(Some(db_res))
+    ResponseBody::default(Some(page_res))
 }
 
 #[utoipa::path(
@@ -141,6 +155,41 @@ pub async fn update_user_by_id(
         }
     }
     ResponseBody::success("更新用户成功")
+}
+
+#[utoipa::path(
+    tag = "user",
+    params(("id", description = "user id") ),
+    responses( (status = 200) )
+)]
+#[delete("/{id}")]
+pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
+    let ex_db = RB.acquire().await.expect("msg");
+
+    let user_id = id.into_inner();
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
+        .await
+        .expect("查询用户失败");
+
+    match db_res {
+        None => {
+            return ResponseBody::error("用户不存在");
+        }
+        Some(mut db_user) => {
+            let mut tx = get_transaction_tx().await.unwrap();
+            db_user.status = Status::DEACTIVE as i16;
+            let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
+            tx.commit().await.expect("msg");
+            if let Err(rbs::Error::E(error)) = update_res {
+                log::error!("更新用户失败, {}", error);
+                let res = ResponseBody::error("更新用户失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
+    }
+
+    ResponseBody::success("删除用户成功")
 }
 
 #[utoipa::path(
