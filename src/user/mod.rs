@@ -48,6 +48,7 @@ pub struct UserUpdateData {
     pub phone: Option<String>,
     pub picture: Option<String>,
     pub introduce: Option<String>,
+    pub user_type: Option<i16>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
