@@ -71,6 +71,14 @@ pub struct RedisLoginData {
     pub id: i32,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct UserListQuery {
+    pub name: Option<String>,
+    pub user_type: Option<i16>,
+    pub page_no: i32,
+    pub take: i32,
+}
+
 /**
  * 后台登陆
  */

@@ -21,7 +21,7 @@ mod response;
 mod role;
 mod user;
 mod middleware;
-
+mod util;
 
 #[derive(OpenApi)]
 #[openapi(
