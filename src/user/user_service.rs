@@ -127,6 +127,7 @@ pub async fn update_user_by_id(
             db_user.password = req_data.password.clone().unwrap_or(db_user.password);
             db_user.picture = req_data.picture.clone();
             db_user.phone = req_data.phone.clone().unwrap_or(db_user.phone);
+            db_user.user_type = req_data.user_type.clone().unwrap_or(db_user.user_type);
 
             let mut tx = get_transaction_tx().await.unwrap();
             let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
