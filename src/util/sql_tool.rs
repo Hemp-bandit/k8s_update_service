@@ -44,7 +44,7 @@ impl SqlTool {
             if page_no < 0 {
                 0
             } else {
-                page_no - 1
+                (page_no - 1) *take
             }
         };
         let res = format!(
