@@ -1,10 +1,10 @@
 use actix_web::{delete, get, post, web, Responder};
 use rbatis::{Page, PageRequest};
 
-use super::{BindAccessData, CreateRoleData, RoleListQuery, RoleUpdateData};
+use super::{BindAccessData, CreateRoleData, RoleUpdateData};
 use crate::{
     access::check_access_by_id,
-    common::{get_current_time_fmt, get_transaction_tx, Status},
+    common::{get_current_time_fmt, get_transaction_tx, NameListQuery, Status},
     entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
     response::ResponseBody,
     role::{check_role_access, check_role_by_id},
@@ -50,7 +50,7 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
     responses( (status = 200) )
   )]
 #[post("/get_role_list")]
-async fn get_role_list(req_data: web::Json<RoleListQuery>) -> impl Responder {
+async fn get_role_list(req_data: web::Json<NameListQuery>) -> impl Responder {
     let ex_db = RB.acquire().await.expect("msg");
     let db_res: Page<RoleEntity> = match &req_data.name {
         Some(name) => RoleEntity::select_page_by_name(

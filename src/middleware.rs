@@ -3,7 +3,7 @@ use std::future::{ready, Ready};
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     error,
-    http::{header::HeaderValue, Method},
+    http::header::HeaderValue,
     Error,
 };
 use futures_util::future::LocalBoxFuture;
@@ -89,7 +89,7 @@ fn has_permission(req: &ServiceRequest) -> bool {
     if ret_method == "OPTIONS" {
         return true;
     }
-    
+
     let token = req.headers().get("Authorization").unwrap_or(&value);
     if token.is_empty() || token.len() < 7 {
         return false;
