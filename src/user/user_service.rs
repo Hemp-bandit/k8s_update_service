@@ -145,6 +145,41 @@ pub async fn update_user_by_id(
 
 #[utoipa::path(
     tag = "user",
+    params(("id", description = "user id") ),
+    responses( (status = 200) )
+)]
+#[delete("/{id}")]
+pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
+    let ex_db = RB.acquire().await.expect("msg");
+
+    let user_id = id.into_inner();
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
+        .await
+        .expect("查询用户失败");
+
+    match db_res {
+        None => {
+            return ResponseBody::error("用户不存在");
+        }
+        Some(mut db_user) => {
+            let mut tx = get_transaction_tx().await.unwrap();
+            db_user.status = Status::DEACTIVE as i16;
+            let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
+            tx.commit().await.expect("msg");
+            if let Err(rbs::Error::E(error)) = update_res {
+                log::error!("更新用户失败, {}", error);
+                let res = ResponseBody::error("更新用户失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
+    }
+
+    ResponseBody::success("删除用户成功")
+}
+
+#[utoipa::path(
+    tag = "user",
     responses( (status = 200) )
   )]
 #[post("/bind_role")]

@@ -17,6 +17,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(user_service::get_user_list);
         config.service(user_service::get_user_by_id);
         config.service(user_service::update_user_by_id);
+        config.service(user_service::delete_user);
 
         config.service(user_service::bind_role);
         config.service(user_service::un_bind_role);
