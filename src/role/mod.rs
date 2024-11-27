@@ -25,12 +25,6 @@ pub struct CreateRoleData {
     pub create_by: i32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct RoleListQuery {
-    pub name: Option<String>,
-    pub page_no: i32,
-    pub take: i32,
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct RoleUpdateData {

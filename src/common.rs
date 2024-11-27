@@ -55,6 +55,14 @@ pub struct CommListReq {
     pub take: u16,
 }
 
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct NameListQuery {
+    pub name: Option<String>,
+    pub page_no: i32,
+    pub take: i32,
+}
+
 #[derive(Debug, Serialize)]
 pub struct JWT;
 

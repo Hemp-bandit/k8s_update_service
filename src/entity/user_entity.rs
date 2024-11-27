@@ -17,6 +17,7 @@ pub struct UserEntity {
 
 crud!(UserEntity {}, "user");
 impl_select_page!(UserEntity{select_page() => "`where status=1 order by create_time desc`" }, "user" );
+impl_select_page!(UserEntity{select_page_by_name(name:&str) => "`where status=1 and name = #{name} order by create_time desc`" }, "user" );
 impl_select!(UserEntity{select_by_id(id:i32) -> Option => "`where id = #{id} and status=1`"}, "user");
 impl_select!(UserEntity{select_by_name_phone(name:&str, phone:&str) -> Option => "`where name = #{name} or phone= #{phone}  and status=1`"}, "user");
 impl_select!(UserEntity{select_by_name(name:&str) -> Option => "`where name = #{name} and status=1`"}, "user");

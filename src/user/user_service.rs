@@ -1,7 +1,8 @@
+use std::borrow::Borrow;
 use super::{BindRoleData, UserCreateData, UserUpdateData};
 use crate::{
     common::{
-        check_phone, get_current_time_fmt, get_transaction_tx, CommListReq, Status, UserType,
+        check_phone, get_current_time_fmt, get_transaction_tx, NameListQuery, Status, UserType,
     },
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
@@ -55,14 +56,23 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
     responses( (status = 200) )
 )]
 #[post("/get_user_list")]
-pub async fn get_user_list(req_data: web::Json<CommListReq>) -> impl Responder {
+pub async fn get_user_list(req_data: web::Json<NameListQuery>) -> impl Responder {
     let ex_db = RB.acquire().await.expect("msg");
-    let db_res: Page<UserEntity> = UserEntity::select_page(
-        &ex_db,
-        &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-    )
-    .await
-    .expect("msg");
+    let db_res: Page<UserEntity> = match req_data.name.borrow() {
+        None => UserEntity::select_page(
+            &ex_db,
+            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
+        )
+        .await
+        .expect("msg"),
+        Some(name) => UserEntity::select_page_by_name(
+            &ex_db,
+            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
+            &name,
+        )
+        .await
+        .expect("msg"),
+    };
 
     ResponseBody::default(Some(db_res))
 }
