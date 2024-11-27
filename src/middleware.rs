@@ -3,7 +3,7 @@ use std::future::{ready, Ready};
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
     error,
-    http::header::HeaderValue,
+    http::{header::HeaderValue, Method},
     Error,
 };
 use futures_util::future::LocalBoxFuture;
@@ -83,8 +83,14 @@ fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
 }
 fn has_permission(req: &ServiceRequest) -> bool {
     let value: HeaderValue = HeaderValue::from_str("").unwrap();
-    let token = req.headers().get("Authorization").unwrap_or(&value);
 
+    let binding = req.method().to_owned();
+    let ret_method = binding.as_str();
+    if ret_method == "OPTIONS" {
+        return true;
+    }
+    
+    let token = req.headers().get("Authorization").unwrap_or(&value);
     if token.is_empty() || token.len() < 7 {
         return false;
     };
