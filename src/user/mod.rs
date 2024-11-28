@@ -79,6 +79,13 @@ pub struct UserListQuery {
     pub take: i32,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct LoginUserData {
+    pub id: i32,
+    pub name: String,
+    pub token: String,
+}
+
 /**
  * 后台登陆
  */

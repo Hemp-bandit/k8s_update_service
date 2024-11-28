@@ -17,6 +17,13 @@ impl<T> ResponseBody<T> {
             data,
         }
     }
+    pub fn default_err(msg: &str) -> ResponseBody<Option<T>> {
+        ResponseBody {
+            code: 0,
+            msg: msg.to_string(),
+            data: None,
+        }
+    }
 }
 impl ResponseBody<String> {
     pub fn error(msg: &str) -> ResponseBody<Option<String>> {

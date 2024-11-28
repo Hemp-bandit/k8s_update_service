@@ -3,7 +3,7 @@ use crate::{
     common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data},
     response::ResponseBody,
     role::AccessData,
-    user::{check_user_by_user_id, RedisLoginData},
+    user::{check_user_by_user_id, LoginUserData, RedisLoginData},
     RB, REDIS, REDIS_KEY,
 };
 use actix_web::{get, post, web, HttpRequest, Responder};
@@ -18,6 +18,7 @@ const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
 #[derive(Serialize, Deserialize)]
 struct PasswordData {
     password: String,
+    name: String,
     id: i32,
 }
 
@@ -51,12 +52,15 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
     let key = format!("{}_{}", REDIS_KEY.to_string(), req_data.name.clone());
     let mut rds = REDIS.lock().unwrap();
     let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
-
     let is_login = match redis_login {
         Err(err) => {
             let detail = err.detail().expect("msg");
             log::error!("{}", detail);
-            return ResponseBody::error(detail);
+            return ResponseBody {
+                code: 500,
+                msg: detail.to_string(),
+                data: None,
+            };
         }
         Ok(res) => res,
     };
@@ -65,29 +69,50 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
         let user_info: RedisLoginData = rds.get(key).expect("get user info from redis error");
         match check_user_pass_by_name(user_info.name.clone()).await {
             None => {
-                return ResponseBody::error("用户不存在");
+                return ResponseBody {
+                    code: 500,
+                    msg: "用户不存在".to_string(),
+                    data: None,
+                };
             }
             Some(pass_data) => {
                 if !pass_data.password.eq(&req_data.password) {
-                    return ResponseBody::error("密码错误");
+                    return ResponseBody {
+                        code: 500,
+                        msg: "密码错误".to_string(),
+                        data: None,
+                    };
                 }
             }
         }
 
-        let jwt_token = gen_jwt_token(user_info);
-        return ResponseBody::default(Some(jwt_token));
+        let jwt_token = gen_jwt_token(user_info.clone());
+        let res_data: LoginUserData = LoginUserData {
+            id: user_info.id,
+            name: user_info.name.clone(),
+            token: jwt_token,
+        };
+        return ResponseBody::default(Some(res_data));
     }
 
     let db_user = check_user_pass_by_name(req_data.name.clone()).await;
 
     match db_user {
         None => {
-            return ResponseBody::error("用户不存在");
+            return ResponseBody {
+                code: 500,
+                msg: "用户不存在".to_string(),
+                data: None,
+            };
         }
         Some(db_user) => {
             let is_eq = db_user.password.eq(&req_data.password);
             if !is_eq {
-                return ResponseBody::error("密码错误");
+                return ResponseBody {
+                    code: 500,
+                    msg: "密码错误".to_string(),
+                    data: None,
+                };
             }
             let auth: u64 = get_user_access_val(db_user.id).await;
             let redis_data = RedisLoginData {
@@ -101,7 +126,12 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
                 .set_ex(key.clone(), &redis_data, LOGIN_EX_TIME)
                 .expect("set user login error");
             let jwt_token = gen_jwt_token(redis_data);
-            return ResponseBody::default(Some(jwt_token));
+            let res_data: LoginUserData = LoginUserData {
+                id: db_user.id,
+                name: db_user.name,
+                token: jwt_token,
+            };
+            return ResponseBody::default(Some(res_data));
         }
     }
 }
@@ -170,7 +200,7 @@ async fn check_user_pass_by_name(name: String) -> Option<PasswordData> {
 
     let db_user: Option<PasswordData> = ex
         .query_decode(
-            "select password, id from user where user.name=?",
+            "select password, id, name from user where user.name=?",
             vec![to_value!(name)],
         )
         .await
