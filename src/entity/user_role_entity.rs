@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserRoleEntity {
-    pub id: Option<u16>,
+    pub id: Option<i32>,
     pub role_id: i32,
     pub user_id: i32,
 }

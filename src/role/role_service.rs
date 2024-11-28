@@ -1,14 +1,17 @@
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::{Page, PageRequest};
+use hmac::digest::typenum::U;
+use rbatis::{rbdc::db, Page, PageRequest};
+use rbs::to_value;
 
-use super::{BindAccessData, CreateRoleData, RoleUpdateData};
+use super::{BindAccessData, CreateRoleData, RoleListQueryData, RoleUpdateData};
 use crate::{
     access::check_access_by_id,
-    common::{get_current_time_fmt, get_transaction_tx, NameListQuery, Status},
+    common::{get_current_time_fmt, get_transaction_tx, Status},
     entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
     response::ResponseBody,
-    role::{check_role_access, check_role_by_id},
+    role::{check_role_access, check_role_by_id, RoleListCreateByData, RoleListListData},
     user::check_user_by_user_id,
+    util::sql_tool::SqlTool,
     RB,
 };
 
@@ -50,23 +53,59 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
     responses( (status = 200) )
   )]
 #[post("/get_role_list")]
-async fn get_role_list(req_data: web::Json<NameListQuery>) -> impl Responder {
+async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder {
     let ex_db = RB.acquire().await.expect("msg");
-    let db_res: Page<RoleEntity> = match &req_data.name {
-        Some(name) => RoleEntity::select_page_by_name(
-            &ex_db,
-            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-            &name,
-        )
+    let mut tool = SqlTool::init("select * from role", "order by create_time desc");
+
+    if let Some(name) = &req_data.name {
+        tool.append_sql_filed("name", to_value!(name));
+    }
+    if let Some(create_by) = req_data.create_by {
+        tool.append_sql_filed("create_by", to_value!(create_by));
+    }
+    tool.append_sql_filed("status", to_value!(1));
+
+    let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
+    let count_sql = tool.gen_count_sql("select count(1) from role");
+    let db_res: Vec<RoleEntity> = ex_db
+        .query_decode(&page_sql, tool.opt_val.clone())
         .await
-        .expect("msg"),
-        None => RoleEntity::select_page(
-            &ex_db,
-            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-        )
+        .expect("msg");
+
+    let total: u64 = ex_db
+        .query_decode(&count_sql, tool.opt_val.clone())
         .await
-        .expect("msg"),
+        .expect("msg");
+
+    let mut records: Vec<RoleListListData> = vec![];
+
+    for val in db_res {
+        let create_by: Option<RoleListCreateByData> = ex_db
+            .query_decode(
+                "select id, name from user where id=?",
+                vec![to_value!(val.create_by)],
+            )
+            .await
+            .expect("err");
+        let val: RoleListListData = RoleListListData {
+            id: val.id.expect("msg"),
+            create_by,
+            create_time: val.create_time,
+            update_time: val.update_time,
+            name: val.name,
+            status: val.status,
+        };
+        records.push(val);
+    }
+
+    let db_res: Page<RoleListListData> = Page {
+        records,
+        total,
+        page_no: req_data.page_no as u64,
+        page_size: req_data.take as u64,
+        do_count: true,
     };
+
     ResponseBody::default(Some(db_res))
 }
 

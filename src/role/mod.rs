@@ -25,7 +25,6 @@ pub struct CreateRoleData {
     pub create_by: i32,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct RoleUpdateData {
     pub id: i32,
@@ -42,6 +41,30 @@ pub struct BindAccessData {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccessData {
     pub access_id: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct RoleListQueryData {
+    pub create_by: Option<i32>,
+    pub name: Option<String>,
+    pub page_no: i32,
+    pub take: i32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RoleListListData {
+    pub id: i32,
+    pub create_time: String,
+    pub update_time: String,
+    pub name: String,
+    pub create_by: Option<RoleListCreateByData>, // 创建的用户id
+    pub status: i8,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct RoleListCreateByData {
+    pub id: Option<i32>,
+    pub name: Option<String>,
 }
 
 pub async fn check_role_by_id(id: i32) -> Option<RoleEntity> {
