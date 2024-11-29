@@ -9,7 +9,7 @@ use actix_web::{
 use futures_util::future::LocalBoxFuture;
 use redis::Commands;
 
-use crate::{common::jwt_token_to_data, REDIS, REDIS_KEY};
+use crate::{util::common::jwt_token_to_data, REDIS, REDIS_KEY};
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with

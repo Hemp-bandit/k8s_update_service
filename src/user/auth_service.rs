@@ -1,9 +1,9 @@
 use crate::{
     access::AccessValueData,
-    common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data},
     response::ResponseBody,
     role::AccessData,
     user::{check_user_by_user_id, LoginUserData, RedisLoginData},
+    util::common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data},
     RB, REDIS, REDIS_KEY,
 };
 use actix_web::{get, post, web, HttpRequest, Responder};

@@ -1,15 +1,17 @@
-use actix_web::{post, web, Responder};
-use rbatis::{Page, PageRequest};
-
 use super::{AccessListQuery, AccessUpdateData, CreateAccessData};
 use crate::{
     access::check_access_by_id,
-    common::{gen_access_value, get_current_time_fmt, get_transaction_tx, Status},
     entity::access_entity::AccessEntity,
     response::ResponseBody,
     user::check_user_by_user_id,
+    util::{
+        common::{gen_access_value, get_current_time_fmt, get_transaction_tx},
+        structs::Status,
+    },
     RB,
 };
+use actix_web::{post, web, Responder};
+use rbatis::{Page, PageRequest};
 
 #[utoipa::path(
     tag = "access",
@@ -90,7 +92,7 @@ async fn get_access_list(req_data: web::Json<AccessListQuery>) -> impl Responder
     tag = "access",
     responses( (status = 200))
 )]
-#[post("/update_access_by_id")]
+#[post("/update_access")]
 pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl Responder {
     match check_access_by_id(req_data.id).await {
         None => {
@@ -99,11 +101,6 @@ pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl 
         Some(mut access) => {
             access.name = req_data.name.clone().unwrap_or(access.name);
             access.update_time = get_current_time_fmt();
-            if let Some(status) = req_data.status.clone() {
-                // 任何非法值会将状态置为无效
-                let st = Status::from(status);
-                access.status = st as i8;
-            }
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
             tx.commit().await.expect("msg");

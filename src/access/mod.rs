@@ -31,7 +31,6 @@ pub struct AccessListQuery {
 pub struct AccessUpdateData {
     pub id: i32,
     pub name: Option<String>,
-    pub status: Option<i8>,
 }
 
 

@@ -4,6 +4,7 @@ use utoipa_actix_web::service_config::ServiceConfig;
 
 use crate::{
     entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
+    util::structs::CreateByData,
     RB,
 };
 
@@ -17,6 +18,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(role_service::bind_access);
         config.service(role_service::get_role_binds);
         config.service(role_service::un_bind_role);
+        config.service(role_service::delete_role_by_id);
     }
 }
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -29,7 +31,6 @@ pub struct CreateRoleData {
 pub struct RoleUpdateData {
     pub id: i32,
     pub name: Option<String>,
-    pub status: Option<i8>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -57,14 +58,8 @@ pub struct RoleListListData {
     pub create_time: String,
     pub update_time: String,
     pub name: String,
-    pub create_by: Option<RoleListCreateByData>, // 创建的用户id
+    pub create_by: Option<CreateByData>, // 创建的用户id
     pub status: i8,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct RoleListCreateByData {
-    pub id: Option<i32>,
-    pub name: Option<String>,
 }
 
 pub async fn check_role_by_id(id: i32) -> Option<RoleEntity> {

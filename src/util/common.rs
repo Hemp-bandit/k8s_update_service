@@ -5,63 +5,18 @@ use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use utoipa::{
     openapi::{
         self,
         security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
     },
-    Modify, ToSchema,
+    Modify,
 };
 
 use hmac::{Hmac, Mac};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename = "Enum")]
-pub enum UserType {
-    BIZ = 0,
-    CLIENT = 1,
-}
-#[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename = "Enum")]
-pub enum Status {
-    ACTIVE = 1,
-    DEACTIVE = 0,
-}
-
-impl Status {
-    pub fn from(val: i8) -> Status {
-        match val {
-            0 => Status::DEACTIVE,
-            1 => Status::ACTIVE,
-            _ => Status::DEACTIVE,
-        }
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
-pub struct DeployInfo {
-    pub deployment_name: String,
-    pub container_name: String,
-    pub new_image: String,
-    pub new_tag: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, ToSchema)]
-pub struct CommListReq {
-    pub page_no: u16,
-    pub take: u16,
-}
-
-
-#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
-pub struct NameListQuery {
-    pub name: Option<String>,
-    pub page_no: i32,
-    pub take: i32,
-}
 
 #[derive(Debug, Serialize)]
 pub struct JWT;
@@ -185,7 +140,7 @@ pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
 #[cfg(test)]
 mod test {
 
-    use crate::{common::check_phone, user::RedisLoginData};
+    use crate::{user::RedisLoginData, util::common::check_phone};
 
     use super::{gen_access_value, gen_jwt_token, jwt_token_to_data};
 

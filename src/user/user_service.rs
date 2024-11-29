@@ -1,11 +1,12 @@
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::{
-    common::{check_phone, get_current_time_fmt, get_transaction_tx, Status},
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
     role::check_role_by_id,
     user::{check_user_by_user_id, check_user_role},
+    util::common::{check_phone, get_current_time_fmt, get_transaction_tx},
     util::sql_tool::SqlTool,
+    util::structs::Status,
     RB,
 };
 use actix_web::{delete, get, post, web, Responder};
