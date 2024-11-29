@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
-use crate::{entity::access_entity::AccessEntity, RB};
+use crate::{entity::access_entity::AccessEntity, util::structs::CreateByData, RB};
 
 mod access_service;
 
@@ -23,6 +23,8 @@ pub struct CreateAccessData {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccessListQuery {
     pub name: Option<String>,
+    pub create_by: Option<i32>,
+    pub role_id: Option<i32>,
     pub page_no: i32,
     pub take: i32,
 }
@@ -33,6 +35,16 @@ pub struct AccessUpdateData {
     pub name: Option<String>,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccessListListData {
+    pub id: i32,
+    pub create_time: String,
+    pub update_time: String,
+    pub name: String,
+    pub create_by: Option<CreateByData>, // 创建的用户id
+    pub status: i8,
+    pub value: u64,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccessValueData {

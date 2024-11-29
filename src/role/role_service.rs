@@ -11,7 +11,7 @@ use crate::{
     user::check_user_by_user_id,
     util::{
         common::{get_current_time_fmt, get_transaction_tx},
-        sql_tool::SqlTool,
+        sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
     },
     RB,
@@ -56,7 +56,7 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
   )]
 #[post("/get_role_list")]
 async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder {
-    let ex_db = RB.acquire().await.expect("msg");
+    let ex_db: rbatis::executor::RBatisConnExecutor = RB.acquire().await.expect("msg");
     let mut tool = SqlTool::init("select * from role", "order by create_time desc");
 
     if let Some(name) = &req_data.name {
@@ -68,19 +68,12 @@ async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder
     tool.append_sql_filed("status", to_value!(1));
 
     let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
-    let count_sql = tool.gen_count_sql("select count(1) from role");
     let db_res: Vec<RoleEntity> = ex_db
         .query_decode(&page_sql, tool.opt_val.clone())
         .await
         .expect("msg");
 
-    let total: u64 = ex_db
-        .query_decode(&count_sql, tool.opt_val.clone())
-        .await
-        .expect("msg");
-
     let mut records: Vec<RoleListListData> = vec![];
-
     for val in db_res {
         let create_by: Option<CreateByData> = ex_db
             .query_decode(
@@ -100,13 +93,14 @@ async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder
         records.push(val);
     }
 
-    let db_res: Page<RoleListListData> = Page {
+    let conf = SqlToolPageData {
+        ex_db,
+        table: "role".to_string(),
         records,
-        total,
         page_no: req_data.page_no as u64,
         page_size: req_data.take as u64,
-        do_count: true,
     };
+    let db_res = tool.page_query(conf).await;
 
     ResponseBody::default(Some(db_res))
 }
