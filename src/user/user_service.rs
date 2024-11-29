@@ -1,4 +1,4 @@
-use std::process::id;
+use core::sync;
 
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::{
@@ -10,6 +10,7 @@ use crate::{
         common::{check_phone, get_current_time_fmt, get_transaction_tx},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
+        sync_opt::{self, SyncOptData},
     },
     RB, REDIS,
 };
@@ -47,11 +48,20 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
     let mut tx = get_transaction_tx().await.unwrap();
     let insert_res = UserEntity::insert(&tx, &insert_user).await;
     tx.commit().await.expect("commit transaction error ");
-    if let Err(rbs::Error::E(error)) = insert_res {
-        let rsp = ResponseBody::error("创建用户失败");
-        log::error!(" 创建用户失败 {}", error);
-        tx.rollback().await.expect("rollback error");
-        return rsp;
+    match insert_res {
+        Err(rbs::Error::E(error)) => {
+            let rsp = ResponseBody::error("创建用户失败");
+            log::error!(" 创建用户失败 {}", error);
+            tx.rollback().await.expect("rollback error");
+            return rsp;
+        }
+        Ok(res) => {
+            let opt = OptionData::default(
+                &req_data.name,
+                res.last_insert_id.as_i64().expect("msg") as i32,
+            );
+            sync_opt::sync(SyncOptData::default("user_ids", "user_info", opt)).await;
+        }
     }
 
     ResponseBody::success("创建用户成功")
@@ -154,6 +164,9 @@ pub async fn update_user_by_id(
                 tx.rollback().await.expect("msg");
                 return res;
             }
+
+            let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
+            sync_opt::sync(SyncOptData::default("user_ids", "user_info", opt)).await;
         }
     }
     ResponseBody::success("更新用户成功")
@@ -320,16 +333,7 @@ pub async fn get_user_option() -> impl Responder {
             .expect("select db err");
 
         for ele in opt.iter() {
-            let _: () = rds
-                .sadd("user_ids", ele.id)
-                .expect("set user_id to rds err");
-            let _: () = rds
-                .hset(
-                    "user_info",
-                    ele.id,
-                    serde_json::to_string(&ele).expect("msg"),
-                )
-                .expect("hset user to rds err");
+            sync_opt::sync(SyncOptData::default("user_ids", "user_info", ele.clone())).await;
         }
         ResponseBody::default(Some(opt))
     }

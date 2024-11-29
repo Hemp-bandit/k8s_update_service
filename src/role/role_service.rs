@@ -14,6 +14,7 @@ use crate::{
         common::{get_current_time_fmt, get_transaction_tx},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
+        sync_opt::{self, SyncOptData},
     },
     RB, REDIS,
 };
@@ -261,7 +262,6 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
     ResponseBody::success("解除绑定成功")
 }
 
-
 #[utoipa::path(
     tag = "role",
     responses( (status = 200) )
@@ -289,16 +289,7 @@ pub async fn get_role_option() -> impl Responder {
             .expect("select db err");
 
         for ele in opt.iter() {
-            let _: () = rds
-                .sadd("role_ids", ele.id)
-                .expect("set role_id to rds err");
-            let _: () = rds
-                .hset(
-                    "role_info",
-                    ele.id,
-                    serde_json::to_string(&ele).expect("msg"),
-                )
-                .expect("hset role_info to rds err");
+            sync_opt::sync(SyncOptData::default("role_ids", "role_info", ele.clone())).await;
         }
         ResponseBody::default(Some(opt))
     }
