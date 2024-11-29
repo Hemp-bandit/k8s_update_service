@@ -1,15 +1,18 @@
-use actix_web::{post, web, Responder};
-use rbatis::{Page, PageRequest};
-
 use super::{AccessListQuery, AccessUpdateData, CreateAccessData};
 use crate::{
-    access::check_access_by_id,
-    common::{gen_access_value, get_current_time_fmt, get_transaction_tx, Status},
+    access::{check_access_by_id, AccessListListData},
     entity::access_entity::AccessEntity,
     response::ResponseBody,
     user::check_user_by_user_id,
+    util::{
+        common::{gen_access_value, get_current_time_fmt, get_transaction_tx},
+        sql_tool::{SqlTool, SqlToolPageData},
+        structs::{CreateByData, Status},
+    },
     RB,
 };
+use actix_web::{delete, post, web, Responder};
+use rbs::to_value;
 
 #[utoipa::path(
     tag = "access",
@@ -68,21 +71,54 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder 
 #[post("/get_access_list")]
 async fn get_access_list(req_data: web::Json<AccessListQuery>) -> impl Responder {
     let ex_db = RB.acquire().await.expect("msg");
-    let db_res: Page<AccessEntity> = match &req_data.name {
-        Some(name) => AccessEntity::select_page_by_name(
-            &ex_db,
-            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-            &name,
-        )
+    let mut tool = SqlTool::init("select * from access", "order by create_time desc");
+
+    if let Some(name) = req_data.name.clone() {
+        tool.append_sql_filed("name", to_value!(name));
+    }
+    if let Some(role_id) = req_data.role_id {
+        tool.append_sql_filed("role_id", to_value!(role_id));
+    }
+    if let Some(create_by) = req_data.create_by {
+        tool.append_sql_filed("create_by", to_value!(create_by));
+    }
+    tool.append_sql_filed("status", to_value!(1));
+
+    let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
+    let db_res: Vec<AccessEntity> = ex_db
+        .query_decode(&page_sql, tool.opt_val.clone())
         .await
-        .expect("msg"),
-        None => AccessEntity::select_page(
-            &ex_db,
-            &PageRequest::new(req_data.page_no as u64, req_data.take as u64),
-        )
-        .await
-        .expect("msg"),
+        .expect("msg");
+
+    let mut records: Vec<AccessListListData> = vec![];
+    for val in db_res {
+        let create_by: Option<CreateByData> = ex_db
+            .query_decode(
+                "select id, name from user where id=?",
+                vec![to_value!(val.create_by)],
+            )
+            .await
+            .expect("err");
+        let val: AccessListListData = AccessListListData {
+            id: val.id.expect("msg"),
+            create_by,
+            create_time: val.create_time,
+            update_time: val.update_time,
+            name: val.name,
+            status: val.status,
+            value: val.value,
+        };
+        records.push(val);
+    }
+    let conf = SqlToolPageData {
+        ex_db,
+        table: "access".to_string(),
+        records,
+        page_no: req_data.page_no as u64,
+        page_size: req_data.take as u64,
     };
+    let db_res = tool.page_query(conf).await;
+
     ResponseBody::default(Some(db_res))
 }
 
@@ -90,7 +126,7 @@ async fn get_access_list(req_data: web::Json<AccessListQuery>) -> impl Responder
     tag = "access",
     responses( (status = 200))
 )]
-#[post("/update_access_by_id")]
+#[post("/update_access")]
 pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl Responder {
     match check_access_by_id(req_data.id).await {
         None => {
@@ -99,11 +135,37 @@ pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl 
         Some(mut access) => {
             access.name = req_data.name.clone().unwrap_or(access.name);
             access.update_time = get_current_time_fmt();
-            if let Some(status) = req_data.status.clone() {
-                // 任何非法值会将状态置为无效
-                let st = Status::from(status);
-                access.status = st as i8;
+            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
+            tx.commit().await.expect("msg");
+
+            if let Err(rbs::Error::E(error)) = update_res {
+                log::error!("更新权限失败, {}", error);
+                let res = ResponseBody::error("更新权限失败");
+                tx.rollback().await.expect("msg");
+                return res;
             }
+        }
+    }
+
+    ResponseBody::success("权限更新成功")
+}
+
+#[utoipa::path(
+    tag = "access",
+    responses( (status = 200))
+)]
+#[delete("/{id}")]
+pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
+    let id = id.into_inner();
+
+    match check_access_by_id(id).await {
+        None => {
+            return ResponseBody::error("权限不存在");
+        }
+        Some(mut access) => {
+            access.status = Status::DEACTIVE as i8;
+            access.update_time = get_current_time_fmt();
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
             tx.commit().await.expect("msg");

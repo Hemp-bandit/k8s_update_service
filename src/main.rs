@@ -2,7 +2,7 @@ use std::sync::Mutex;
 use actix_cors::Cors;
 use actix_web::middleware::{Compress, Logger};
 use actix_web::{http, App, HttpServer};
-use common::JWT;
+use util::common::JWT;
 use middleware::JwtAuth;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
@@ -15,7 +15,6 @@ use env::dotenv;
 
 
 mod access;
-mod common;
 mod entity;
 mod response;
 mod role;

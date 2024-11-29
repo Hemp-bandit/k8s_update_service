@@ -1,17 +1,19 @@
 use actix_web::{delete, get, post, web, Responder};
-use hmac::digest::typenum::U;
-use rbatis::{rbdc::db, Page, PageRequest};
+use rbatis::Page;
 use rbs::to_value;
 
 use super::{BindAccessData, CreateRoleData, RoleListQueryData, RoleUpdateData};
 use crate::{
     access::check_access_by_id,
-    common::{get_current_time_fmt, get_transaction_tx, Status},
     entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
     response::ResponseBody,
-    role::{check_role_access, check_role_by_id, RoleListCreateByData, RoleListListData},
+    role::{check_role_access, check_role_by_id, CreateByData, RoleListListData},
     user::check_user_by_user_id,
-    util::sql_tool::SqlTool,
+    util::{
+        common::{get_current_time_fmt, get_transaction_tx},
+        sql_tool::{SqlTool, SqlToolPageData},
+        structs::Status,
+    },
     RB,
 };
 
@@ -54,7 +56,7 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
   )]
 #[post("/get_role_list")]
 async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder {
-    let ex_db = RB.acquire().await.expect("msg");
+    let ex_db: rbatis::executor::RBatisConnExecutor = RB.acquire().await.expect("msg");
     let mut tool = SqlTool::init("select * from role", "order by create_time desc");
 
     if let Some(name) = &req_data.name {
@@ -66,21 +68,14 @@ async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder
     tool.append_sql_filed("status", to_value!(1));
 
     let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
-    let count_sql = tool.gen_count_sql("select count(1) from role");
     let db_res: Vec<RoleEntity> = ex_db
         .query_decode(&page_sql, tool.opt_val.clone())
         .await
         .expect("msg");
 
-    let total: u64 = ex_db
-        .query_decode(&count_sql, tool.opt_val.clone())
-        .await
-        .expect("msg");
-
     let mut records: Vec<RoleListListData> = vec![];
-
     for val in db_res {
-        let create_by: Option<RoleListCreateByData> = ex_db
+        let create_by: Option<CreateByData> = ex_db
             .query_decode(
                 "select id, name from user where id=?",
                 vec![to_value!(val.create_by)],
@@ -98,13 +93,14 @@ async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder
         records.push(val);
     }
 
-    let db_res: Page<RoleListListData> = Page {
+    let conf = SqlToolPageData {
+        ex_db,
+        table: "role".to_string(),
         records,
-        total,
         page_no: req_data.page_no as u64,
         page_size: req_data.take as u64,
-        do_count: true,
     };
+    let db_res = tool.page_query(conf).await;
 
     ResponseBody::default(Some(db_res))
 }
@@ -113,7 +109,7 @@ async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder
     tag = "role",
     responses( (status = 200) )
   )]
-#[post("/update_role_by_id")]
+#[post("/update_role")]
 pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Responder {
     match check_role_by_id(req_data.id).await {
         None => {
@@ -122,11 +118,6 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
         Some(mut role) => {
             role.name = req_data.name.clone().unwrap_or(role.name);
             role.update_time = get_current_time_fmt();
-            if let Some(status) = req_data.status.clone() {
-                // 任何非法值会将状态置为无效
-                let st = Status::from(status);
-                role.status = st as i8;
-            }
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
             tx.commit().await.expect("msg");
@@ -141,6 +132,36 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
     }
 
     ResponseBody::success("角色更新成功")
+}
+
+#[utoipa::path(
+    tag = "role",
+    responses( (status = 200) )
+  )]
+#[delete("/{id}")]
+pub async fn delete_role_by_id(id: web::Path<i32>) -> impl Responder {
+    let id: i32 = id.into_inner();
+    match check_role_by_id(id).await {
+        None => {
+            return ResponseBody::error("角色不存在");
+        }
+        Some(mut role) => {
+            role.status = Status::DEACTIVE as i8;
+            role.update_time = get_current_time_fmt();
+            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
+            tx.commit().await.expect("msg");
+
+            if let Err(rbs::Error::E(error)) = update_res {
+                log::error!("更新用户失败, {}", error);
+                let res = ResponseBody::error("更新角色失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
+    }
+
+    ResponseBody::success("角色删除成功")
 }
 
 #[utoipa::path(
