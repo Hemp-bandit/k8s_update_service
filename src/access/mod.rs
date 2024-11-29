@@ -11,6 +11,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(access_service::create_access);
         config.service(access_service::get_access_list);
         config.service(access_service::update_access_by_id);
+        config.service(access_service::delete_access);
     }
 }
 

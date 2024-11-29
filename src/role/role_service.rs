@@ -147,6 +147,7 @@ pub async fn delete_role_by_id(id: web::Path<i32>) -> impl Responder {
         }
         Some(mut role) => {
             role.status = Status::DEACTIVE as i8;
+            role.update_time = get_current_time_fmt();
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
             tx.commit().await.expect("msg");

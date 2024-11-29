@@ -11,7 +11,7 @@ use crate::{
     },
     RB,
 };
-use actix_web::{post, web, Responder};
+use actix_web::{delete, post, web, Responder};
 use rbs::to_value;
 
 #[utoipa::path(
@@ -83,7 +83,7 @@ async fn get_access_list(req_data: web::Json<AccessListQuery>) -> impl Responder
         tool.append_sql_filed("create_by", to_value!(create_by));
     }
     tool.append_sql_filed("status", to_value!(1));
-    
+
     let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
     let db_res: Vec<AccessEntity> = ex_db
         .query_decode(&page_sql, tool.opt_val.clone())
@@ -134,6 +134,37 @@ pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl 
         }
         Some(mut access) => {
             access.name = req_data.name.clone().unwrap_or(access.name);
+            access.update_time = get_current_time_fmt();
+            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
+            tx.commit().await.expect("msg");
+
+            if let Err(rbs::Error::E(error)) = update_res {
+                log::error!("更新权限失败, {}", error);
+                let res = ResponseBody::error("更新权限失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
+    }
+
+    ResponseBody::success("权限更新成功")
+}
+
+#[utoipa::path(
+    tag = "access",
+    responses( (status = 200))
+)]
+#[delete("/{id}")]
+pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
+    let id = id.into_inner();
+
+    match check_access_by_id(id).await {
+        None => {
+            return ResponseBody::error("权限不存在");
+        }
+        Some(mut access) => {
+            access.status = Status::DEACTIVE as i8;
             access.update_time = get_current_time_fmt();
             let mut tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
