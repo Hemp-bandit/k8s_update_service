@@ -1,17 +1,23 @@
+use std::process::id;
+
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
     role::check_role_by_id,
-    user::{check_user_by_user_id, check_user_role},
-    util::common::{check_phone, get_current_time_fmt, get_transaction_tx},
-    util::sql_tool::SqlTool,
-    util::structs::Status,
-    RB,
+    user::{check_user_by_user_id, check_user_role, OptionData},
+    util::{
+        common::{check_phone, get_current_time_fmt, get_transaction_tx},
+        sql_tool::{SqlTool, SqlToolPageData},
+        structs::Status,
+    },
+    RB, REDIS,
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbatis::Page;
 use rbs::to_value;
+use redis::Commands;
+use serde::Serializer;
 
 #[utoipa::path(
     tag = "user",
@@ -65,27 +71,23 @@ pub async fn get_user_list(req_data: web::Json<UserListQuery>) -> impl Responder
     if let Some(user_type) = req_data.user_type {
         tool.append_sql_filed("user_type", to_value!(user_type));
     }
+
     tool.append_sql_filed("status", to_value!(1));
     let page_sql = tool.gen_page_sql(req_data.page_no, req_data.take);
-    let count_sql = tool.gen_count_sql("select count(1) from user");
+
     let db_res: Vec<UserEntity> = ex_db
         .query_decode(&page_sql, tool.opt_val.clone())
         .await
         .expect("msg");
-
-    let total: u64 = ex_db
-        .query_decode(&count_sql, tool.opt_val.clone())
-        .await
-        .expect("msg");
-
-    let page_res = Page {
+    let conf: SqlToolPageData<UserEntity> = SqlToolPageData {
+        ex_db,
+        table: "user".to_string(),
         records: db_res,
         page_no: req_data.page_no as u64,
         page_size: req_data.take as u64,
-        total,
-        do_count: true,
     };
 
+    let page_res = tool.page_query(conf).await;
     ResponseBody::default(Some(page_res))
 }
 
@@ -289,4 +291,46 @@ pub async fn un_bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     }
 
     ResponseBody::success("解除绑定成功")
+}
+
+#[utoipa::path(
+    tag = "user",
+    responses( (status = 200) )
+  )]
+#[get("/get_user_option")]
+pub async fn get_user_option() -> impl Responder {
+    let mut rds = REDIS.lock().unwrap();
+    let ids: Vec<i32> = rds.smembers("user_ids").expect("get user_id rds err");
+
+    if !ids.is_empty() {
+        let res: Vec<OptionData> = ids
+            .into_iter()
+            .map(|id| {
+                let user_data: String = rds.hget("user_info", id).expect("asdf");
+                let user_data: OptionData = serde_json::from_str(&user_data).expect("msg");
+                user_data
+            })
+            .collect();
+        ResponseBody::default(Some(res))
+    } else {
+        let ex_db = RB.acquire().await.expect("get ex err");
+        let opt: Vec<OptionData> = ex_db
+            .query_decode("select id, name from user", vec![])
+            .await
+            .expect("select db err");
+
+        for ele in opt.iter() {
+            let _: () = rds
+                .sadd("user_ids", ele.id)
+                .expect("set user_id to rds err");
+            let _: () = rds
+                .hset(
+                    "user_info",
+                    ele.id,
+                    serde_json::to_string(&ele).expect("msg"),
+                )
+                .expect("hset user to rds err");
+        }
+        ResponseBody::default(Some(opt))
+    }
 }

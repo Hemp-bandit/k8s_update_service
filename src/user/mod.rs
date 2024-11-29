@@ -15,13 +15,17 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
         config.service(user_service::create_user);
         config.service(user_service::get_user_list);
-        config.service(user_service::get_user_by_id);
-        config.service(user_service::update_user_by_id);
-        config.service(user_service::delete_user);
-
         config.service(user_service::bind_role);
         config.service(user_service::un_bind_role);
+        config.service(user_service::get_user_option);
+
+
+        
+        config.service(user_service::update_user_by_id);
+        config.service(user_service::get_user_by_id);
+        config.service(user_service::delete_user);
         config.service(user_service::get_role_binds);
+        
     }
 }
 
@@ -93,6 +97,12 @@ pub struct LoginUserData {
 pub struct LoginData {
     pub name: String,
     pub password: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
+pub struct OptionData {
+    pub name: String,
+    pub id: i32,
 }
 
 pub async fn check_user_by_user_id(user_id: i32) -> Option<UserEntity> {
