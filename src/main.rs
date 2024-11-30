@@ -24,7 +24,7 @@ mod util;
 
 #[derive(OpenApi)]
 #[openapi(
-    tags( 
+    tags(
         (name = "user", description = "user 接口"),
         (name = "role", description = "role 接口"),
         (name = "access", description = "权限接口"),
@@ -52,7 +52,7 @@ lazy_static::lazy_static! {
                 client
             }
         };
-    
+
         let conn: Connection =  match client.get_connection() {
           Err(err)=>{
             let detail = err.detail().expect("get redis err detail ");

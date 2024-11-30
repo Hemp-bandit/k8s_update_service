@@ -1,11 +1,17 @@
 use core::sync;
 
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
+use crate::entity::role_entity::RoleEntity;
+use crate::user::user_role::{
+    check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
+};
+use crate::user::SubUserRoleData;
+use crate::util::common::RedisKeys;
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
     role::check_role_by_id,
-    user::{check_user_by_user_id, check_user_role, OptionData},
+    user::{check_user_by_user_id, OptionData},
     util::{
         common::{check_phone, get_current_time_fmt, get_transaction_tx},
         sql_tool::{SqlTool, SqlToolPageData},
@@ -201,49 +207,11 @@ pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
                 tx.rollback().await.expect("msg");
                 return res;
             }
+            //     TODOl: delete user from cache
         }
     }
 
     ResponseBody::success("删除用户成功")
-}
-
-#[utoipa::path(
-    tag = "user",
-    responses( (status = 200) )
-  )]
-#[post("/bind_role")]
-pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
-    let db_role = check_role_by_id(req_data.role_id).await;
-    let db_user = check_user_by_user_id(req_data.user_id).await;
-    if db_role.is_none() {
-        return ResponseBody::error("角色不存在");
-    }
-    if db_user.is_none() {
-        return ResponseBody::error("用户不存在");
-    }
-
-    let db_role = check_user_role(req_data.role_id.clone(), req_data.user_id.clone()).await;
-    if !db_role.is_empty() {
-        return ResponseBody::error("角色已绑定");
-    }
-
-    let new_user_role = UserRoleEntity {
-        id: None,
-        role_id: req_data.role_id.clone(),
-        user_id: req_data.user_id.clone(),
-    };
-
-    let mut tx = get_transaction_tx().await.expect("get tx error");
-    let insert_res = UserRoleEntity::insert(&tx, &new_user_role).await;
-    tx.commit().await.expect("msg");
-    if let Err(rbs::Error::E(error)) = insert_res {
-        log::error!("绑定角色失败, {}", error);
-        let res = ResponseBody::error("绑定角色失败");
-        tx.rollback().await.expect("msg");
-        return res;
-    }
-
-    ResponseBody::success("绑定成功")
 }
 
 #[utoipa::path(
@@ -263,12 +231,10 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     }
 
     let ex = RB.acquire().await.expect("msg");
-    let search_res = UserRoleEntity::select_by_column(&ex, "user_id", id)
-        .await
-        .expect("msg");
+    let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
+    let res = ResponseBody::default(Some(roles));
 
-    let res: ResponseBody<Option<Vec<UserRoleEntity>>> = ResponseBody::default(Some(search_res));
-
+    // TODO: cache to redis
     res
 }
 
@@ -276,34 +242,49 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     tag = "user",
     responses( (status = 200) )
   )]
-#[delete("/un_bind_role")]
-pub async fn un_bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
-    let db_role = check_role_by_id(req_data.role_id).await;
+#[post("/bind_role")]
+pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
+    let check_res = check_role_exists(&req_data.role_id).await;
     let db_user = check_user_by_user_id(req_data.user_id).await;
-    if db_role.is_none() {
+    if check_res.is_none() {
         return ResponseBody::error("角色不存在");
     }
     if db_user.is_none() {
         return ResponseBody::error("用户不存在");
     }
 
+    let (hash_bind, mut add_ids, mut sub_ids) = check_bind(&req_data.user_id, &req_data.role_id);
+    if !hash_bind {
+        add_ids = req_data.role_id.clone();
+        sub_ids = req_data.role_id.clone();
+    }
+
+    let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids);
+    let sub_tabs: Vec<SubUserRoleData> = role_ids_to_sub_tab(&req_data.user_id, &sub_ids);
+
     let mut tx = get_transaction_tx().await.expect("get tx error");
-    let delete_res = UserRoleEntity::delete_by_role_and_user(
-        &tx,
-        req_data.role_id.clone(),
-        req_data.user_id.clone(),
-    )
-    .await;
+
+    let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
+    let sub_res =
+        UserRoleEntity::delete_by_column_batch(&tx, "role_id", &sub_tabs, sub_tabs.len() as u64)
+            .await;
 
     tx.commit().await.expect("msg");
-    if let Err(rbs::Error::E(error)) = delete_res {
-        log::error!("解除绑定角色失败, {error}");
-        let res = ResponseBody::error("解除绑定角色失败");
+
+    if let Err(rbs::Error::E(error)) = add_res {
+        log::error!("绑定用户角色失败, {error}");
+        let res = ResponseBody::error("绑定用户角色失败");
         tx.rollback().await.expect("msg");
         return res;
     }
 
-    ResponseBody::success("解除绑定成功")
+    if let Err(rbs::Error::E(error)) = sub_res {
+        log::error!("删除用户角色失败, {error}");
+        let res = ResponseBody::error("删除用户角色失败");
+        tx.rollback().await.expect("msg");
+        return res;
+    }
+    ResponseBody::success("绑定成功")
 }
 
 #[utoipa::path(
@@ -319,7 +300,8 @@ pub async fn get_user_option() -> impl Responder {
         let res: Vec<OptionData> = ids
             .into_iter()
             .map(|id| {
-                let user_data: String = rds.hget("user_info", id).expect("asdf");
+                let user_data: String =
+                    rds.hget(RedisKeys::UserInfo.to_string(), id).expect("asdf");
                 let user_data: OptionData = serde_json::from_str(&user_data).expect("msg");
                 user_data
             })
@@ -333,7 +315,12 @@ pub async fn get_user_option() -> impl Responder {
             .expect("select db err");
 
         for ele in opt.iter() {
-            sync_opt::sync(SyncOptData::default("user_ids", "user_info", ele.clone())).await;
+            sync_opt::sync(SyncOptData::default(
+                &RedisKeys::UserIds.to_string(),
+                &RedisKeys::UserInfo.to_string(),
+                ele.clone(),
+            ))
+            .await;
         }
         ResponseBody::default(Some(opt))
     }

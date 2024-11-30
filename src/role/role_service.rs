@@ -1,5 +1,4 @@
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::Page;
 use rbs::to_value;
 use redis::Commands;
 
@@ -11,7 +10,7 @@ use crate::{
     role::{check_role_access, check_role_by_id, CreateByData, RoleListListData},
     user::{check_user_by_user_id, OptionData},
     util::{
-        common::{get_current_time_fmt, get_transaction_tx},
+        common::{get_current_time_fmt, get_transaction_tx, RedisKeys},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
         sync_opt::{self, SyncOptData},
@@ -269,13 +268,16 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
     let mut rds = REDIS.lock().unwrap();
-    let ids: Vec<i32> = rds.smembers("role_ids").expect("get role_ids rds err");
+    let ids: Vec<i32> = rds
+        .smembers(RedisKeys::RoleIds.to_string())
+        .expect("get role_ids rds err");
 
     if !ids.is_empty() {
         let res: Vec<OptionData> = ids
             .into_iter()
             .map(|id| {
-                let user_data: String = rds.hget("role_info", id).expect("asdf");
+                let user_data: String =
+                    rds.hget(RedisKeys::RoleInfo.to_string(), id).expect("asdf");
                 let user_data: OptionData = serde_json::from_str(&user_data).expect("msg");
                 user_data
             })
@@ -289,7 +291,12 @@ pub async fn get_role_option() -> impl Responder {
             .expect("select db err");
 
         for ele in opt.iter() {
-            sync_opt::sync(SyncOptData::default("role_ids", "role_info", ele.clone())).await;
+            sync_opt::sync(SyncOptData::default(
+                &RedisKeys::RoleIds.to_string(),
+                &RedisKeys::RoleInfo.to_string(),
+                ele.clone(),
+            ))
+            .await;
         }
         ResponseBody::default(Some(opt))
     }

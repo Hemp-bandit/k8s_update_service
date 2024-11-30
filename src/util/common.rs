@@ -1,11 +1,12 @@
-use std::env::var;
-
 use crate::{user::RedisLoginData, RB};
 use chrono::{DateTime, Local, Utc};
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
 use serde::Serialize;
+use std::env::var;
+use std::fmt;
+use std::fmt::Formatter;
 use utoipa::{
     openapi::{
         self,
@@ -33,6 +34,26 @@ impl Modify for JWT {
                         .build(),
                 ),
             );
+        }
+    }
+}
+
+pub enum RedisKeys {
+    UserIds,
+    UserInfo,
+    RoleIds,
+    RoleInfo,
+    UserRoles,
+}
+
+impl fmt::Display for RedisKeys {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            RedisKeys::UserIds => write!(f, "user_ids"),
+            RedisKeys::UserInfo => write!(f, "user_info"),
+            RedisKeys::RoleIds => write!(f, "role_ids"),
+            RedisKeys::RoleInfo => write!(f, "role_info"),
+            RedisKeys::UserRoles => write!(f, "user_roles"),
         }
     }
 }

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use utoipa::ToSchema;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -39,6 +40,7 @@ pub struct DeployInfo {
 }
 
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
+#[schema(example = json!({"page_no": 1, "take": 10}))]
 pub struct CommListReq {
     pub page_no: u16,
     pub take: u16,
