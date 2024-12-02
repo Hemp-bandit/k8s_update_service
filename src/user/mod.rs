@@ -115,15 +115,6 @@ pub struct SubUserRoleData {
 
 pub async fn check_user_by_user_id(user_id: i32) -> Option<UserEntity> {
     // check in redis
-    let mut rds = REDIS.lock().unwrap();
-    let r_user: bool = rds
-        .sismember(RedisKeys::UserIds.to_string(), user_id.clone())
-        .expect("get user in rds err");
-
-    if !r_user {
-        return None;
-    }
-
     let ex_db = RB.acquire().await.expect("msg");
     let db_user: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id.clone().into())
         .await

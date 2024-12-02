@@ -6,9 +6,7 @@ use redis::Commands;
 
 use super::SubUserRoleData;
 
-/**
- * 检查角色是否存在于cache & db
- */
+///检查角色是否存在于cache & db
 pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
     //  check in cache
     let mut rds = REDIS.lock().unwrap();

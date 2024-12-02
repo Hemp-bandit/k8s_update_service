@@ -221,8 +221,8 @@ pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
 #[get("/user_binds/{id}")]
 pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     let id = parma.into_inner();
-    let db_role = check_user_by_user_id(id.clone()).await;
-    if db_role.is_none() {
+    let db_user = check_user_by_user_id(id).await;
+    if db_user.is_none() {
         return ResponseBody {
             code: 500,
             msg: "用户不存在".to_string(),
@@ -234,7 +234,6 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
     let res = ResponseBody::default(Some(roles));
 
-    // TODO: cache to redis
     res
 }
 
@@ -310,7 +309,7 @@ pub async fn get_user_option() -> impl Responder {
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
         let opt: Vec<OptionData> = ex_db
-            .query_decode("select id, name from user", vec![])
+            .query_decode("select id, name from user where status = 1", vec![])
             .await
             .expect("select db err");
 

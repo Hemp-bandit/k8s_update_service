@@ -272,6 +272,7 @@ pub async fn get_role_option() -> impl Responder {
         .smembers(RedisKeys::RoleIds.to_string())
         .expect("get role_ids rds err");
 
+
     if !ids.is_empty() {
         let res: Vec<OptionData> = ids
             .into_iter()
@@ -286,16 +287,16 @@ pub async fn get_role_option() -> impl Responder {
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
         let opt: Vec<OptionData> = ex_db
-            .query_decode("select id, name from role", vec![])
+            .query_decode("select id, name from role where status=1", vec![])
             .await
             .expect("select db err");
 
         for ele in opt.iter() {
-            sync_opt::sync(SyncOptData::default(
-                &RedisKeys::RoleIds.to_string(),
-                &RedisKeys::RoleInfo.to_string(),
-                ele.clone(),
-            ))
+            sync_opt::sync(SyncOptData {
+                set_key: RedisKeys::RoleIds.to_string(),
+                hmap_key: RedisKeys::RoleInfo.to_string(),
+                opt_data: ele.clone(),
+            })
             .await;
         }
         ResponseBody::default(Some(opt))
