@@ -1,18 +1,22 @@
-use super::{AccessListQuery, AccessUpdateData, CreateAccessData};
+use super::{AccessListQuery, AccessMapItem, AccessUpdateData, CreateAccessData};
 use crate::{
     access::{check_access_by_id, AccessListListData},
     entity::access_entity::AccessEntity,
-    response::ResponseBody,
+    response::{MyError, ResponseBody},
     user::check_user_by_user_id,
     util::{
-        common::{gen_access_value, get_current_time_fmt, get_transaction_tx},
+        common::{
+            gen_access_value, get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys,
+        },
         sql_tool::{SqlTool, SqlToolPageData},
         structs::{CreateByData, Status},
+        sync_opt::{self, SyncOptData},
     },
-    RB,
+    RB, REDIS,
 };
-use actix_web::{delete, post, web, Responder};
+use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use redis::Commands;
 
 #[utoipa::path(
     tag = "access",
@@ -180,4 +184,47 @@ pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
     }
 
     ResponseBody::success("权限更新成功")
+}
+
+#[utoipa::path(
+    tag = "access",
+    responses( (status = 200))
+)]
+#[get("/access_map")]
+pub async fn get_access_map() -> Result<impl Responder, MyError> {
+    let mut rds = REDIS.lock().expect("get rds err");
+    // check in rds
+    let cache_ids: Vec<i32> = rds
+        .smembers(RedisKeys::AccessMapIds.to_string())
+        .expect("get access map ids err");
+    if cache_ids.is_empty() {
+        let list = get_access().await;
+        drop(rds);
+        for ele in &list {
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::UserIds,
+                RedisKeys::UserInfo,
+                ele.id,
+                ele.clone(),
+            ))
+            .await;
+        }
+        Ok(ResponseBody::default(Some(list)))
+    } else {
+        let res: Vec<AccessMapItem> =
+            rds_str_to_list(rds, cache_ids, RedisKeys::AccessMap, |val| {
+                let item: AccessMapItem = serde_json::from_str(&val).expect("msg");
+                item
+            });
+        Ok(ResponseBody::default(Some(res)))
+    }
+}
+
+async fn get_access() -> Vec<AccessMapItem> {
+    let ex = RB.acquire().await.expect("asdf");
+    let list: Vec<AccessMapItem> = ex
+        .query_decode("select id,name,value from access where status=1", vec![])
+        .await
+        .expect("msg");
+    list
 }

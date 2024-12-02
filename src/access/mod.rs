@@ -11,6 +11,8 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(access_service::create_access);
         config.service(access_service::get_access_list);
         config.service(access_service::update_access_by_id);
+        config.service(access_service::get_access_map);
+
         config.service(access_service::delete_access);
     }
 }
@@ -46,6 +48,13 @@ pub struct AccessListListData {
     pub status: i8,
     pub value: u64,
 }
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct AccessMapItem {
+    pub id: i32,
+    pub name: String,
+    pub value: u64,
+}
+
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccessValueData {

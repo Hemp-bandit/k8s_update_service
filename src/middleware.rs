@@ -114,8 +114,8 @@ pub fn check_is_login_redis(user_name: String) -> bool {
     let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
     let is_login = match redis_login {
         Err(err) => {
-            let detail = err.detail().expect("msg");
-            log::error!("{}", detail);
+            let detail = err.detail();
+            log::error!("{detail:?}", );
             return false;
         }
         Ok(res) => res,

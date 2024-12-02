@@ -1,5 +1,4 @@
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::Page;
 use rbs::to_value;
 use redis::Commands;
 
@@ -11,9 +10,10 @@ use crate::{
     role::{check_role_access, check_role_by_id, CreateByData, RoleListListData},
     user::{check_user_by_user_id, OptionData},
     util::{
-        common::{get_current_time_fmt, get_transaction_tx},
+        common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
+        sync_opt::{self, SyncOptData},
     },
     RB, REDIS,
 };
@@ -261,7 +261,6 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
     ResponseBody::success("解除绑定成功")
 }
 
-
 #[utoipa::path(
     tag = "role",
     responses( (status = 200) )
@@ -269,36 +268,31 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
     let mut rds = REDIS.lock().unwrap();
-    let ids: Vec<i32> = rds.smembers("role_ids").expect("get role_ids rds err");
-
+    let ids: Vec<i32> = rds
+        .smembers(RedisKeys::RoleIds.to_string())
+        .expect("get role_ids rds err");
     if !ids.is_empty() {
-        let res: Vec<OptionData> = ids
-            .into_iter()
-            .map(|id| {
-                let user_data: String = rds.hget("role_info", id).expect("asdf");
-                let user_data: OptionData = serde_json::from_str(&user_data).expect("msg");
-                user_data
-            })
-            .collect();
+        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::RoleInfo, |val| {
+            let user_data: OptionData = serde_json::from_str(&val).expect("msg");
+            user_data
+        });
         ResponseBody::default(Some(res))
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
         let opt: Vec<OptionData> = ex_db
-            .query_decode("select id, name from role", vec![])
+            .query_decode("select id, name from role where status=1", vec![])
             .await
             .expect("select db err");
+        drop(rds);
 
         for ele in opt.iter() {
-            let _: () = rds
-                .sadd("role_ids", ele.id)
-                .expect("set role_id to rds err");
-            let _: () = rds
-                .hset(
-                    "role_info",
-                    ele.id,
-                    serde_json::to_string(&ele).expect("msg"),
-                )
-                .expect("hset role_info to rds err");
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::RoleIds,
+                RedisKeys::RoleInfo,
+                ele.id,
+                ele.clone(),
+            ))
+            .await;
         }
         ResponseBody::default(Some(opt))
     }
