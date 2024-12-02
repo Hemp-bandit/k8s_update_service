@@ -21,6 +21,7 @@ impl<T: Serialize> SyncOptData<T> {
     }
 }
 
+/// 在使用前先释放redis 锁
 pub async fn sync<T: Serialize>(data: SyncOptData<T>) {
     let mut rds = REDIS.lock().expect("get rds err");
     let _: () = rds
