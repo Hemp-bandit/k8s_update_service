@@ -1,6 +1,6 @@
 use crate::{
     access::AccessValueData,
-    response::ResponseBody,
+    response::{MyError, ResponseBody},
     role::AccessData,
     user::{check_user_by_user_id, LoginUserData, RedisLoginData},
     util::common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data},
@@ -27,20 +27,16 @@ struct PasswordData {
   responses( (status = 200))
 )]
 #[get("/get_user_permission/{user_id}")]
-async fn get_user_permission(path: web::Path<i32>) -> impl Responder {
+async fn get_user_permission(path: web::Path<i32>) -> Result<impl Responder, MyError> {
     let user_id = path.into_inner();
 
     let check_res = check_user_by_user_id(user_id).await;
     if check_res.is_none() {
-        return ResponseBody {
-            code: 500,
-            msg: "用户不存在".to_string(),
-            data: None,
-        };
+        return Err(MyError::UserNotExist);
     }
 
     let vals = get_user_access_val(user_id).await;
-    ResponseBody::default(Some(vals))
+    Ok(ResponseBody::default(Some(vals)))
 }
 
 #[utoipa::path(
@@ -48,7 +44,7 @@ async fn get_user_permission(path: web::Path<i32>) -> impl Responder {
     responses( (status = 200) )
 )]
 #[post("/login")]
-async fn login(req_data: web::Json<LoginData>) -> impl Responder {
+async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), req_data.name.clone());
     let mut rds = REDIS.lock().unwrap();
     let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
@@ -56,11 +52,11 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
         Err(err) => {
             let detail = err.detail().expect("msg");
             log::error!("{}", detail);
-            return ResponseBody {
+            return Ok(ResponseBody {
                 code: 500,
                 msg: detail.to_string(),
                 data: None,
-            };
+            });
         }
         Ok(res) => res,
     };
@@ -69,19 +65,11 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
         let user_info: RedisLoginData = rds.get(key).expect("get user info from redis error");
         match check_user_pass_by_name(user_info.name.clone()).await {
             None => {
-                return ResponseBody {
-                    code: 500,
-                    msg: "用户不存在".to_string(),
-                    data: None,
-                };
+                return Err(MyError::UserNotExist);
             }
             Some(pass_data) => {
                 if !pass_data.password.eq(&req_data.password) {
-                    return ResponseBody {
-                        code: 500,
-                        msg: "密码错误".to_string(),
-                        data: None,
-                    };
+                    return Err(MyError::PassWordError);
                 }
             }
         }
@@ -92,48 +80,38 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
             name: user_info.name.clone(),
             token: jwt_token,
         };
-        return ResponseBody::default(Some(res_data));
+        return Ok(ResponseBody::default(Some(res_data)));
     }
 
     let db_user = check_user_pass_by_name(req_data.name.clone()).await;
 
-    match db_user {
-        None => {
-            return ResponseBody {
-                code: 500,
-                msg: "用户不存在".to_string(),
-                data: None,
-            };
-        }
-        Some(db_user) => {
-            let is_eq = db_user.password.eq(&req_data.password);
-            if !is_eq {
-                return ResponseBody {
-                    code: 500,
-                    msg: "密码错误".to_string(),
-                    data: None,
-                };
-            }
-            let auth: u64 = get_user_access_val(db_user.id).await;
-            let redis_data = RedisLoginData {
-                auth,
-                last_login_time: get_current_timestamp(),
-                name: req_data.name.clone(),
-                id: db_user.id.clone(),
-            };
-
-            let _: () = rds
-                .set_ex(key.clone(), &redis_data, LOGIN_EX_TIME)
-                .expect("set user login error");
-            let jwt_token = gen_jwt_token(redis_data);
-            let res_data: LoginUserData = LoginUserData {
-                id: db_user.id,
-                name: db_user.name,
-                token: jwt_token,
-            };
-            return ResponseBody::default(Some(res_data));
-        }
+    if db_user.is_none() {
+        return Err(MyError::UserNotExist);
     }
+    let db_user = db_user.unwrap();
+
+    let is_eq = db_user.password.eq(&req_data.password);
+    if !is_eq {
+        return Err(MyError::PassWordError);
+    }
+    let auth: u64 = get_user_access_val(db_user.id).await;
+    let redis_data = RedisLoginData {
+        auth,
+        last_login_time: get_current_timestamp(),
+        name: req_data.name.clone(),
+        id: db_user.id.clone(),
+    };
+
+    let _: () = rds
+        .set_ex(key.clone(), &redis_data, LOGIN_EX_TIME)
+        .expect("set user login error");
+    let jwt_token = gen_jwt_token(redis_data);
+    let res_data: LoginUserData = LoginUserData {
+        id: db_user.id,
+        name: db_user.name,
+        token: jwt_token,
+    };
+    return Ok(ResponseBody::default(Some(res_data)));
 }
 
 #[utoipa::path(
@@ -141,11 +119,11 @@ async fn login(req_data: web::Json<LoginData>) -> impl Responder {
     responses( (status = 200) )
 )]
 #[post("/logout/{id}")]
-async fn logout(id: web::Path<i32>, req: HttpRequest) -> impl Responder {
+async fn logout(id: web::Path<i32>, req: HttpRequest) -> Result<impl Responder, MyError> {
     let user_id = id.into_inner();
     let check_res = check_user_by_user_id(user_id).await;
     if check_res.is_none() {
-        return ResponseBody::error("用户不存在");
+        return Err(MyError::UserNotExist);
     }
     let token = req.headers().get("Authorization").expect("get token error");
     let binding = token.to_owned();
@@ -153,11 +131,11 @@ async fn logout(id: web::Path<i32>, req: HttpRequest) -> impl Responder {
     let slice = &jwt_token[7..];
     let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
     if jwt_user.id != user_id {
-        return ResponseBody::error("用户不正确");
+        return Err(MyError::UserIsWrong);
     }
     delete_user_from_redis(jwt_user.name);
 
-    ResponseBody::success("退出成功!")
+    Ok(ResponseBody::success("退出成功!"))
 }
 
 async fn get_user_access_val(user_id: i32) -> u64 {

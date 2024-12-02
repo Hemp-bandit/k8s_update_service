@@ -1,25 +1,25 @@
-use std::sync::Mutex;
 use actix_cors::Cors;
 use actix_web::middleware::{Compress, Logger};
 use actix_web::{http, App, HttpServer};
-use util::common::JWT;
+use env::dotenv;
+use env_logger;
 use middleware::JwtAuth;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use redis::Connection;
+use std::sync::{Arc, Mutex};
+use util::common::JWT;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
-use env_logger;
-use env::dotenv;
-
 
 mod access;
+mod cron;
 mod entity;
+mod middleware;
 mod response;
 mod role;
 mod user;
-mod middleware;
 mod util;
 
 #[derive(OpenApi)]
@@ -36,7 +36,6 @@ mod util;
     )
 )]
 struct ApiDoc;
-
 
 lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
@@ -66,7 +65,6 @@ lazy_static::lazy_static! {
     };
 }
 
-
 #[actix_web::main]
 async fn main() {
     dotenv().expect("Failed to load .env file");
@@ -78,24 +76,16 @@ async fn main() {
         App::new()
             .into_utoipa_app()
             .openapi(ApiDoc::openapi())
-            .service(
-                utoipa_actix_web::scope("/api/user") .configure(user::configure()),
-            )
-            .service(
-                utoipa_actix_web::scope("/api/role").configure(role::configure()),
-            )
-            .service(
-                utoipa_actix_web::scope("/api/access").configure(access::configure()),
-            )
-            .service(
-                utoipa_actix_web::scope("/api/auth").configure(user::auth_configure()),
-            )
+            .service(utoipa_actix_web::scope("/api/user").configure(user::configure()))
+            .service(utoipa_actix_web::scope("/api/role").configure(role::configure()))
+            .service(utoipa_actix_web::scope("/api/access").configure(access::configure()))
+            .service(utoipa_actix_web::scope("/api/auth").configure(user::auth_configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
             .wrap(
                 Cors::default()
                     .allow_any_origin()
-                    .allowed_methods(vec!["GET", "POST", "DELETE", "PUT","OPTION"])
+                    .allowed_methods(vec!["GET", "POST", "DELETE", "PUT", "OPTION"])
                     .allowed_headers(vec![
                         http::header::AUTHORIZATION,
                         http::header::ACCEPT,
@@ -122,9 +112,9 @@ fn gen_server_url() -> String {
     url
 }
 
-async fn init_db(){
+async fn init_db() {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     if let Err(e) = RB.link(MysqlDriver {}, &database_url).await {
-          panic!("db err: {}", e.to_string());
+        panic!("db err: {}", e.to_string());
     }
 }

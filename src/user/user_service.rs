@@ -1,16 +1,14 @@
-use core::sync;
-
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
+use crate::response::MyError;
 use crate::user::user_role::{
     check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
 };
 use crate::user::SubUserRoleData;
-use crate::util::common::RedisKeys;
+use crate::util::common::{rds_str_to_list, RedisKeys};
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
-    role::check_role_by_id,
     user::{check_user_by_user_id, OptionData},
     util::{
         common::{check_phone, get_current_time_fmt, get_transaction_tx},
@@ -21,10 +19,8 @@ use crate::{
     RB, REDIS,
 };
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::Page;
 use rbs::to_value;
 use redis::Commands;
-use serde::Serializer;
 
 #[utoipa::path(
     tag = "user",
@@ -66,7 +62,13 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
                 &req_data.name,
                 res.last_insert_id.as_i64().expect("msg") as i32,
             );
-            sync_opt::sync(SyncOptData::default("user_ids", "user_info", opt)).await;
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::UserIds,
+                RedisKeys::UserInfo,
+                opt.id,
+                opt,
+            ))
+            .await;
         }
     }
 
@@ -172,7 +174,13 @@ pub async fn update_user_by_id(
             }
 
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            sync_opt::sync(SyncOptData::default("user_ids", "user_info", opt)).await;
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::UserIds,
+                RedisKeys::UserInfo,
+                opt.id,
+                opt,
+            ))
+            .await;
         }
     }
     ResponseBody::success("更新用户成功")
@@ -292,21 +300,15 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     responses( (status = 200) )
   )]
 #[get("/get_user_option")]
-pub async fn get_user_option() -> impl Responder {
+pub async fn get_user_option() -> Result<impl Responder, MyError> {
     let mut rds = REDIS.lock().unwrap();
     let ids: Vec<i32> = rds.smembers("user_ids").expect("get user_id rds err");
-
     if !ids.is_empty() {
-        let res: Vec<OptionData> = ids
-            .into_iter()
-            .map(|id| {
-                let user_data: String =
-                    rds.hget(RedisKeys::UserInfo.to_string(), id).expect("asdf");
-                let user_data: OptionData = serde_json::from_str(&user_data).expect("msg");
-                user_data
-            })
-            .collect();
-        ResponseBody::default(Some(res))
+        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::UserInfo, |val| {
+            let user_data: OptionData = serde_json::from_str(&val).expect("msg");
+            user_data
+        });
+        return Ok(ResponseBody::default(Some(res)));
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
         let opt: Vec<OptionData> = ex_db
@@ -314,14 +316,16 @@ pub async fn get_user_option() -> impl Responder {
             .await
             .expect("select db err");
 
+        drop(rds);
         for ele in opt.iter() {
             sync_opt::sync(SyncOptData::default(
-                &RedisKeys::UserIds.to_string(),
-                &RedisKeys::UserInfo.to_string(),
+                RedisKeys::UserIds,
+                RedisKeys::UserInfo,
+                ele.id,
                 ele.clone(),
             ))
             .await;
         }
-        ResponseBody::default(Some(opt))
+        Ok(ResponseBody::default(Some(opt)))
     }
 }

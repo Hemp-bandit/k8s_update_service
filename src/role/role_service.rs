@@ -10,7 +10,7 @@ use crate::{
     role::{check_role_access, check_role_by_id, CreateByData, RoleListListData},
     user::{check_user_by_user_id, OptionData},
     util::{
-        common::{get_current_time_fmt, get_transaction_tx, RedisKeys},
+        common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
         sync_opt::{self, SyncOptData},
@@ -271,17 +271,11 @@ pub async fn get_role_option() -> impl Responder {
     let ids: Vec<i32> = rds
         .smembers(RedisKeys::RoleIds.to_string())
         .expect("get role_ids rds err");
-
     if !ids.is_empty() {
-        let res: Vec<OptionData> = ids
-            .into_iter()
-            .map(|id| {
-                let user_data: String =
-                    rds.hget(RedisKeys::RoleInfo.to_string(), id).expect("asdf");
-                let user_data: OptionData = serde_json::from_str(&user_data).expect("msg");
-                user_data
-            })
-            .collect();
+        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::RoleInfo, |val| {
+            let user_data: OptionData = serde_json::from_str(&val).expect("msg");
+            user_data
+        });
         ResponseBody::default(Some(res))
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
@@ -289,11 +283,13 @@ pub async fn get_role_option() -> impl Responder {
             .query_decode("select id, name from role", vec![])
             .await
             .expect("select db err");
+        drop(rds);
 
         for ele in opt.iter() {
             sync_opt::sync(SyncOptData::default(
-                &RedisKeys::RoleIds.to_string(),
-                &RedisKeys::RoleInfo.to_string(),
+                RedisKeys::RoleIds,
+                RedisKeys::RoleInfo,
+                ele.id,
                 ele.clone(),
             ))
             .await;
