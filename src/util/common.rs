@@ -1,12 +1,12 @@
 use crate::{user::RedisLoginData, RB};
 use chrono::{DateTime, Local, Utc};
+use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
+use redis::Commands;
 use serde::Serialize;
 use std::env::var;
-use std::fmt;
-use std::fmt::Formatter;
 use utoipa::{
     openapi::{
         self,
@@ -38,24 +38,28 @@ impl Modify for JWT {
     }
 }
 
+#[derive(Debug, Display)]
 pub enum RedisKeys {
+    #[display("user_ids")]
     UserIds,
-    UserInfo,
-    RoleIds,
-    RoleInfo,
-    UserRoles,
-}
 
-impl fmt::Display for RedisKeys {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            RedisKeys::UserIds => write!(f, "user_ids"),
-            RedisKeys::UserInfo => write!(f, "user_info"),
-            RedisKeys::RoleIds => write!(f, "role_ids"),
-            RedisKeys::RoleInfo => write!(f, "role_info"),
-            RedisKeys::UserRoles => write!(f, "user_roles"),
-        }
-    }
+    #[display("user_info")]
+    UserInfo,
+
+    #[display("role_ids")]
+    RoleIds,
+
+    #[display("role_info")]
+    RoleInfo,
+
+    #[display("user_roles")]
+    UserRoles,
+
+    #[display("access_map")]
+    AccessMap,
+
+    #[display("access_map_ids")]
+    AccessMapIds,
 }
 
 /**
@@ -156,6 +160,23 @@ pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
         }
         Ok(res) => Some(res),
     }
+}
+
+pub fn rds_str_to_list<T, U: Fn(String) -> T>(
+    mut rds: std::sync::MutexGuard<'_, redis::Connection>,
+    ids: Vec<i32>,
+    key: RedisKeys,
+    cb: U,
+) -> Vec<T> {
+    let mut res: Vec<T> = vec![];
+    for id in ids {
+        let data: Option<String> = rds.hget(key.to_string(), id).expect("asdf");
+        if let Some(str) = data {
+            let item: T = cb(str);
+            res.push(item);
+        }
+    }
+    res
 }
 
 #[cfg(test)]

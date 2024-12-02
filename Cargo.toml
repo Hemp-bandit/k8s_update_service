@@ -26,12 +26,13 @@ utoipa-scalar = {version = "0.2.0", features = ["actix-web"]}
 rbatis = {version = "4.5"}
 rbdc-mysql = "4.5.0"
 rbs = {version = "4.5"}
+redis = {version = "0.27.5", features = ["tokio-native-tls-comp", "json"]}
 
-redis = {version = "0.27.5", features = ["tokio-comp","json"]}
 redis-macros = "0.4.2"
 
+cron-job = "0.2.0"
+derive_more = {version = "1.0.0", features = ['full']}
+futures-util = "0.3.31"
+hmac = "0.12.1"
 jwt = "0.16.0"
 sha2 = "0.10.8"
-hmac = "0.12.1"
-futures-util = "0.3.31"
-

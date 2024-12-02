@@ -1,31 +1,36 @@
-use crate::{user::OptionData, REDIS};
+use crate::REDIS;
+
+use super::common::RedisKeys;
 use redis::Commands;
-#[derive(Debug)]
-pub struct SyncOptData {
+use serde::Serialize;
+
+pub struct SyncOptData<T> {
     pub set_key: String,
     pub hmap_key: String,
-    pub opt_data: OptionData,
+    pub opt_data: T,
+    pub id: i32,
 }
-impl SyncOptData {
-    pub fn default(set_key: &str, hmap_key: &str, opt_data: OptionData) -> Self {
+impl<T: Serialize> SyncOptData<T> {
+    pub fn default(set_key: RedisKeys, hmap_key: RedisKeys, id: i32, opt_data: T) -> Self {
         Self {
             set_key: set_key.to_string(),
             hmap_key: hmap_key.to_string(),
             opt_data,
+            id,
         }
     }
 }
 
-pub async fn sync(data: SyncOptData) {
-    let mut rds = REDIS.lock().unwrap();
-    log::info!("data {data:?}");
+/// 在使用前先释放redis 锁
+pub async fn sync<T: Serialize>(data: SyncOptData<T>) {
+    let mut rds = REDIS.lock().expect("get rds err");
     let _: () = rds
-        .sadd(data.set_key, data.opt_data.id)
+        .sadd(data.set_key, data.id)
         .expect("set user_id to rds err");
     let _: () = rds
         .hset(
             data.hmap_key,
-            data.opt_data.id,
+            data.id,
             serde_json::to_string(&data.opt_data).expect("msg"),
         )
         .expect("hset user to rds err");
