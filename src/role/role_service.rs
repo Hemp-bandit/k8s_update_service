@@ -267,7 +267,7 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
   )]
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     let ids: Vec<i32> = rds
         .smembers(RedisKeys::RoleIds.to_string())
         .expect("get role_ids rds err");

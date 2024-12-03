@@ -1,13 +1,14 @@
 use actix_cors::Cors;
 use actix_web::middleware::{from_fn, Compress, Logger};
 use actix_web::{http, App, HttpServer};
+use core::cell::RefMut;
 use env::dotenv;
 use env_logger;
 use middleware::jwt_mw;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use redis::Connection;
-use std::sync::Mutex;
+use std::cell::RefCell;
 use util::common::JWT;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
@@ -37,10 +38,43 @@ mod util;
 )]
 struct ApiDoc;
 
+struct RdsTool {
+    inner: UPSafeCell<Connection>,
+}
+
+pub struct UPSafeCell<T> {
+    /// inner data
+    inner: RefCell<T>,
+}
+
+unsafe impl<T> Sync for UPSafeCell<T> {}
+
+impl<T> UPSafeCell<T> {
+    /// User is responsible to guarantee that inner struct is only used in
+    /// uniprocessor.
+    pub unsafe fn new(value: T) -> Self {
+        Self {
+            inner: RefCell::new(value),
+        }
+    }
+    /// Panic if the data has been borrowed.
+    pub fn exclusive_access(&self) -> RefMut<'_, T> {
+        self.inner.borrow_mut()
+    }
+}
+
+impl RdsTool {
+    pub unsafe fn new(conn: Connection) -> Self {
+        Self {
+            inner: UPSafeCell::new(conn),
+        }
+    }
+}
+
 lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
     static ref RB:RBatis=RBatis::new();
-    static ref REDIS:Mutex<Connection> = {
+    static ref REDIS:RdsTool = {
         let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
         let client =  match redis::Client::open(redis_url) {
             Err(err)=>{
@@ -61,7 +95,9 @@ lazy_static::lazy_static! {
             conn
           }
         };
-        Mutex::new(conn)
+
+      unsafe {  RdsTool::new(conn)}
+
     };
 }
 
@@ -90,7 +126,7 @@ async fn main() {
                         http::header::AUTHORIZATION,
                         http::header::ACCEPT,
                         http::header::CONTENT_TYPE,
-                    ])
+                    ]),
             )
             .wrap(Compress::default())
             .wrap(Logger::default())

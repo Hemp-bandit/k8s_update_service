@@ -7,7 +7,7 @@ use redis::Commands;
 ///检查角色是否存在于cache & db
 pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
     //  check in cache
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     for id in role_ids {
         let in_ids_cache: bool = rds.sismember(RedisKeys::RoleIds.to_string(), id).expect("");
         let in_info_cache: bool = rds.hexists(RedisKeys::RoleInfo.to_string(), id).expect("");
@@ -31,7 +31,7 @@ pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
 ///
 ///
 pub fn check_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i32>, Vec<i32>) {
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
     drop(rds);
@@ -63,7 +63,7 @@ pub fn check_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i32>, Vec<i32>) {
 }
 
 pub fn role_ids_to_add_tab(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleEntity> {
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     let mut tabs: Vec<UserRoleEntity> = vec![];
     for id in role_ids {
@@ -79,7 +79,7 @@ pub fn role_ids_to_add_tab(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleEn
 }
 
 pub fn role_ids_to_sub_tab(user_id: &i32, role_ids: &Vec<i32>) {
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     for id in role_ids {
         let _: () = rds.srem(key.clone(), id).expect("sub new user_role error");
