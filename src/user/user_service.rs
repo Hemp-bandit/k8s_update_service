@@ -172,14 +172,14 @@ pub async fn update_user_by_id(
                 tx.rollback().await.expect("msg");
                 return res;
             }
-            let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            let _ = sotre
-                .send(HmapData {
-                    hmap_key: RedisKeys::UserInfo,
-                    opt_data: opt,
-                    id: db_user.id.clone().expect("msg"),
-                })
-                .await;
+            // let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
+            // let _ = sotre
+            //     .send(HmapData {
+            //         hmap_key: RedisKeys::UserInfo,
+            //         opt_data: opt,
+            //         id: db_user.id.clone().expect("msg"),
+            //     })
+            //     .await;
         }
     }
     ResponseBody::success("更新用户成功")
