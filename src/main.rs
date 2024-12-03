@@ -51,18 +51,6 @@ lazy_static::lazy_static! {
             }
         };
         client
-    //     let conn: Connection =  match client.get_connection() {
-    //       Err(err)=>{
-    //         let detail = err.detail().expect("get redis err detail ");
-    //         panic!("redis connect err:  {detail}");
-    //       },
-    //       Ok(conn)=>{
-    //         conn
-    //       }
-    //     };
-
-    //   unsafe {  RdsTool::new(conn)}
-
     };
 }
 
