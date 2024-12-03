@@ -155,6 +155,7 @@ pub async fn update_user_by_id(
             return ResponseBody::error("用户不存在");
         }
         Some(mut db_user) => {
+            log::debug!("db_user {db_user:?}");
             db_user.update_time = get_current_time_fmt();
             db_user.introduce = req_data.introduce.clone();
             db_user.name = req_data.name.clone().unwrap_or(db_user.name);
