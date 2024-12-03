@@ -129,7 +129,7 @@ pub async fn get_user_by_id(id: web::Path<i32>) -> impl Responder {
     params(("id", description = "user id") ),
     responses( (status = 200) )
 )]
-#[post("/{id}")]
+#[post("/update_user/{id}")]
 pub async fn update_user_by_id(
     id: web::Path<i32>,
     req_data: web::Json<UserUpdateData>,
@@ -173,12 +173,6 @@ pub async fn update_user_by_id(
                 return res;
             }
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            // let _ = sotre
-            //     .send(SetData {
-            //         id: db_user.id.clone().unwrap(),
-            //         set_key: RedisKeys::UserIds,
-            //     })
-            //     .await;
             let _ = sotre
                 .send(HmapData {
                     hmap_key: RedisKeys::UserInfo,
