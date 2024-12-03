@@ -1,5 +1,5 @@
 use actix::prelude::*;
-use redis::{aio::MultiplexedConnection, AsyncCommands, Client};
+use redis::{aio::MultiplexedConnection, Client};
 use serde::Serialize;
 
 use super::common::RedisKeys;
@@ -57,9 +57,7 @@ impl<T: Serialize> Handler<HmapData<T>> for RedisActor {
             &serde_json::to_string(&msg.opt_data).expect("msg"),
         ]);
 
-        let fut = async move {
-            hmap_cmd.query_async(&mut rds).await
-        };
+        let fut = async move { hmap_cmd.query_async(&mut rds).await };
         Box::pin(fut)
     }
 }

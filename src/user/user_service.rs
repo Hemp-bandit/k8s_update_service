@@ -143,10 +143,10 @@ pub async fn update_user_by_id(
         }
     }
 
-    let ex_db = RB.acquire().await.expect("msg");
+    let mut tx = get_transaction_tx().await.unwrap();
 
     let user_id = id.into_inner();
-    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&tx, user_id)
         .await
         .expect("查询用户失败");
 
@@ -164,8 +164,12 @@ pub async fn update_user_by_id(
             db_user.phone = req_data.phone.clone().unwrap_or(db_user.phone);
             db_user.user_type = req_data.user_type.clone().unwrap_or(db_user.user_type);
 
-            let mut tx = get_transaction_tx().await.unwrap();
-            let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
+            let update_res: Result<Option<()>, rbs::Error> =
+                tx.query_decode(
+                    "update user set user.update_time=?, introduce=?, name=?, password=?, picture=?, phone=?, user_type=? where id=? ",
+                    vec![ to_value!(db_user.update_time),to_value!(db_user.introduce),to_value!(db_user.name.clone()), to_value!(db_user.password.clone()), to_value!(db_user.picture), to_value!(db_user.phone.clone()), to_value!(db_user.user_type) ,to_value!(db_user.id.unwrap())]
+                )
+                 .await;
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
                 log::error!("更新用户失败, {}", error);
@@ -173,14 +177,14 @@ pub async fn update_user_by_id(
                 tx.rollback().await.expect("msg");
                 return res;
             }
-            // let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            // let _ = sotre
-            //     .send(HmapData {
-            //         hmap_key: RedisKeys::UserInfo,
-            //         opt_data: opt,
-            //         id: db_user.id.clone().expect("msg"),
-            //     })
-            //     .await;
+            let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
+            let _ = sotre
+                .send(HmapData {
+                    hmap_key: RedisKeys::UserInfo,
+                    opt_data: opt,
+                    id: db_user.id.clone().expect("msg"),
+                })
+                .await;
         }
     }
     ResponseBody::success("更新用户成功")
