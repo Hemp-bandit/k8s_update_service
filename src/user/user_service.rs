@@ -1,3 +1,5 @@
+use std::borrow::BorrowMut;
+
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
 use crate::response::MyError;
@@ -240,7 +242,7 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
-    let mut rds = REDIS.lock().unwrap();
+    let rds = REDIS.rds.borrow_mut();
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
     let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
 
