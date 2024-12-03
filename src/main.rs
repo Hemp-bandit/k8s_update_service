@@ -1,16 +1,14 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::sync::Arc;
-
 use actix_cors::Cors;
 use actix_web::middleware::{from_fn, Compress, Logger};
 use actix_web::{http, App, HttpServer};
+use core::cell::RefMut;
 use env::dotenv;
 use env_logger;
 use middleware::jwt_mw;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use redis::Connection;
+use std::cell::RefCell;
 use util::common::JWT;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
@@ -41,14 +39,37 @@ mod util;
 struct ApiDoc;
 
 struct RdsTool {
-    rds: Rc<RefCell<Connection>>,
+    inner: UPSafeCell<Connection>,
 }
-// impl RdsTool {
-//     pub fn get_mut(&self) -> &Connection {
-//         let red = &self.rds;
-//         red
-//     }
-// }
+
+pub struct UPSafeCell<T> {
+    /// inner data
+    inner: RefCell<T>,
+}
+
+unsafe impl<T> Sync for UPSafeCell<T> {}
+
+impl<T> UPSafeCell<T> {
+    /// User is responsible to guarantee that inner struct is only used in
+    /// uniprocessor.
+    pub unsafe fn new(value: T) -> Self {
+        Self {
+            inner: RefCell::new(value),
+        }
+    }
+    /// Panic if the data has been borrowed.
+    pub fn exclusive_access(&self) -> RefMut<'_, T> {
+        self.inner.borrow_mut()
+    }
+}
+
+impl RdsTool {
+    pub unsafe fn new(conn: Connection) -> Self {
+        Self {
+            inner: UPSafeCell::new(conn),
+        }
+    }
+}
 
 lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
@@ -74,7 +95,9 @@ lazy_static::lazy_static! {
             conn
           }
         };
-        RdsTool{rds:  Rc::new(RefCell::new(conn))}
+
+      unsafe {  RdsTool::new(conn)}
+
     };
 }
 

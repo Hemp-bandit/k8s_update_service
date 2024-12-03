@@ -163,7 +163,7 @@ pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
 }
 
 pub fn rds_str_to_list<T, U: Fn(String) -> T>(
-    mut rds: std::sync::MutexGuard<'_, redis::Connection>,
+    mut rds: std::cell::RefMut<'_, redis::Connection>,
     ids: Vec<i32>,
     key: RedisKeys,
     cb: U,

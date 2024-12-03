@@ -15,7 +15,7 @@ pub async fn jwt_mw(
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
     if !check_is_in_whitelist(&req) {
         if !has_permission(&req) {
-            return  Err(Error::from(MyError::AuthError));
+            return Err(Error::from(MyError::AuthError));
         }
     }
 
@@ -61,7 +61,7 @@ fn has_permission(req: &ServiceRequest) -> bool {
 
 pub fn check_is_login_redis(user_name: String) -> bool {
     let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds = REDIS.inner.exclusive_access();
     let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
     let is_login = match redis_login {
         Err(err) => {

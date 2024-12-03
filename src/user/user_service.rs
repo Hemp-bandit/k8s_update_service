@@ -1,4 +1,3 @@
-use std::borrow::BorrowMut;
 
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
@@ -20,13 +19,8 @@ use crate::{
     RB, REDIS,
 };
 use actix_web::{delete, get, post, web, Responder};
-use rbatis::rbatis_codegen::IntoSql;
-use rbatis::rbdc::db::ExecResult;
-use rbatis::sql;
 use rbs::to_value;
 use redis::Commands;
-use serde_json::to_vec;
-
 #[utoipa::path(
     tag = "user",
     responses( (status = 200) )
@@ -242,7 +236,7 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
-    let rds = REDIS.rds.borrow_mut();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
     let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
 
@@ -343,7 +337,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
   )]
 #[get("/get_user_option")]
 pub async fn get_user_option() -> Result<impl Responder, MyError> {
-    let mut rds = REDIS.lock().unwrap();
+    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
     let ids: Vec<i32> = rds.smembers("user_ids").expect("get user_id rds err");
     if !ids.is_empty() {
         let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::UserInfo, |val| {
