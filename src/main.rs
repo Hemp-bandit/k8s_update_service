@@ -3,7 +3,7 @@ use actix_web::middleware::{from_fn, Compress, Logger};
 use actix_web::{http, App, HttpServer};
 use env::dotenv;
 use env_logger;
-use middleware::my_mw;
+use middleware::jwt_mw;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use redis::Connection;
@@ -95,7 +95,7 @@ async fn main() {
             .wrap(Compress::default())
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{Referer}i"))
-            .wrap(from_fn(my_mw))
+            .wrap(from_fn(jwt_mw))
     })
     .keep_alive(None)
     .shutdown_timeout(5)

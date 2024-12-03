@@ -9,7 +9,7 @@ use redis::Commands;
 
 use crate::{response::MyError, util::common::jwt_token_to_data, REDIS, REDIS_KEY};
 
-pub async fn my_mw(
+pub async fn jwt_mw(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
