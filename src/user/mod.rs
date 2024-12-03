@@ -1,5 +1,4 @@
-use crate::{entity::user_entity::UserEntity, util::common::RedisKeys, RB, REDIS};
-use redis::Commands;
+use crate::{entity::user_entity::UserEntity, RB};
 use redis_macros::{FromRedisValue, ToRedisArgs};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -106,11 +105,6 @@ impl OptionData {
             id,
         }
     }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SubUserRoleData {
-    pub role_id: i32,
 }
 
 pub async fn check_user_by_user_id(user_id: i32) -> Option<UserEntity> {

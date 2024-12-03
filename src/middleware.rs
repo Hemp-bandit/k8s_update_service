@@ -1,75 +1,26 @@
-use std::future::{ready, Ready};
-
 use actix_web::{
-    dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    error,
+    body::MessageBody,
+    dev::{ServiceRequest, ServiceResponse},
     http::header::HeaderValue,
+    middleware::Next,
     Error,
 };
-use futures_util::future::LocalBoxFuture;
 use redis::Commands;
 
-use crate::{util::common::jwt_token_to_data, REDIS, REDIS_KEY};
+use crate::{response::MyError, util::common::jwt_token_to_data, REDIS, REDIS_KEY};
 
-// There are two steps in middleware processing.
-// 1. Middleware initialization, middleware factory gets called with
-//    next service in chain as parameter.
-// 2. Middleware's call method gets called with normal request.
-pub struct JwtAuth;
-
-// Middleware factory is `Transform` trait
-// `S` - type of the next service
-// `B` - type of response's body
-impl<S, B> Transform<S, ServiceRequest> for JwtAuth
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type InitError = ();
-    type Transform = JwtAuthMiddleware<S>;
-    type Future = Ready<Result<Self::Transform, Self::InitError>>;
-
-    fn new_transform(&self, service: S) -> Self::Future {
-        ready(Ok(JwtAuthMiddleware { service }))
-    }
-}
-
-pub struct JwtAuthMiddleware<S> {
-    service: S,
-}
-
-impl<S, B> Service<ServiceRequest> for JwtAuthMiddleware<S>
-where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
-    S::Future: 'static,
-    B: 'static,
-{
-    type Response = ServiceResponse<B>;
-    type Error = Error;
-    type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    forward_ready!(service);
-
-    fn call(&self, req: ServiceRequest) -> Self::Future {
-        if !check_is_in_whitelist(&req) {
-            if !has_permission(&req) {
-                return Box::pin(async move {
-                    // 鉴权失败，返回未授权的响应，停止后续中间件的调用
-                    Err(error::ErrorUnauthorized("Unauthorized"))
-                });
-            }
+pub async fn jwt_mw(
+    req: ServiceRequest,
+    next: Next<impl MessageBody>,
+) -> Result<ServiceResponse<impl MessageBody>, Error> {
+    if !check_is_in_whitelist(&req) {
+        if !has_permission(&req) {
+            return  Err(Error::from(MyError::AuthError));
         }
-
-        let fut = self.service.call(req);
-
-        Box::pin(async move {
-            let res = fut.await?;
-            Ok(res)
-        })
     }
+
+    let res = next.call(req).await?;
+    Ok(res)
 }
 
 fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
@@ -115,7 +66,7 @@ pub fn check_is_login_redis(user_name: String) -> bool {
     let is_login = match redis_login {
         Err(err) => {
             let detail = err.detail();
-            log::error!("{detail:?}", );
+            log::error!("{detail:?}",);
             return false;
         }
         Ok(res) => res,
