@@ -21,9 +21,8 @@ impl<T: Serialize> SyncOptData<T> {
     }
 }
 
-/// 在使用前先释放redis 锁
-pub async fn sync<T: Serialize>(data: SyncOptData<T>) {
-    let mut rds = REDIS.inner.exclusive_access();
+pub fn sync<T: Serialize>(data: SyncOptData<T>) {
+    let mut rds = REDIS.get_connection().expect("msg");
     let _: () = rds
         .sadd(data.set_key, data.id)
         .expect("set user_id to rds err");

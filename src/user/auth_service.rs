@@ -46,7 +46,7 @@ async fn get_user_permission(path: web::Path<i32>) -> Result<impl Responder, MyE
 #[post("/login")]
 async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), req_data.name.clone());
-    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
+    let mut rds = REDIS.get_connection().expect("msg");
     let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
     let is_login = match redis_login {
         Err(err) => {
@@ -188,6 +188,6 @@ async fn check_user_pass_by_name(name: String) -> Option<PasswordData> {
 
 fn delete_user_from_redis(user_name: String) {
     let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
-    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
+    let mut rds = REDIS.get_connection().expect("msg");
     let _: () = rds.del(key).expect("delete error");
 }

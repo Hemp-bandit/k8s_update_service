@@ -1,4 +1,3 @@
-
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
 use crate::response::MyError;
@@ -66,8 +65,7 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
                 RedisKeys::UserInfo,
                 opt.id,
                 opt,
-            ))
-            .await;
+            ));
         }
     }
 
@@ -171,15 +169,13 @@ pub async fn update_user_by_id(
                 tx.rollback().await.expect("msg");
                 return res;
             }
-
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::UserIds,
                 RedisKeys::UserInfo,
                 opt.id,
                 opt,
-            ))
-            .await;
+            ));
         }
     }
     ResponseBody::success("更新用户成功")
@@ -214,7 +210,7 @@ pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
                 tx.rollback().await.expect("msg");
                 return res;
             }
-            //     TODOl: delete user from cache
+            // TODOl: delete user from cache
         }
     }
 
@@ -236,7 +232,7 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
-    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
+    let mut rds = REDIS.get_connection().expect("msg");
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
     let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
 
@@ -337,7 +333,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
   )]
 #[get("/get_user_option")]
 pub async fn get_user_option() -> Result<impl Responder, MyError> {
-    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
+    let mut rds = REDIS.get_connection().expect("msg");
     let ids: Vec<i32> = rds.smembers("user_ids").expect("get user_id rds err");
     if !ids.is_empty() {
         let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::UserInfo, |val| {
@@ -352,15 +348,13 @@ pub async fn get_user_option() -> Result<impl Responder, MyError> {
             .await
             .expect("select db err");
 
-        drop(rds);
         for ele in opt.iter() {
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::UserIds,
                 RedisKeys::UserInfo,
                 ele.id,
                 ele.clone(),
-            ))
-            .await;
+            ));
         }
         Ok(ResponseBody::default(Some(opt)))
     }

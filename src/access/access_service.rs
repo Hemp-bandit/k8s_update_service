@@ -192,7 +192,7 @@ pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
 )]
 #[get("/access_map")]
 pub async fn get_access_map() -> Result<impl Responder, MyError> {
-    let mut rds: std::cell::RefMut<'_, redis::Connection> = REDIS.inner.exclusive_access();
+    let mut rds = REDIS.get_connection().expect("msg");
     // check in rds
     let cache_ids: Vec<i32> = rds
         .smembers(RedisKeys::AccessMapIds.to_string())
@@ -206,8 +206,7 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
                 RedisKeys::UserInfo,
                 ele.id,
                 ele.clone(),
-            ))
-            .await;
+            ));
         }
         Ok(ResponseBody::default(Some(list)))
     } else {
