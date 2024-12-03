@@ -50,7 +50,7 @@ lazy_static::lazy_static! {
                 client
             }
         };
-        client
+    client
     };
 }
 

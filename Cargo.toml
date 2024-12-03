@@ -26,8 +26,7 @@ utoipa-scalar = {version = "0.2.0", features = ["actix-web"]}
 rbatis = {version = "4.5"}
 rbdc-mysql = "4.5.0"
 rbs = {version = "4.5"}
-redis = {version = "0.27.5", features = ["tokio-comp", "json"]}
-
+redis = {version = "0.27.5", features = ["tokio-comp", "cluster"]}
 redis-macros = "0.4.2"
 
 cron-job = "0.2.0"
