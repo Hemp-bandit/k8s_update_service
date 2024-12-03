@@ -1,6 +1,7 @@
+use actix::{Actor, Addr};
 use actix_cors::Cors;
 use actix_web::middleware::{from_fn, Compress, Logger};
-use actix_web::{http, App, HttpServer};
+use actix_web::{http, web, App, HttpServer};
 use env::dotenv;
 use env_logger;
 use middleware::jwt_mw;
@@ -8,6 +9,7 @@ use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
 use redis::Client;
 use util::common::JWT;
+use util::redis_actor::RedisActor;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
@@ -59,6 +61,10 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
 
+    let var_name = RedisActor::new();
+    let actor = var_name.await;
+    let addr: Addr<RedisActor> = actor.start();
+
     init_db().await;
 
     let _ = HttpServer::new(move || {
@@ -71,6 +77,7 @@ async fn main() {
             .service(utoipa_actix_web::scope("/api/auth").configure(user::auth_configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
+            .app_data(web::Data::new(addr.clone()))
             .wrap(
                 Cors::default()
                     .allow_any_origin()

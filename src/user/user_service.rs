@@ -5,6 +5,7 @@ use crate::user::user_role::{
     check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
+use crate::util::redis_actor::{HmapData, RedisActor, SetData};
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
@@ -17,6 +18,7 @@ use crate::{
     },
     RB, REDIS,
 };
+use actix::Addr;
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
 use redis::Commands;
@@ -131,6 +133,7 @@ pub async fn get_user_by_id(id: web::Path<i32>) -> impl Responder {
 pub async fn update_user_by_id(
     id: web::Path<i32>,
     req_data: web::Json<UserUpdateData>,
+    sotre: web::Data<Addr<RedisActor>>,
 ) -> impl Responder {
     if let Some(new_phone) = &req_data.phone {
         let phone_check_res = check_phone(new_phone);
@@ -170,18 +173,19 @@ pub async fn update_user_by_id(
                 return res;
             }
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-
-            let mut rds = REDIS.get_connection().expect("msg");
-            let _: () = rds
-                .sadd(RedisKeys::UserIds.to_string(), opt.id)
-                .expect("set user_id to rds err");
-            let _: () = rds
-                .hset(
-                    RedisKeys::UserInfo.to_string(),
-                    opt.id,
-                    serde_json::to_string(&opt).expect("msg"),
-                )
-                .expect("hset user to rds err");
+            // let _ = sotre
+            //     .send(SetData {
+            //         id: db_user.id.clone().unwrap(),
+            //         set_key: RedisKeys::UserIds,
+            //     })
+            //     .await;
+            let _ = sotre
+                .send(HmapData {
+                    hmap_key: RedisKeys::UserInfo,
+                    opt_data: opt,
+                    id: db_user.id.clone().expect("msg"),
+                })
+                .await;
         }
     }
     ResponseBody::success("更新用户成功")
