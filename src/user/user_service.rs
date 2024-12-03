@@ -170,12 +170,18 @@ pub async fn update_user_by_id(
                 return res;
             }
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            sync_opt::sync(SyncOptData::default(
-                RedisKeys::UserIds,
-                RedisKeys::UserInfo,
-                opt.id,
-                opt,
-            ));
+
+            let mut rds = REDIS.get_connection().expect("msg");
+            let _: () = rds
+                .sadd(RedisKeys::UserIds.to_string(), opt.id)
+                .expect("set user_id to rds err");
+            let _: () = rds
+                .hset(
+                    RedisKeys::UserInfo.to_string(),
+                    opt.id,
+                    serde_json::to_string(&opt).expect("msg"),
+                )
+                .expect("hset user to rds err");
         }
     }
     ResponseBody::success("更新用户成功")
