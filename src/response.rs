@@ -62,13 +62,34 @@ pub enum MyError {
 
     #[display("密码错误")]
     PassWordError,
+
+    #[display("权限验证失败")]
+    AuthError,
 }
 
 impl error::ResponseError for MyError {
     fn error_response(&self) -> HttpResponse {
-        let rsp_data = ResponseBody::error(&self.to_string());
+        let rsp_data = match self {
+            MyError::AuthError => {
+                let res: ResponseBody<Option<String>> = ResponseBody {
+                    code: StatusCode::UNAUTHORIZED.as_u16() as i16,
+                    msg: self.to_string(),
+                    data: None,
+                };
+                res
+            }
+            _ => ResponseBody::error(&self.to_string()),
+        };
+
         HttpResponse::build(self.status_code())
             .insert_header(ContentType::json())
+            .insert_header(("Access-Control-Allow-Origin", "*"))
             .json(rsp_data)
+    }
+    fn status_code(&self) -> StatusCode {
+        match self {
+            MyError::AuthError => StatusCode::UNAUTHORIZED,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
     }
 }
