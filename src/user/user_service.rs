@@ -240,11 +240,29 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
+    let mut rds = REDIS.lock().unwrap();
+    let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
+    let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
 
     let ex = RB.acquire().await.expect("msg");
-    let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
-    let res = ResponseBody::default(Some(roles));
 
+    let roles = if cache_ids.is_empty() {
+        let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
+        let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
+        for ele in roles.iter() {
+            let _: () = rds
+                .sadd(key.clone(), ele.id.unwrap())
+                .expect("add new user_role error");
+        }
+        roles
+    } else {
+        let roles = RoleEntity::select_in_column(&ex, "id", &cache_ids)
+            .await
+            .expect("获取用户绑定角色失败");
+        roles
+    };
+
+    let res = ResponseBody::default(Some(roles));
     res
 }
 
