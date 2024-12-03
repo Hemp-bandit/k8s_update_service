@@ -4,7 +4,6 @@ use crate::response::MyError;
 use crate::user::user_role::{
     check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
 };
-use crate::user::SubUserRoleData;
 use crate::util::common::{rds_str_to_list, RedisKeys};
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
@@ -19,8 +18,12 @@ use crate::{
     RB, REDIS,
 };
 use actix_web::{delete, get, post, web, Responder};
+use rbatis::rbatis_codegen::IntoSql;
+use rbatis::rbdc::db::ExecResult;
+use rbatis::sql;
 use rbs::to_value;
 use redis::Commands;
+use serde_json::to_vec;
 
 #[utoipa::path(
     tag = "user",
@@ -260,37 +263,57 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
         return ResponseBody::error("用户不存在");
     }
 
-    let (hash_bind, mut add_ids, mut sub_ids) = check_bind(&req_data.user_id, &req_data.role_id);
-    if !hash_bind {
-        add_ids = req_data.role_id.clone();
-        sub_ids = req_data.role_id.clone();
-    }
-
-    let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids);
-    let sub_tabs: Vec<SubUserRoleData> = role_ids_to_sub_tab(&req_data.user_id, &sub_ids);
-
     let mut tx = get_transaction_tx().await.expect("get tx error");
+    let (add_ids, sub_ids) = check_bind(&req_data.user_id, &req_data.role_id);
 
-    let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
-    let sub_res =
-        UserRoleEntity::delete_by_column_batch(&tx, "role_id", &sub_tabs, sub_tabs.len() as u64)
-            .await;
+    log::debug!("add_ids {add_ids:?}");
+    log::debug!("sub_ids {sub_ids:?}");
 
-    tx.commit().await.expect("msg");
+    if !sub_ids.is_empty() {
+        role_ids_to_sub_tab(&req_data.user_id, &sub_ids);
 
-    if let Err(rbs::Error::E(error)) = add_res {
-        log::error!("绑定用户角色失败, {error}");
-        let res = ResponseBody::error("绑定用户角色失败");
-        tx.rollback().await.expect("msg");
-        return res;
+        for id in sub_ids {
+            let sub_res: Result<Option<()>, rbs::Error> = tx
+                .query_decode(
+                    "delete from user_role where role_id=? and user_id = ?",
+                    vec![to_value!(id), to_value!(req_data.user_id)],
+                )
+                .await;
+            tx.commit().await.expect("msg");
+            if let Err(rbs::Error::E(error)) = sub_res {
+                log::error!("删除用户角色失败, {error}");
+                let res = ResponseBody::error("删除用户角色失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
+    } else {
+        if req_data.role_id.is_empty() {
+            let sub_res = UserRoleEntity::delete_by_column(&tx, "user_id", req_data.user_id).await;
+            tx.commit().await.expect("msg");
+            if let Err(rbs::Error::E(error)) = sub_res {
+                log::error!("删除用户角色失败, {error}");
+                let res = ResponseBody::error("删除用户角色失败");
+                tx.rollback().await.expect("msg");
+                return res;
+            }
+        }
     }
 
-    if let Err(rbs::Error::E(error)) = sub_res {
-        log::error!("删除用户角色失败, {error}");
-        let res = ResponseBody::error("删除用户角色失败");
-        tx.rollback().await.expect("msg");
-        return res;
+    if !add_ids.is_empty() {
+        let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids);
+        log::debug!("add_tabs {add_tabs:#?}");
+        let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
+
+        tx.commit().await.expect("msg");
+        if let Err(rbs::Error::E(error)) = add_res {
+            log::error!("绑定用户角色失败, {error}");
+            let res = ResponseBody::error("绑定用户角色失败");
+            tx.rollback().await.expect("msg");
+            return res;
+        }
     }
+
     ResponseBody::success("绑定成功")
 }
 
