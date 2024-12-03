@@ -4,7 +4,7 @@ use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
-use redis::Commands;
+use redis::{Commands, Connection};
 use serde::Serialize;
 use std::env::var;
 use utoipa::{
@@ -163,7 +163,7 @@ pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
 }
 
 pub fn rds_str_to_list<T, U: Fn(String) -> T>(
-    mut rds: std::cell::RefMut<'_, redis::Connection>,
+    mut rds: Connection,
     ids: Vec<i32>,
     key: RedisKeys,
     cb: U,
