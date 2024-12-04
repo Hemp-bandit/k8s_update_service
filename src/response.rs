@@ -1,3 +1,5 @@
+use std::fmt::write;
+
 use actix_web::{
     body::BoxBody,
     error,
@@ -53,9 +55,14 @@ impl<T: Serialize> Responder for ResponseBody<T> {
 pub enum MyError {
     // #[display("internal error")]
     // InternalError = 0,
-
     #[display("用户不存在")]
     UserNotExist,
+
+    #[display("角色不存在")]
+    RoleNotExist,
+
+    #[display("权限不存在")]
+    AccessNotExist,
 
     #[display("用户不正确")]
     UserIsWrong,
@@ -65,6 +72,15 @@ pub enum MyError {
 
     #[display("权限验证失败")]
     AuthError,
+
+    #[display("删除角色权限失败")]
+    DelRoleAccessError,
+
+    #[display("更新角色失败")]
+    UpdateRoleError,
+
+    #[display("创建角色失败")]
+    CreateRoleError,
 }
 
 impl error::ResponseError for MyError {

@@ -56,6 +56,9 @@ pub enum RedisKeys {
     #[display("user_roles")]
     UserRoles,
 
+    #[display("role_access")]
+    RoleAccess,
+
     #[display("access_map")]
     AccessMap,
 

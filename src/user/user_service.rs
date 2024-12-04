@@ -1,8 +1,8 @@
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
 use crate::response::MyError;
-use crate::user::user_role::{
-    check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
+use crate::user::user_role_service::{
+    check_user_role_bind, check_role_exists, bind_user_role, unbind_role_from_cache,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
 use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
@@ -293,13 +293,13 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     }
 
     let mut tx = get_transaction_tx().await.expect("get tx error");
-    let (add_ids, sub_ids) = check_bind(&req_data.user_id, &req_data.role_id).await;
+    let (add_ids, sub_ids) = check_user_role_bind(&req_data.user_id, &req_data.role_id).await;
 
     log::debug!("add_ids {add_ids:?}");
     log::debug!("sub_ids {sub_ids:?}");
 
     if !sub_ids.is_empty() {
-        role_ids_to_sub_tab(&req_data.user_id, &sub_ids).await;
+        unbind_role_from_cache(&req_data.user_id, &sub_ids).await;
 
         for id in sub_ids {
             let sub_res: Result<Option<()>, rbs::Error> = tx
@@ -330,7 +330,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     }
 
     if !add_ids.is_empty() {
-        let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids).await;
+        let add_tabs: Vec<UserRoleEntity> = bind_user_role(&req_data.user_id, &add_ids).await;
         log::debug!("add_tabs {add_tabs:#?}");
         let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
 

@@ -45,7 +45,7 @@ pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
 /// [1,2 ,5]    [1,2,3,4]    remove 3,4 add 5
 ///
 ///
-pub async fn check_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i32>, Vec<i32>) {
+pub async fn check_user_role_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i32>, Vec<i32>) {
     let rds = REDIS_ADDR.get().expect("msg");
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     let cache_ids: Vec<i32> = rds
@@ -80,7 +80,7 @@ pub async fn check_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i32>, Vec<i3
     (add_ids, sub_ids)
 }
 
-pub async fn role_ids_to_add_tab(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleEntity> {
+pub async fn bind_user_role(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleEntity> {
     let rds = REDIS_ADDR.get().expect("msg");
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     let mut tabs: Vec<UserRoleEntity> = vec![];
@@ -103,7 +103,7 @@ pub async fn role_ids_to_add_tab(user_id: &i32, role_ids: &Vec<i32>) -> Vec<User
     tabs
 }
 
-pub async fn role_ids_to_sub_tab(user_id: &i32, role_ids: &Vec<i32>) {
+pub async fn unbind_role_from_cache(user_id: &i32, role_ids: &Vec<i32>) {
     let rds = REDIS_ADDR.get().expect("msg");
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     for id in role_ids {
