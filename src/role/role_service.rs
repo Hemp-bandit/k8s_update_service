@@ -237,15 +237,11 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     responses( (status = 200) )
   )]
 #[get("/role_binds/{id}")]
-pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
+pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyError> {
     let id = parma.into_inner();
     let db_role = check_role_by_id(id.clone()).await;
     if db_role.is_none() {
-        return ResponseBody {
-            code: 500,
-            msg: "角色不存在".to_string(),
-            data: None,
-        };
+        return Err(MyError::UserNotExist);
     }
 
     let ex = RB.acquire().await.expect("msg");
@@ -255,7 +251,7 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
 
     let res: ResponseBody<Option<Vec<RoleAccessEntity>>> = ResponseBody::default(Some(search_res));
 
-    res
+    Ok(res)
 }
 
 #[utoipa::path(

@@ -23,9 +23,9 @@ use rbs::to_value;
     responses( (status = 200))
 )]
 #[post("/create_access")]
-async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder {
+async fn create_access(req_data: web::Json<CreateAccessData>) -> Result<impl Responder, MyError> {
     if check_user_by_user_id(req_data.create_by).await.is_none() {
-        return ResponseBody::error("用户不存在");
+        return Err(MyError::UserNotExist);
     }
 
     let new_access = AccessEntity {
@@ -43,10 +43,9 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder 
     tx.commit().await.expect("commit error");
     match insert_res {
         Err(rbs::Error::E(error)) => {
-            let res = ResponseBody::error("创建权限失败");
-            log::error!(" 创建权限失败 {}", error);
+            log::error!(" {} {error}", MyError::CreateAccessError);
             tx.rollback().await.expect("rollback error");
-            return res;
+            return Err(MyError::CreateAccessError);
         }
         Ok(res) => {
             let permission = gen_access_value(res.last_insert_id.as_u64().unwrap_or(0));
@@ -57,15 +56,14 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> impl Responder 
 
             let update_res = AccessEntity::update_by_column(&tx, &update_access, "id").await;
             if let Err(rbs::Error::E(error)) = update_res {
-                let res = ResponseBody::error("更新权限值失败");
-                log::error!(" 更新权限值失败 {}", error);
+                log::error!(" {} {error}", MyError::UpdateAccessError);
                 tx.rollback().await.expect("rollback error");
-                return res;
+                return Err(MyError::UpdateAccessError);
             }
         }
     }
 
-    ResponseBody::success("权限创建成功")
+    Ok(ResponseBody::success("权限创建成功"))
 }
 
 #[utoipa::path(
@@ -131,10 +129,12 @@ async fn get_access_list(req_data: web::Json<AccessListQuery>) -> impl Responder
     responses( (status = 200))
 )]
 #[post("/update_access")]
-pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl Responder {
+pub async fn update_access_by_id(
+    req_data: web::Json<AccessUpdateData>,
+) -> Result<impl Responder, MyError> {
     match check_access_by_id(req_data.id).await {
         None => {
-            return ResponseBody::error("权限不存在");
+            return Err(MyError::AccessNotExist);
         }
         Some(mut access) => {
             access.name = req_data.name.clone().unwrap_or(access.name);
@@ -144,15 +144,14 @@ pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl 
             tx.commit().await.expect("msg");
 
             if let Err(rbs::Error::E(error)) = update_res {
-                log::error!("更新权限失败, {}", error);
-                let res = ResponseBody::error("更新权限失败");
-                tx.rollback().await.expect("msg");
-                return res;
+                log::error!(" {} {error}", MyError::UpdateAccessError);
+                tx.rollback().await.expect("rollback error");
+                return Err(MyError::UpdateAccessError);
             }
         }
     }
 
-    ResponseBody::success("权限更新成功")
+    Ok(ResponseBody::success("权限更新成功"))
 }
 
 #[utoipa::path(
@@ -160,12 +159,12 @@ pub async fn update_access_by_id(req_data: web::Json<AccessUpdateData>) -> impl 
     responses( (status = 200))
 )]
 #[delete("/{id}")]
-pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
+pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError> {
     let id = id.into_inner();
 
     match check_access_by_id(id).await {
         None => {
-            return ResponseBody::error("权限不存在");
+            return Err(MyError::AccessNotExist);
         }
         Some(mut access) => {
             access.status = Status::DEACTIVE as i8;
@@ -175,15 +174,14 @@ pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
             tx.commit().await.expect("msg");
 
             if let Err(rbs::Error::E(error)) = update_res {
-                log::error!("更新权限失败, {}", error);
-                let res = ResponseBody::error("更新权限失败");
-                tx.rollback().await.expect("msg");
-                return res;
+                log::error!(" {} {error}", MyError::UpdateAccessError);
+                tx.rollback().await.expect("rollback error");
+                return Err(MyError::UpdateAccessError);
             }
         }
     }
 
-    ResponseBody::success("权限更新成功")
+    Ok(ResponseBody::success("权限更新成功"))
 }
 
 #[utoipa::path(

@@ -76,11 +76,35 @@ pub enum MyError {
     #[display("删除角色权限失败")]
     DelRoleAccessError,
 
+    #[display("删除用户角色失败")]
+    DelUserRoleError,
+
+    #[display("绑定用户角色失败")]
+    BindUserRoleError,
+
     #[display("更新角色失败")]
     UpdateRoleError,
 
     #[display("创建角色失败")]
     CreateRoleError,
+
+    #[display("创建权限失败")]
+    CreateAccessError,
+
+    #[display("更新权限失败")]
+    UpdateAccessError,
+
+    #[display("删除权限失败")]
+    DeleteAccessError,
+
+    #[display("手机号不正确")]
+    PhoneIsError,
+
+    #[display("创建用户失败")]
+    CreateUserError,
+
+    #[display("更新用户失败")]
+    UpdateUserError,
 }
 
 impl error::ResponseError for MyError {
