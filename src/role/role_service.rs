@@ -1,6 +1,5 @@
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
-use redis::Commands;
 
 use super::{BindAccessData, CreateRoleData, RoleListQueryData, RoleUpdateData};
 use crate::{
@@ -11,11 +10,12 @@ use crate::{
     user::{check_user_by_user_id, OptionData},
     util::{
         common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
+        redis_actor::SmembersData,
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
         sync_opt::{self, SyncOptData},
     },
-    RB, REDIS,
+    RB, REDIS_ADDR,
 };
 
 #[utoipa::path(
@@ -267,15 +267,20 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
   )]
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
-    let mut rds = REDIS.get_connection().expect("msg");
-    let ids: Vec<i32> = rds
-        .smembers(RedisKeys::RoleIds.to_string())
-        .expect("get role_ids rds err");
+    let rds = REDIS_ADDR.get().expect("get addr err");
+    let ids = rds
+        .send(SmembersData {
+            key: RedisKeys::RoleIds.to_string(),
+        })
+        .await
+        .expect("msg")
+        .expect("msg");
     if !ids.is_empty() {
-        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::RoleInfo, |val| {
+        let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {
             let user_data: OptionData = serde_json::from_str(&val).expect("msg");
             user_data
-        });
+        })
+        .await;
         ResponseBody::default(Some(res))
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
@@ -283,15 +288,14 @@ pub async fn get_role_option() -> impl Responder {
             .query_decode("select id, name from role where status=1", vec![])
             .await
             .expect("select db err");
-        drop(rds);
-
         for ele in opt.iter() {
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::RoleIds,
                 RedisKeys::RoleInfo,
                 ele.id,
                 ele.clone(),
-            ));
+            ))
+            .await;
         }
         ResponseBody::default(Some(opt))
     }

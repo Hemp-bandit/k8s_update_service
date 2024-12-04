@@ -5,7 +5,8 @@ use crate::user::user_role::{
     check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
-use crate::util::redis_actor::{HmapData, RedisActor, SetData};
+use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
+use crate::REDIS_ADDR;
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
@@ -16,12 +17,10 @@ use crate::{
         structs::Status,
         sync_opt::{self, SyncOptData},
     },
-    RB, REDIS,
+    RB,
 };
-use actix::Addr;
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
-use redis::Commands;
 #[utoipa::path(
     tag = "user",
     responses( (status = 200) )
@@ -67,7 +66,8 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
                 RedisKeys::UserInfo,
                 opt.id,
                 opt,
-            ));
+            ))
+            .await;
         }
     }
 
@@ -133,7 +133,6 @@ pub async fn get_user_by_id(id: web::Path<i32>) -> impl Responder {
 pub async fn update_user_by_id(
     id: web::Path<i32>,
     req_data: web::Json<UserUpdateData>,
-    sotre: web::Data<Addr<RedisActor>>,
 ) -> impl Responder {
     if let Some(new_phone) = &req_data.phone {
         let phone_check_res = check_phone(new_phone);
@@ -178,10 +177,12 @@ pub async fn update_user_by_id(
                 return res;
             }
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            let _ = sotre
-                .send(HmapData {
-                    hmap_key: RedisKeys::UserInfo,
-                    opt_data: opt,
+            let _ = REDIS_ADDR
+                .get()
+                .expect("get redis addr error")
+                .send(HsetData {
+                    key: RedisKeys::UserInfo.to_string(),
+                    opt_data: serde_json::to_string(&opt).expect("msg"),
                     id: db_user.id.clone().expect("msg"),
                 })
                 .await;
@@ -241,9 +242,14 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
-    let mut rds = REDIS.get_connection().expect("msg");
-    let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
-    let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
+
+    let rds = REDIS_ADDR.get().expect("msg");
+    let key: String = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
+    let cache_ids: Vec<i32> = rds
+        .send(SmembersData { key })
+        .await
+        .expect("获取角色绑定失败")
+        .expect("msg");
 
     let ex = RB.acquire().await.expect("msg");
 
@@ -251,8 +257,12 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
         let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
         let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
         for ele in roles.iter() {
-            let _: () = rds
-                .sadd(key.clone(), ele.id.unwrap())
+            let _ = rds
+                .send(SaddData {
+                    key: key.clone(),
+                    id: ele.id.unwrap(),
+                })
+                .await
                 .expect("add new user_role error");
         }
         roles
@@ -283,13 +293,13 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     }
 
     let mut tx = get_transaction_tx().await.expect("get tx error");
-    let (add_ids, sub_ids) = check_bind(&req_data.user_id, &req_data.role_id);
+    let (add_ids, sub_ids) = check_bind(&req_data.user_id, &req_data.role_id).await;
 
     log::debug!("add_ids {add_ids:?}");
     log::debug!("sub_ids {sub_ids:?}");
 
     if !sub_ids.is_empty() {
-        role_ids_to_sub_tab(&req_data.user_id, &sub_ids);
+        role_ids_to_sub_tab(&req_data.user_id, &sub_ids).await;
 
         for id in sub_ids {
             let sub_res: Result<Option<()>, rbs::Error> = tx
@@ -320,7 +330,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
     }
 
     if !add_ids.is_empty() {
-        let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids);
+        let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids).await;
         log::debug!("add_tabs {add_tabs:#?}");
         let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
 
@@ -342,13 +352,20 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
   )]
 #[get("/get_user_option")]
 pub async fn get_user_option() -> Result<impl Responder, MyError> {
-    let mut rds = REDIS.get_connection().expect("msg");
-    let ids: Vec<i32> = rds.smembers("user_ids").expect("get user_id rds err");
+    let rds = REDIS_ADDR.get().expect("msg");
+    let ids: Vec<i32> = rds
+        .send(SmembersData {
+            key: RedisKeys::UserIds.to_string(),
+        })
+        .await
+        .expect("get user_id rds err")
+        .expect("get user_id rds err");
     if !ids.is_empty() {
-        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::UserInfo, |val| {
+        let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::UserInfo, |val| {
             let user_data: OptionData = serde_json::from_str(&val).expect("msg");
             user_data
-        });
+        })
+        .await;
         return Ok(ResponseBody::default(Some(res)));
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
@@ -363,7 +380,8 @@ pub async fn get_user_option() -> Result<impl Responder, MyError> {
                 RedisKeys::UserInfo,
                 ele.id,
                 ele.clone(),
-            ));
+            ))
+            .await;
         }
         Ok(ResponseBody::default(Some(opt)))
     }

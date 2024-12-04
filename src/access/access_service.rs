@@ -8,15 +8,15 @@ use crate::{
         common::{
             gen_access_value, get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys,
         },
+        redis_actor::SmembersData,
         sql_tool::{SqlTool, SqlToolPageData},
         structs::{CreateByData, Status},
         sync_opt::{self, SyncOptData},
     },
-    RB, REDIS,
+    RB, REDIS_ADDR,
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
-use redis::Commands;
 
 #[utoipa::path(
     tag = "access",
@@ -192,29 +192,33 @@ pub async fn delete_access(id: web::Path<i32>) -> impl Responder {
 )]
 #[get("/access_map")]
 pub async fn get_access_map() -> Result<impl Responder, MyError> {
-    let mut rds = REDIS.get_connection().expect("msg");
-    // check in rds
+    let rds = REDIS_ADDR.get().expect("msg");
+
     let cache_ids: Vec<i32> = rds
-        .smembers(RedisKeys::AccessMapIds.to_string())
-        .expect("get access map ids err");
+        .send(SmembersData {
+            key: RedisKeys::AccessMapIds.to_string(),
+        })
+        .await
+        .expect("msg")
+        .expect("msg");
     if cache_ids.is_empty() {
         let list = get_access().await;
-        drop(rds);
         for ele in &list {
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::UserIds,
                 RedisKeys::UserInfo,
                 ele.id,
                 ele.clone(),
-            ));
+            ))
+            .await;
         }
         Ok(ResponseBody::default(Some(list)))
     } else {
-        let res: Vec<AccessMapItem> =
-            rds_str_to_list(rds, cache_ids, RedisKeys::AccessMap, |val| {
-                let item: AccessMapItem = serde_json::from_str(&val).expect("msg");
-                item
-            });
+        let res: Vec<AccessMapItem> = rds_str_to_list(cache_ids, RedisKeys::AccessMap, |val| {
+            let item: AccessMapItem = serde_json::from_str(&val).expect("msg");
+            item
+        })
+        .await;
         Ok(ResponseBody::default(Some(res)))
     }
 }

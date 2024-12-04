@@ -1,7 +1,9 @@
-use crate::REDIS;
+use crate::REDIS_ADDR;
 
-use super::common::RedisKeys;
-use redis::Commands;
+use super::{
+    common::RedisKeys,
+    redis_actor::{HsetData, SaddData},
+};
 use serde::Serialize;
 
 pub struct SyncOptData<T> {
@@ -21,16 +23,30 @@ impl<T: Serialize> SyncOptData<T> {
     }
 }
 
-pub fn sync<T: Serialize>(data: SyncOptData<T>) {
-    let mut rds = REDIS.get_connection().expect("msg");
-    let _: () = rds
-        .sadd(data.set_key, data.id)
-        .expect("set user_id to rds err");
-    let _: () = rds
-        .hset(
-            data.hmap_key,
-            data.id,
-            serde_json::to_string(&data.opt_data).expect("msg"),
-        )
-        .expect("hset user to rds err");
+pub async fn sync<T: Serialize>(data: SyncOptData<T>) {
+    let rds = REDIS_ADDR.get().expect("msg");
+    rds.send(SaddData {
+        key: data.set_key,
+        id: data.id,
+    })
+    .await
+    .expect("msg")
+    .expect("msg");
+    let msg = HsetData {
+        key: data.hmap_key,
+        id: data.id,
+        opt_data: serde_json::to_string(&data.opt_data).expect("msg"),
+    };
+    rds.send(msg).await.expect("msg").expect("msg");
+
+    // let _: () = rds
+    //     .sadd(data.set_key, data.id)
+    //     .expect("set user_id to rds err");
+    // let _: () = rds
+    //     .hset(
+    //         data.hmap_key,
+    //         data.id,
+    //         serde_json::to_string(&data.opt_data).expect("msg"),
+    //     )
+    //     .expect("hset user to rds err");
 }

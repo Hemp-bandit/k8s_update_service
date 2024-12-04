@@ -1,10 +1,9 @@
-use crate::{user::RedisLoginData, RB};
+use crate::{user::RedisLoginData, RB, REDIS_ADDR};
 use chrono::{DateTime, Local, Utc};
 use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
-use redis::{Commands, Connection};
 use serde::Serialize;
 use std::env::var;
 use utoipa::{
@@ -18,6 +17,8 @@ use utoipa::{
 use hmac::{Hmac, Mac};
 use jwt::{SignWithKey, VerifyWithKey};
 use sha2::Sha256;
+
+use super::redis_actor::HgetById;
 
 #[derive(Debug, Serialize)]
 pub struct JWT;
@@ -38,7 +39,7 @@ impl Modify for JWT {
     }
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug, Display, Clone)]
 pub enum RedisKeys {
     #[display("user_ids")]
     UserIds,
@@ -60,6 +61,42 @@ pub enum RedisKeys {
 
     #[display("access_map_ids")]
     AccessMapIds,
+}
+
+#[derive(Debug, Display, Clone)]
+pub enum RedisCmd {
+    #[display("sismember")]
+    Sismember,
+
+    #[display("hexists")]
+    Hexists,
+
+    #[display("exists")]
+    Exists,
+
+    #[display("smembers")]
+    Smembers,
+
+    #[display("HGET")]
+    Hget,
+
+    #[display("HSET")]
+    Hset,
+
+    #[display("SADD")]
+    Sadd,
+
+    #[display("srem")]
+    Srem,
+
+    #[display("get")]
+    Get,
+
+    #[display("del")]
+    Del,
+
+    #[display("SETEX")]
+    SETEX,
 }
 
 /**
@@ -162,15 +199,22 @@ pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
     }
 }
 
-pub fn rds_str_to_list<T, U: Fn(String) -> T>(
-    mut rds: Connection,
+pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
     ids: Vec<i32>,
     key: RedisKeys,
     cb: U,
 ) -> Vec<T> {
+    let rds = REDIS_ADDR.get().expect("get addr err");
     let mut res: Vec<T> = vec![];
     for id in ids {
-        let data: Option<String> = rds.hget(key.to_string(), id).expect("asdf");
+        let data = rds
+            .send(HgetById {
+                key: key.clone().to_string(),
+                id,
+            })
+            .await
+            .expect("msg")
+            .expect("msg");
         if let Some(str) = data {
             let item: T = cb(str);
             res.push(item);
