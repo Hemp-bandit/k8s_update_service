@@ -110,11 +110,12 @@ impl Handler<ExistsData> for RedisActor {
 
     fn handle(&mut self, msg: ExistsData, _ctx: &mut Self::Context) -> Self::Result {
         let mut rds = self.conn.clone();
-        let mut set_cmd = redis::cmd(&msg.cmd.to_string());
+        let mut cmd = redis::cmd(&msg.cmd.to_string());
+        cmd.arg(msg.key);
         if let Some(data) = msg.data {
-            set_cmd.arg(msg.key).arg(data);
+            cmd.arg(data);
         }
-        let fut = async move { set_cmd.query_async(&mut rds).await };
+        let fut = async move { cmd.query_async(&mut rds).await };
         Box::pin(fut)
     }
 }

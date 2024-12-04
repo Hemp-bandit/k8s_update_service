@@ -49,8 +49,7 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
 
-    let var_name = RedisActor::new();
-    let actor = var_name.await;
+    let actor =  RedisActor::new().await;
     let addr: Addr<RedisActor> = actor.start();
 
     REDIS_ADDR.set(addr.clone()).expect("set redis addr error");
