@@ -184,7 +184,6 @@ pub fn gen_jwt_token(login_data: RedisLoginData) -> String {
 }
 
 pub fn jwt_token_to_data(jwt_token: String) -> Option<RedisLoginData> {
-    log::debug!("jwt_token {jwt_token}");
     if jwt_token.is_empty() {
         return None;
     }

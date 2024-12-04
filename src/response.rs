@@ -1,5 +1,3 @@
-use std::fmt::write;
-
 use actix_web::{
     body::BoxBody,
     error,

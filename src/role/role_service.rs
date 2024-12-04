@@ -4,7 +4,9 @@ use rbs::to_value;
 use super::{BindAccessData, CreateRoleData, RoleListQueryData, RoleUpdateData};
 use crate::{
     access::check_access_by_ids,
-    entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
+    entity::{
+        access_entity::AccessEntity, role_access_entity::RoleAccessEntity, role_entity::RoleEntity,
+    },
     response::{MyError, ResponseBody},
     role::{
         check_role_by_id,
@@ -14,7 +16,7 @@ use crate::{
     user::{check_user_by_user_id, OptionData},
     util::{
         common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
-        redis_actor::SmembersData,
+        redis_actor::{SaddData, SmembersData},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
         sync_opt::{self, SyncOptData},
@@ -244,14 +246,35 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyE
         return Err(MyError::UserNotExist);
     }
 
-    let ex = RB.acquire().await.expect("msg");
-    let search_res = RoleAccessEntity::select_by_column(&ex, "role_id", id)
+    let rds = REDIS_ADDR.get().expect("msg");
+    let key: String = format!("{}_{}", RedisKeys::RoleAccess.to_string(), id);
+    let cache_ids: Vec<i32> = rds
+        .send(SmembersData { key })
         .await
+        .expect("获取权限绑定失败")
         .expect("msg");
 
-    let res: ResponseBody<Option<Vec<RoleAccessEntity>>> = ResponseBody::default(Some(search_res));
-
-    Ok(res)
+    let ex = RB.acquire().await.expect("msg");
+    let search_res: Vec<AccessEntity> = if cache_ids.is_empty() {
+        let access :Vec<AccessEntity>=  ex.query_decode("select access.* from role_access left join access on role_access.access_id = access.id where role_id=? and access.status = 1;", vec![to_value!(id)]).await.expect("msg");
+        let key = format!("{}_{}", RedisKeys::RoleAccess.to_string(), id);
+        for ele in access.iter() {
+            let _ = rds
+                .send(SaddData {
+                    key: key.clone(),
+                    id: ele.id.unwrap(),
+                })
+                .await
+                .expect("add new role_access error");
+        }
+        access
+    } else {
+        let roles = AccessEntity::select_in_column(&ex, "id", &cache_ids)
+            .await
+            .expect("获取角色绑定权限失败");
+        roles
+    };
+    Ok(ResponseBody::default(Some(search_res)))
 }
 
 #[utoipa::path(
