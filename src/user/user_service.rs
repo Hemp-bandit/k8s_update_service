@@ -192,7 +192,7 @@ pub async fn update_user_by_id(
     params(("id", description = "user id") ),
     responses( (status = 200) )
 )]
-#[delete("/{id}")]
+#[delete("/delete_user/{id}")]
 pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> {
     let ex_db = RB.acquire().await.expect("msg");
 
@@ -208,7 +208,12 @@ pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> 
         Some(mut db_user) => {
             let mut tx = get_transaction_tx().await.unwrap();
             db_user.status = Status::DEACTIVE as i16;
-            let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
+            let update_res: Result<Option<()>, rbs::Error> = tx
+                .query_decode(
+                    "update user set user.status = ? where user.id = ?",
+                    vec![to_value!(db_user.status), to_value!(db_user.id.unwrap())],
+                )
+                .await;
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
                 log::error!("{} {}", error, MyError::UpdateUserError);
