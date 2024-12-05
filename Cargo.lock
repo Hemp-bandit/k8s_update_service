@@ -70,7 +70,7 @@ dependencies = [
  "actix-service",
  "actix-utils",
  "ahash",
- "base64 0.22.1",
+ "base64",
  "bitflags",
  "brotli",
  "bytes",
@@ -395,12 +395,6 @@ dependencies = [
  "rustc-demangle",
  "windows-targets",
 ]
-
-[[package]]
-name = "base64"
-version = "0.13.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e1b586273c5702936fe7b7d6896644d8be71e6314cfe09d3167c95f712589e8"
 
 [[package]]
 name = "base64"
@@ -757,7 +751,6 @@ dependencies = [
  "block-buffer",
  "const-oid",
  "crypto-common",
- "subtle",
 ]
 
 [[package]]
@@ -1056,15 +1049,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
-name = "hmac"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
-dependencies = [
- "digest",
-]
-
-[[package]]
 name = "html_parser"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1317,21 +1301,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jwt"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6204285f77fe7d9784db3fdc449ecce1a0114927a51d5a41c4c7a292011c015f"
-dependencies = [
- "base64 0.13.1",
- "crypto-common",
- "digest",
- "hmac",
- "serde",
- "serde_json",
- "sha2",
-]
-
-[[package]]
 name = "kaibai_user_service"
 version = "0.1.0"
 dependencies = [
@@ -1344,8 +1313,6 @@ dependencies = [
  "env",
  "env_logger",
  "futures-util",
- "hmac",
- "jwt",
  "lazy-regex",
  "lazy_static",
  "log",
@@ -1357,7 +1324,7 @@ dependencies = [
  "redis-macros",
  "serde",
  "serde_json",
- "sha2",
+ "simple-base64",
  "utoipa",
  "utoipa-actix-web",
  "utoipa-scalar",
@@ -1822,7 +1789,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4839c07fb831556e85bbe751641ad50ac8d7b4ea46d984c1d4585f1816bda1e3"
 dependencies = [
  "async-trait",
- "base64 0.22.1",
+ "base64",
  "html_parser",
  "proc-macro2",
  "quote",
@@ -2095,9 +2062,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.17"
+version = "0.23.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f1a745511c54ba6d4465e8d5dfbd81b45791756de28d4981af70d6dca128f1e"
+checksum = "934b404430bb06b3fae2cba809eb45a1ab1aecd64491213d7c3301b88393f8d1"
 dependencies = [
  "once_cell",
  "ring",
@@ -2267,6 +2234,12 @@ dependencies = [
  "digest",
  "rand_core",
 ]
+
+[[package]]
+name = "simple-base64"
+version = "0.23.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6385ef05b7bbfddaa8bf6306d059adac087990d659576c73b7da802d9a6ce91f"
 
 [[package]]
 name = "slab"
