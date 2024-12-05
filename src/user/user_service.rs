@@ -45,7 +45,7 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> Result<impl Res
         status: Status::ACTIVE as i16,
     };
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
     let insert_res = UserEntity::insert(&tx, &insert_user).await;
     tx.commit().await.expect("commit transaction error ");
     match insert_res {
@@ -290,7 +290,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
         return Err(MyError::UserNotExist);
     }
 
-    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let tx = get_transaction_tx().await.expect("get tx error");
     let (add_ids, sub_ids) = check_user_role_bind(&req_data.user_id, &req_data.role_id).await;
 
     log::debug!("add_ids {add_ids:?}");

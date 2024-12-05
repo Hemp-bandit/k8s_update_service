@@ -132,7 +132,7 @@ pub fn check_phone(phone: &str) -> bool {
 
 pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
     let tx = RB.acquire_begin().await.unwrap();
-    let tx: RBatisTxExecutorGuard = tx.defer_async(|mut tx| async move {
+    let tx: RBatisTxExecutorGuard = tx.defer_async(|tx| async move {
         if tx.done() {
             log::info!("transaction [{}] complete.", tx.tx_id);
         } else {
