@@ -16,7 +16,7 @@ case $1 in
   docker login -u=15717827650 -p wyswill4290 registry.cn-hangzhou.aliyuncs.com
   ;;
 "update")
-  kubectl set image deployment/kaibai-user-deployment kaibai-user-deploy=registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:4b01dbe0
+  kubectl set image deployment/kaibai-user-deployment kaibai-user-deploy=$docker_tag
   ;;
 *)
   echo "comd has push_img、build_img"
