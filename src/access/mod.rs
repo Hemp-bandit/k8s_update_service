@@ -2,7 +2,15 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
-use crate::{entity::access_entity::AccessEntity, util::structs::CreateByData, RB};
+use crate::{
+    entity::access_entity::AccessEntity,
+    util::{
+        common::{RedisCmd, RedisKeys},
+        redis_actor::ExistsData,
+        structs::CreateByData,
+    },
+    RB, REDIS_ADDR,
+};
 
 mod access_service;
 
@@ -55,7 +63,6 @@ pub struct AccessMapItem {
     pub value: u64,
 }
 
-
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct AccessValueData {
     pub value: u64,
@@ -66,4 +73,35 @@ pub async fn check_access_by_id(id: i32) -> Option<AccessEntity> {
     AccessEntity::select_by_id(&ex_db, id.clone())
         .await
         .expect("权限查询失败")
+}
+
+pub async fn check_access_by_ids(list: &Vec<i32>) -> Option<bool> {
+    let rds = REDIS_ADDR.get().expect("msg");
+    for id in list {
+        let in_ids_cache: bool = rds
+            .send(ExistsData {
+                key: RedisKeys::AccessMapIds.to_string(),
+                cmd: RedisCmd::Sismember,
+                data: Some(id.to_string()),
+            })
+            .await
+            .expect("msg")
+            .expect("msg");
+        let in_info_cache: bool = rds
+            .send(ExistsData {
+                key: RedisKeys::AccessMap.to_string(),
+                cmd: RedisCmd::Hexists,
+                data: Some(id.to_string()),
+            })
+            .await
+            .expect("msg")
+            .expect("msg");
+        if !in_ids_cache && !in_info_cache {
+            let db_role = check_access_by_id(id.clone()).await;
+            if db_role.is_none() {
+                return None;
+            }
+        }
+    }
+    Some(true)
 }

@@ -5,9 +5,9 @@ use actix_web::{http, web, App, HttpServer};
 use env::dotenv;
 use env_logger;
 use middleware::jwt_mw;
+use once_cell::sync::OnceCell;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
-use redis::Client;
 use util::common::JWT;
 use util::redis_actor::RedisActor;
 use utoipa::OpenApi;
@@ -41,19 +41,7 @@ struct ApiDoc;
 lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
     static ref RB:RBatis=RBatis::new();
-    static ref REDIS:Client = {
-        let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
-        let client =  match redis::Client::open(redis_url) {
-            Err(err)=>{
-                let detail = err.detail().expect("get redis err detail ");
-                panic!("redis client err:  {detail}");
-            },
-            Ok(client)=>{
-                client
-            }
-        };
-    client
-    };
+    static ref REDIS_ADDR: OnceCell<Addr<RedisActor>> = OnceCell::new();
 }
 
 #[actix_web::main]
@@ -61,9 +49,10 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
 
-    let var_name = RedisActor::new();
-    let actor = var_name.await;
+    let actor =  RedisActor::new().await;
     let addr: Addr<RedisActor> = actor.start();
+
+    REDIS_ADDR.set(addr.clone()).expect("set redis addr error");
 
     init_db().await;
 

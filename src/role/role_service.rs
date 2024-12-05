@@ -1,21 +1,27 @@
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
-use redis::Commands;
 
 use super::{BindAccessData, CreateRoleData, RoleListQueryData, RoleUpdateData};
 use crate::{
-    access::check_access_by_id,
-    entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
-    response::ResponseBody,
-    role::{check_role_access, check_role_by_id, CreateByData, RoleListListData},
+    access::check_access_by_ids,
+    entity::{
+        access_entity::AccessEntity, role_access_entity::RoleAccessEntity, role_entity::RoleEntity,
+    },
+    response::{MyError, ResponseBody},
+    role::{
+        check_role_by_id,
+        role_access_service::{bind_role_access, check_role_access_bind, unbind_access_from_cache},
+        CreateByData, RoleListListData,
+    },
     user::{check_user_by_user_id, OptionData},
     util::{
         common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
+        redis_actor::{SaddData, SmembersData},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
         sync_opt::{self, SyncOptData},
     },
-    RB, REDIS,
+    RB, REDIS_ADDR,
 };
 
 #[utoipa::path(
@@ -23,9 +29,9 @@ use crate::{
   responses( (status = 200) )
 )]
 #[post("/create_role")]
-async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
+async fn create_role(req_data: web::Json<CreateRoleData>) -> Result<impl Responder, MyError> {
     if check_user_by_user_id(req_data.create_by).await.is_none() {
-        return ResponseBody::error("用户不存在");
+        return Err(MyError::RoleNotExist);
     }
 
     let new_role = RoleEntity {
@@ -42,13 +48,12 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> impl Responder {
     tx.commit().await.expect("commit error");
 
     if let Err(rbs::Error::E(error)) = insert_res {
-        let res = ResponseBody::error("创建角色失败");
         log::error!(" 创建角色失败 {}", error);
         tx.rollback().await.expect("rollback error");
-        return res;
+        return Err(MyError::CreateRoleError);
     }
 
-    ResponseBody::success("角色创建成功")
+    Ok(ResponseBody::success("角色创建成功"))
 }
 
 #[utoipa::path(
@@ -111,10 +116,12 @@ async fn get_role_list(req_data: web::Json<RoleListQueryData>) -> impl Responder
     responses( (status = 200) )
   )]
 #[post("/update_role")]
-pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Responder {
+pub async fn update_role_by_id(
+    req_data: web::Json<RoleUpdateData>,
+) -> Result<impl Responder, MyError> {
     match check_role_by_id(req_data.id).await {
         None => {
-            return ResponseBody::error("角色不存在");
+            return Err(MyError::RoleNotExist);
         }
         Some(mut role) => {
             role.name = req_data.name.clone().unwrap_or(role.name);
@@ -124,15 +131,14 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
             tx.commit().await.expect("msg");
 
             if let Err(rbs::Error::E(error)) = update_res {
-                log::error!("更新用户失败, {}", error);
-                let res = ResponseBody::error("更新角色失败");
+                log::error!("{}, {}", error, MyError::UpdateRoleError);
                 tx.rollback().await.expect("msg");
-                return res;
+                return Err(MyError::UpdateRoleError);
             }
         }
     }
 
-    ResponseBody::success("角色更新成功")
+    Ok(ResponseBody::success("角色更新成功"))
 }
 
 #[utoipa::path(
@@ -140,11 +146,11 @@ pub async fn update_role_by_id(req_data: web::Json<RoleUpdateData>) -> impl Resp
     responses( (status = 200) )
   )]
 #[delete("/{id}")]
-pub async fn delete_role_by_id(id: web::Path<i32>) -> impl Responder {
+pub async fn delete_role_by_id(id: web::Path<i32>) -> Result<impl Responder, MyError> {
     let id: i32 = id.into_inner();
     match check_role_by_id(id).await {
         None => {
-            return ResponseBody::error("角色不存在");
+            return Err(MyError::RoleNotExist);
         }
         Some(mut role) => {
             role.status = Status::DEACTIVE as i8;
@@ -154,15 +160,14 @@ pub async fn delete_role_by_id(id: web::Path<i32>) -> impl Responder {
             tx.commit().await.expect("msg");
 
             if let Err(rbs::Error::E(error)) = update_res {
-                log::error!("更新用户失败, {}", error);
-                let res = ResponseBody::error("更新角色失败");
+                log::error!("{}, {}", error, MyError::UpdateRoleError);
                 tx.rollback().await.expect("msg");
-                return res;
+                return Err(MyError::UpdateRoleError);
             }
         }
     }
 
-    ResponseBody::success("角色删除成功")
+    Ok(ResponseBody::success("角色删除成功"))
 }
 
 #[utoipa::path(
@@ -170,36 +175,63 @@ pub async fn delete_role_by_id(id: web::Path<i32>) -> impl Responder {
     responses( (status = 200) )
   )]
 #[post("/bind_access")]
-pub async fn bind_access(req_data: web::Json<BindAccessData>) -> impl Responder {
+pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Responder, MyError> {
     let db_role = check_role_by_id(req_data.role_id).await;
-    let db_access = check_access_by_id(req_data.access_id).await;
+    let db_access = check_access_by_ids(&req_data.access_ids).await;
     if db_role.is_none() {
-        return ResponseBody::error("角色不存在");
+        return Err(MyError::RoleNotExist);
     }
     if db_access.is_none() {
-        return ResponseBody::error("权限不存在");
+        return Err(MyError::AccessNotExist);
     }
-    let db_access = check_role_access(req_data.role_id.clone(), req_data.access_id.clone()).await;
-    if !db_access.is_empty() {
-        return ResponseBody::error("权限已绑定");
-    }
-
-    let new_role_access = RoleAccessEntity {
-        id: None,
-        role_id: req_data.role_id.clone(),
-        access_id: req_data.access_id.clone(),
-    };
-
     let mut tx = get_transaction_tx().await.expect("get tx error");
-    let insert_res = RoleAccessEntity::insert(&tx, &new_role_access).await;
-    tx.commit().await.expect("msg");
-    if let Err(rbs::Error::E(error)) = insert_res {
-        log::error!("绑定权限失败, {}", error);
-        let res = ResponseBody::error("绑定权限失败");
-        tx.rollback().await.expect("msg");
-        return res;
+    let (add_ids, sub_ids) = check_role_access_bind(&req_data.role_id, &req_data.access_ids).await;
+
+    log::debug!("add_ids {add_ids:?}");
+    log::debug!("sub_ids {sub_ids:?}");
+
+    if !sub_ids.is_empty() {
+        unbind_access_from_cache(&req_data.role_id, &sub_ids).await;
+        for id in sub_ids {
+            let sub_res: Result<Option<()>, rbs::Error> = tx
+                .query_decode(
+                    "delete from role_access where access_id=? and role_id = ?",
+                    vec![to_value!(id), to_value!(req_data.role_id)],
+                )
+                .await;
+            tx.commit().await.expect("msg");
+            if let Err(rbs::Error::E(error)) = sub_res {
+                log::error!("{}, {error}", MyError::DelRoleAccessError);
+                tx.rollback().await.expect("msg");
+                return Err(MyError::DelRoleAccessError);
+            }
+        }
+    } else {
+        if req_data.access_ids.is_empty() {
+            let sub_res =
+                RoleAccessEntity::delete_by_column(&tx, "role_id", req_data.role_id).await;
+            tx.commit().await.expect("msg");
+            if let Err(rbs::Error::E(error)) = sub_res {
+                log::error!("{}, {error}", MyError::DelRoleAccessError);
+                tx.rollback().await.expect("msg");
+                return Err(MyError::DelRoleAccessError);
+            }
+        }
     }
-    ResponseBody::success("绑定成功")
+
+    if !add_ids.is_empty() {
+        let add_tabs: Vec<RoleAccessEntity> = bind_role_access(&req_data.role_id, &add_ids).await;
+        log::debug!("add_tabs {add_tabs:#?}");
+        let add_res = RoleAccessEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
+
+        tx.commit().await.expect("msg");
+        if let Err(rbs::Error::E(error)) = add_res {
+            log::error!("{}, {error}", MyError::DelRoleAccessError);
+            tx.rollback().await.expect("msg");
+            return Err(MyError::DelRoleAccessError);
+        }
+    }
+    Ok(ResponseBody::success("绑定成功"))
 }
 
 #[utoipa::path(
@@ -207,58 +239,42 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> impl Responder 
     responses( (status = 200) )
   )]
 #[get("/role_binds/{id}")]
-pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
+pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyError> {
     let id = parma.into_inner();
     let db_role = check_role_by_id(id.clone()).await;
     if db_role.is_none() {
-        return ResponseBody {
-            code: 500,
-            msg: "角色不存在".to_string(),
-            data: None,
-        };
+        return Err(MyError::UserNotExist);
     }
 
-    let ex = RB.acquire().await.expect("msg");
-    let search_res = RoleAccessEntity::select_by_column(&ex, "role_id", id)
+    let rds = REDIS_ADDR.get().expect("msg");
+    let key: String = format!("{}_{}", RedisKeys::RoleAccess.to_string(), id);
+    let cache_ids: Vec<i32> = rds
+        .send(SmembersData { key })
         .await
+        .expect("获取权限绑定失败")
         .expect("msg");
 
-    let res: ResponseBody<Option<Vec<RoleAccessEntity>>> = ResponseBody::default(Some(search_res));
-
-    res
-}
-
-#[utoipa::path(
-    tag = "role",
-    responses( (status = 200) )
-  )]
-#[delete("/un_bind_role")]
-pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder {
-    let db_role = check_role_by_id(req_data.role_id).await;
-    let db_access = check_access_by_id(req_data.access_id).await;
-    if db_role.is_none() {
-        return ResponseBody::error("角色不存在");
-    }
-    if db_access.is_none() {
-        return ResponseBody::error("权限不存在");
-    }
-
-    let mut tx = get_transaction_tx().await.expect("get tx error");
-    let delete_res = RoleAccessEntity::delete_by_role_and_access(
-        &tx,
-        req_data.role_id.clone(),
-        req_data.access_id.clone(),
-    )
-    .await;
-    tx.commit().await.expect("msg");
-    if let Err(rbs::Error::E(error)) = delete_res {
-        log::error!("解除绑定权限失败, {error}");
-        let res = ResponseBody::error("解除绑定权限失败");
-        tx.rollback().await.expect("msg");
-        return res;
-    }
-
-    ResponseBody::success("解除绑定成功")
+    let ex = RB.acquire().await.expect("msg");
+    let search_res: Vec<AccessEntity> = if cache_ids.is_empty() {
+        let access :Vec<AccessEntity>=  ex.query_decode("select access.* from role_access left join access on role_access.access_id = access.id where role_id=? and access.status = 1;", vec![to_value!(id)]).await.expect("msg");
+        let key = format!("{}_{}", RedisKeys::RoleAccess.to_string(), id);
+        for ele in access.iter() {
+            let _ = rds
+                .send(SaddData {
+                    key: key.clone(),
+                    id: ele.id.unwrap(),
+                })
+                .await
+                .expect("add new role_access error");
+        }
+        access
+    } else {
+        let roles = AccessEntity::select_in_column(&ex, "id", &cache_ids)
+            .await
+            .expect("获取角色绑定权限失败");
+        roles
+    };
+    Ok(ResponseBody::default(Some(search_res)))
 }
 
 #[utoipa::path(
@@ -267,15 +283,20 @@ pub async fn un_bind_role(req_data: web::Json<BindAccessData>) -> impl Responder
   )]
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
-    let mut rds = REDIS.get_connection().expect("msg");
-    let ids: Vec<i32> = rds
-        .smembers(RedisKeys::RoleIds.to_string())
-        .expect("get role_ids rds err");
+    let rds = REDIS_ADDR.get().expect("get addr err");
+    let ids = rds
+        .send(SmembersData {
+            key: RedisKeys::RoleIds.to_string(),
+        })
+        .await
+        .expect("msg")
+        .expect("msg");
     if !ids.is_empty() {
-        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::RoleInfo, |val| {
+        let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {
             let user_data: OptionData = serde_json::from_str(&val).expect("msg");
             user_data
-        });
+        })
+        .await;
         ResponseBody::default(Some(res))
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
@@ -283,15 +304,14 @@ pub async fn get_role_option() -> impl Responder {
             .query_decode("select id, name from role where status=1", vec![])
             .await
             .expect("select db err");
-        drop(rds);
-
         for ele in opt.iter() {
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::RoleIds,
                 RedisKeys::RoleInfo,
                 ele.id,
                 ele.clone(),
-            ));
+            ))
+            .await;
         }
         ResponseBody::default(Some(opt))
     }

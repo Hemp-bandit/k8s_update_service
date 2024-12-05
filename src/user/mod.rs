@@ -5,7 +5,7 @@ use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
 pub mod auth_service;
-mod user_role;
+mod user_role_service;
 mod user_service;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {

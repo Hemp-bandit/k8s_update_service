@@ -1,3 +1,11 @@
+use crate::{
+    response::MyError,
+    util::{
+        common::{jwt_token_to_data, RedisCmd},
+        redis_actor::ExistsData,
+    },
+    REDIS_ADDR, REDIS_KEY,
+};
 use actix_web::{
     body::MessageBody,
     dev::{ServiceRequest, ServiceResponse},
@@ -5,16 +13,13 @@ use actix_web::{
     middleware::Next,
     Error,
 };
-use redis::Commands;
-
-use crate::{response::MyError, util::common::jwt_token_to_data, REDIS, REDIS_KEY};
 
 pub async fn jwt_mw(
     req: ServiceRequest,
     next: Next<impl MessageBody>,
 ) -> Result<ServiceResponse<impl MessageBody>, Error> {
     if !check_is_in_whitelist(&req) {
-        if !has_permission(&req) {
+        if !has_permission(&req).await {
             return Err(Error::from(MyError::AuthError));
         }
     }
@@ -32,7 +37,7 @@ fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
         .find(|val| val.to_string() == path.to_string());
     is_in_white_list.is_some()
 }
-fn has_permission(req: &ServiceRequest) -> bool {
+async fn has_permission(req: &ServiceRequest) -> bool {
     let value: HeaderValue = HeaderValue::from_str("").unwrap();
 
     let binding = req.method().to_owned();
@@ -55,14 +60,21 @@ fn has_permission(req: &ServiceRequest) -> bool {
     // jwt_user.name
     match jwt_user {
         None => false,
-        Some(info) => check_is_login_redis(info.name),
+        Some(info) => check_is_login_redis(info.name).await,
     }
 }
 
-pub fn check_is_login_redis(user_name: String) -> bool {
+pub async fn check_is_login_redis(user_name: String) -> bool {
     let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
-    let mut rds = REDIS.get_connection().expect("msg");
-    let redis_login: Result<bool, redis::RedisError> = rds.exists(key.clone());
+    let rds = REDIS_ADDR.get().expect("msg");
+    let redis_login: Result<bool, redis::RedisError> = rds
+        .send(ExistsData {
+            key,
+            cmd: RedisCmd::Exists,
+            data: None,
+        })
+        .await
+        .expect("msg"); //.exists(key.clone());
     let is_login = match redis_login {
         Err(err) => {
             let detail = err.detail();

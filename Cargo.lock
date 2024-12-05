@@ -1349,6 +1349,7 @@ dependencies = [
  "lazy-regex",
  "lazy_static",
  "log",
+ "once_cell",
  "rbatis",
  "rbdc-mysql",
  "rbs",

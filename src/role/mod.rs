@@ -1,13 +1,9 @@
+use crate::{entity::role_entity::RoleEntity, util::structs::CreateByData, RB};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
-use crate::{
-    entity::{role_access_entity::RoleAccessEntity, role_entity::RoleEntity},
-    util::structs::CreateByData,
-    RB,
-};
-
+mod role_access_service;
 mod role_service;
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
@@ -16,9 +12,7 @@ pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(role_service::get_role_list);
         config.service(role_service::update_role_by_id);
         config.service(role_service::bind_access);
-        config.service(role_service::un_bind_role);
         config.service(role_service::get_role_option);
-
 
         config.service(role_service::get_role_binds);
         config.service(role_service::delete_role_by_id);
@@ -39,7 +33,7 @@ pub struct RoleUpdateData {
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct BindAccessData {
     pub role_id: i32,
-    pub access_id: i32,
+    pub access_ids: Vec<i32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
@@ -72,13 +66,4 @@ pub async fn check_role_by_id(id: i32) -> Option<RoleEntity> {
         .expect("角色查询失败");
 
     db_role
-}
-
-pub async fn check_role_access(role_id: i32, access_id: i32) -> Vec<RoleAccessEntity> {
-    let ex_db = RB.acquire().await.expect("get db ex error");
-    let db_res: Vec<RoleAccessEntity> =
-        RoleAccessEntity::find_by_role_and_access(&ex_db, role_id.into(), access_id)
-            .await
-            .expect("角色关系查询失败");
-    db_res
 }

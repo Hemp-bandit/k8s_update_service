@@ -1,11 +1,12 @@
 use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
 use crate::response::MyError;
-use crate::user::user_role::{
-    check_bind, check_role_exists, role_ids_to_add_tab, role_ids_to_sub_tab,
+use crate::user::user_role_service::{
+    bind_user_role, check_role_exists, check_user_role_bind, unbind_role_from_cache,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
-use crate::util::redis_actor::{HmapData, RedisActor, SetData};
+use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
+use crate::REDIS_ADDR;
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
@@ -16,22 +17,19 @@ use crate::{
         structs::Status,
         sync_opt::{self, SyncOptData},
     },
-    RB, REDIS,
+    RB,
 };
-use actix::Addr;
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
-use redis::Commands;
 #[utoipa::path(
     tag = "user",
     responses( (status = 200) )
 )]
 #[post("/create_user")]
-pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder {
+pub async fn create_user(req_data: web::Json<UserCreateData>) -> Result<impl Responder, MyError> {
     let phone_check_res = check_phone(&req_data.phone);
     if !phone_check_res {
-        let rsp: ResponseBody<Option<String>> = ResponseBody::error("手机号不正确");
-        return rsp;
+        return Err(MyError::PhoneIsError);
     }
 
     let insert_user = UserEntity {
@@ -52,10 +50,9 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
     tx.commit().await.expect("commit transaction error ");
     match insert_res {
         Err(rbs::Error::E(error)) => {
-            let rsp = ResponseBody::error("创建用户失败");
-            log::error!(" 创建用户失败 {}", error);
+            log::error!(" {} {}", error, MyError::CreateUserError);
             tx.rollback().await.expect("rollback error");
-            return rsp;
+            return Err(MyError::CreateUserError);
         }
         Ok(res) => {
             let opt = OptionData::default(
@@ -67,11 +64,12 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> impl Responder 
                 RedisKeys::UserInfo,
                 opt.id,
                 opt,
-            ));
+            ))
+            .await;
         }
     }
 
-    ResponseBody::success("创建用户成功")
+    Ok(ResponseBody::success("创建用户成功"))
 }
 
 #[utoipa::path(
@@ -114,14 +112,14 @@ pub async fn get_user_list(req_data: web::Json<UserListQuery>) -> impl Responder
     responses( (status = 200) )
 )]
 #[get("/{id}")]
-pub async fn get_user_by_id(id: web::Path<i32>) -> impl Responder {
+pub async fn get_user_by_id(id: web::Path<i32>) -> Result<impl Responder, MyError> {
     let ex_db = RB.acquire().await.expect("msg");
     let user_id = id.into_inner();
     let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
         .await
         .expect("查询用户失败");
 
-    ResponseBody::default(Some(db_res))
+    Ok(ResponseBody::default(Some(db_res)))
 }
 
 #[utoipa::path(
@@ -133,13 +131,11 @@ pub async fn get_user_by_id(id: web::Path<i32>) -> impl Responder {
 pub async fn update_user_by_id(
     id: web::Path<i32>,
     req_data: web::Json<UserUpdateData>,
-    sotre: web::Data<Addr<RedisActor>>,
-) -> impl Responder {
+) -> Result<impl Responder, MyError> {
     if let Some(new_phone) = &req_data.phone {
         let phone_check_res = check_phone(new_phone);
         if !phone_check_res {
-            let res: ResponseBody<Option<String>> = ResponseBody::error("手机号不正确");
-            return res;
+            return Err(MyError::PhoneIsError);
         }
     }
 
@@ -152,7 +148,7 @@ pub async fn update_user_by_id(
 
     match db_res {
         None => {
-            return ResponseBody::error("用户不存在");
+            return Err(MyError::UserNotExist);
         }
         Some(mut db_user) => {
             log::debug!("db_user {db_user:?}");
@@ -172,22 +168,23 @@ pub async fn update_user_by_id(
                  .await;
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
-                log::error!("更新用户失败, {}", error);
-                let res = ResponseBody::error("更新用户失败");
+                log::error!("{} {}", error, MyError::UpdateUserError);
                 tx.rollback().await.expect("msg");
-                return res;
+                return Err(MyError::UpdateUserError);
             }
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            let _ = sotre
-                .send(HmapData {
-                    hmap_key: RedisKeys::UserInfo,
-                    opt_data: opt,
+            let _ = REDIS_ADDR
+                .get()
+                .expect("get redis addr error")
+                .send(HsetData {
+                    key: RedisKeys::UserInfo.to_string(),
+                    opt_data: serde_json::to_string(&opt).expect("msg"),
                     id: db_user.id.clone().expect("msg"),
                 })
                 .await;
         }
     }
-    ResponseBody::success("更新用户成功")
+    Ok(ResponseBody::success("更新用户成功"))
 }
 
 #[utoipa::path(
@@ -196,7 +193,7 @@ pub async fn update_user_by_id(
     responses( (status = 200) )
 )]
 #[delete("/{id}")]
-pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
+pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> {
     let ex_db = RB.acquire().await.expect("msg");
 
     let user_id = id.into_inner();
@@ -206,7 +203,7 @@ pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
 
     match db_res {
         None => {
-            return ResponseBody::error("用户不存在");
+            return Err(MyError::UserNotExist);
         }
         Some(mut db_user) => {
             let mut tx = get_transaction_tx().await.unwrap();
@@ -214,16 +211,15 @@ pub async fn delete_user(id: web::Path<i32>) -> impl Responder {
             let update_res = UserEntity::update_by_column(&tx, &db_user, "id").await;
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = update_res {
-                log::error!("更新用户失败, {}", error);
-                let res = ResponseBody::error("更新用户失败");
+                log::error!("{} {}", error, MyError::UpdateUserError);
                 tx.rollback().await.expect("msg");
-                return res;
+                return Err(MyError::UpdateUserError);
             }
             // TODOl: delete user from cache
         }
     }
 
-    ResponseBody::success("删除用户成功")
+    Ok(ResponseBody::success("删除用户成功"))
 }
 
 #[utoipa::path(
@@ -241,9 +237,14 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
-    let mut rds = REDIS.get_connection().expect("msg");
-    let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
-    let cache_ids: Vec<i32> = rds.smembers(key).expect("获取角色绑定失败");
+
+    let rds = REDIS_ADDR.get().expect("msg");
+    let key: String = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
+    let cache_ids: Vec<i32> = rds
+        .send(SmembersData { key })
+        .await
+        .expect("获取角色绑定失败")
+        .expect("msg");
 
     let ex = RB.acquire().await.expect("msg");
 
@@ -251,8 +252,12 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
         let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
         let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
         for ele in roles.iter() {
-            let _: () = rds
-                .sadd(key.clone(), ele.id.unwrap())
+            let _ = rds
+                .send(SaddData {
+                    key: key.clone(),
+                    id: ele.id.unwrap(),
+                })
+                .await
                 .expect("add new user_role error");
         }
         roles
@@ -272,24 +277,24 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
     responses( (status = 200) )
   )]
 #[post("/bind_role")]
-pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
+pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Responder, MyError> {
     let check_res = check_role_exists(&req_data.role_id).await;
     let db_user = check_user_by_user_id(req_data.user_id).await;
     if check_res.is_none() {
-        return ResponseBody::error("角色不存在");
+        return Err(MyError::RoleNotExist);
     }
     if db_user.is_none() {
-        return ResponseBody::error("用户不存在");
+        return Err(MyError::UserNotExist);
     }
 
     let mut tx = get_transaction_tx().await.expect("get tx error");
-    let (add_ids, sub_ids) = check_bind(&req_data.user_id, &req_data.role_id);
+    let (add_ids, sub_ids) = check_user_role_bind(&req_data.user_id, &req_data.role_id).await;
 
     log::debug!("add_ids {add_ids:?}");
     log::debug!("sub_ids {sub_ids:?}");
 
     if !sub_ids.is_empty() {
-        role_ids_to_sub_tab(&req_data.user_id, &sub_ids);
+        unbind_role_from_cache(&req_data.user_id, &sub_ids).await;
 
         for id in sub_ids {
             let sub_res: Result<Option<()>, rbs::Error> = tx
@@ -301,9 +306,8 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = sub_res {
                 log::error!("删除用户角色失败, {error}");
-                let res = ResponseBody::error("删除用户角色失败");
                 tx.rollback().await.expect("msg");
-                return res;
+                return Err(MyError::DelUserRoleError);
             }
         }
     } else {
@@ -312,28 +316,26 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
             tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = sub_res {
                 log::error!("删除用户角色失败, {error}");
-                let res = ResponseBody::error("删除用户角色失败");
                 tx.rollback().await.expect("msg");
-                return res;
+                return Err(MyError::DelUserRoleError);
             }
         }
     }
 
     if !add_ids.is_empty() {
-        let add_tabs: Vec<UserRoleEntity> = role_ids_to_add_tab(&req_data.user_id, &add_ids);
+        let add_tabs: Vec<UserRoleEntity> = bind_user_role(&req_data.user_id, &add_ids).await;
         log::debug!("add_tabs {add_tabs:#?}");
         let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
 
         tx.commit().await.expect("msg");
         if let Err(rbs::Error::E(error)) = add_res {
             log::error!("绑定用户角色失败, {error}");
-            let res = ResponseBody::error("绑定用户角色失败");
             tx.rollback().await.expect("msg");
-            return res;
+            return Err(MyError::BindUserRoleError);
         }
     }
 
-    ResponseBody::success("绑定成功")
+    Ok(ResponseBody::success("绑定成功"))
 }
 
 #[utoipa::path(
@@ -342,13 +344,20 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> impl Responder {
   )]
 #[get("/get_user_option")]
 pub async fn get_user_option() -> Result<impl Responder, MyError> {
-    let mut rds = REDIS.get_connection().expect("msg");
-    let ids: Vec<i32> = rds.smembers("user_ids").expect("get user_id rds err");
+    let rds = REDIS_ADDR.get().expect("msg");
+    let ids: Vec<i32> = rds
+        .send(SmembersData {
+            key: RedisKeys::UserIds.to_string(),
+        })
+        .await
+        .expect("get user_id rds err")
+        .expect("get user_id rds err");
     if !ids.is_empty() {
-        let res: Vec<OptionData> = rds_str_to_list(rds, ids, RedisKeys::UserInfo, |val| {
+        let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::UserInfo, |val| {
             let user_data: OptionData = serde_json::from_str(&val).expect("msg");
             user_data
-        });
+        })
+        .await;
         return Ok(ResponseBody::default(Some(res)));
     } else {
         let ex_db = RB.acquire().await.expect("get ex err");
@@ -363,7 +372,8 @@ pub async fn get_user_option() -> Result<impl Responder, MyError> {
                 RedisKeys::UserInfo,
                 ele.id,
                 ele.clone(),
-            ));
+            ))
+            .await;
         }
         Ok(ResponseBody::default(Some(opt)))
     }
