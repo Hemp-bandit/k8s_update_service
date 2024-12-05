@@ -13,7 +13,7 @@ jobs:
         shell: bash
         run: |
           echo "git clone "
-          git clone -b dev https://github.com/Hemp-bandit/kaibai_user_service .
+          git clone  https://github.com/Hemp-bandit/kaibai_user_service .
           ls -al
       - name: login_registry
         run: docker login -u=${{ vars.REGISTRY_USER }} -p  ${{ secrets.REGISTRY_PASS }} registry.cn-hangzhou.aliyuncs.com
