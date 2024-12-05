@@ -55,12 +55,15 @@ async fn has_permission(req: &ServiceRequest) -> bool {
     let jwt_token = binding.to_str().expect("msg").to_string();
     let slice = &jwt_token[7..];
     log::info!("jwt {slice}");
-    let jwt_user: Option<crate::user::RedisLoginData> = jwt_token_to_data(slice.to_owned());
+    let jwt_user = jwt_token_to_data(slice.to_owned());
     log::info!("jwt_user {jwt_user:?}");
     // jwt_user.name
     match jwt_user {
-        None => false,
-        Some(info) => check_is_login_redis(info.name).await,
+        Err(e) => {
+            log::error!("{e}",);
+            false
+        }
+        Ok(info) => check_is_login_redis(info.name).await,
     }
 }
 

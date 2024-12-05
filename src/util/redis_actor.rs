@@ -1,7 +1,7 @@
 use super::common::RedisCmd;
 use crate::user::RedisLoginData;
 use actix::prelude::*;
-use redis::{aio::MultiplexedConnection, Client};
+use redis::{aio::MultiplexedConnection, AsyncCommands, Client};
 
 pub struct RedisActor {
     conn: MultiplexedConnection,
@@ -177,9 +177,10 @@ impl Handler<SetRedisLogin> for RedisActor {
 
     fn handle(&mut self, msg: SetRedisLogin, _ctx: &mut Self::Context) -> Self::Result {
         let mut rds = self.conn.clone();
-        let mut set_cmd = redis::cmd(&RedisCmd::SETEX.to_string());
-        set_cmd.arg(msg.key).arg(msg.data).arg(msg.ex_data);
-        let fut = async move { set_cmd.query_async(&mut rds).await };
+        let mut cmd = redis::cmd(&RedisCmd::SETEX.to_string());
+        log::info!("{msg:#?}");
+        cmd.arg(msg.key).arg(msg.ex_data).arg(msg.data);
+        let fut = async move { cmd.query_async(&mut rds).await };
         Box::pin(fut)
     }
 }

@@ -2,7 +2,7 @@ use crate::{
     access::AccessValueData,
     response::{MyError, ResponseBody},
     role::AccessData,
-    user::{check_user_by_user_id, LoginUserData, RedisLoginData},
+    user::{check_user_by_user_id, RedisLoginData},
     util::{
         common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data, RedisCmd},
         redis_actor::{DelData, ExistsData, GetRedisLogin, SetRedisLogin},
@@ -61,11 +61,7 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
         Err(err) => {
             let detail = err.detail().expect("msg");
             log::error!("{}", detail);
-            return Ok(ResponseBody {
-                code: 500,
-                msg: detail.to_string(),
-                data: None,
-            });
+            return Ok(ResponseBody::error(detail));
         }
         Ok(res) => res,
     };
@@ -88,12 +84,7 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
         }
 
         let jwt_token = gen_jwt_token(user_info.clone());
-        let res_data: LoginUserData = LoginUserData {
-            id: user_info.id,
-            name: user_info.name.clone(),
-            token: jwt_token,
-        };
-        return Ok(ResponseBody::default(Some(res_data)));
+        return Ok(ResponseBody::default(Some(jwt_token)));
     }
 
     let db_user = check_user_pass_by_name(req_data.name.clone()).await;
@@ -124,12 +115,7 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
         .await
         .expect("set user login error");
     let jwt_token = gen_jwt_token(redis_data);
-    let res_data: LoginUserData = LoginUserData {
-        id: db_user.id,
-        name: db_user.name,
-        token: jwt_token,
-    };
-    return Ok(ResponseBody::default(Some(res_data)));
+    return Ok(ResponseBody::default(Some(jwt_token)));
 }
 
 #[utoipa::path(
@@ -147,7 +133,7 @@ async fn logout(id: web::Path<i32>, req: HttpRequest) -> Result<impl Responder, 
     let binding = token.to_owned();
     let jwt_token = binding.to_str().expect("msg").to_string();
     let slice = &jwt_token[7..];
-    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
+    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned())?;
     if jwt_user.id != user_id {
         return Err(MyError::UserIsWrong);
     }
