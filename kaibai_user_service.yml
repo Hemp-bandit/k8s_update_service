@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kaibai-user-deployment
+  namespace: kaibai
+spec:
+  selector:
+    matchLabels:
+      app: kaibai-user
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      namespace: kaibai
+      labels:
+        app: kaibai-user
+    spec:
+      restartPolicy: Always 
+      imagePullSecrets:
+        - name: aliregistry
+      containers:
+        - name: kaibai-user-deploy
+          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:9daadcbe
+          ports:
+            - containerPort: 3000
+          resources:
+            limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 100Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kaibai-user-svc
+  namespace: kaibai
+  labels:
+    app: kaibai-user
+spec:
+  type: NodePort
+  selector:
+    app: kaibai-user
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30000
