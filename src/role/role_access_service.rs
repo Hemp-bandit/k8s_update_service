@@ -60,7 +60,7 @@ pub async fn unbind_access_from_cache(role_id: &i32, role_ids: &Vec<i32>) {
 
 pub async fn bind_role_access(role_id: &i32, access_ids: &Vec<i32>) -> Vec<RoleAccessEntity> {
     let rds = REDIS_ADDR.get().expect("msg");
-    let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), role_id);
+    let key = format!("{}_{}", RedisKeys::RoleAccess.to_string(), role_id);
     let mut tabs: Vec<RoleAccessEntity> = vec![];
     for id in access_ids {
         let _ = rds

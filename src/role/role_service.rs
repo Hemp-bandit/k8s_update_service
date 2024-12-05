@@ -190,8 +190,8 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     log::debug!("add_ids {add_ids:?}");
     log::debug!("sub_ids {sub_ids:?}");
 
-    if sub_ids.is_empty() {
-        unbind_access_from_cache(&req_data.role_id, &req_data.access_ids).await;
+    if !sub_ids.is_empty() {
+        unbind_access_from_cache(&req_data.role_id, &sub_ids).await;
         for id in sub_ids {
             let sub_res: Result<Option<()>, rbs::Error> = tx
                 .query_decode(

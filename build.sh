@@ -20,7 +20,7 @@ function login_ali(){
 }
 
 function update_img() {
-curl -k --request PATCH --url https://1.94.186.245:6443/apis/apps/v1/namespaces/kaibai/deployments/kaibai-user-deployment --header "authorization: Bearer $token" --header 'content-type: application/strategic-merge-patch+json' --header 'user-agent: vscode-restclient' --data "{\"spec\": {\"template\": {\"spec\": {\"containers\": [{\"name\": \"kaibai-user-deploy\",\"image\": \"$docker_tag\"}]}}}}"
+curl -k --request PATCH --url https://kaibai.cloud:6443/apis/apps/v1/namespaces/kaibai/deployments/kaibai-user-deployment --header "authorization: Bearer $token" --header 'content-type: application/strategic-merge-patch+json' --header 'user-agent: vscode-restclient' --data "{\"spec\": {\"template\": {\"spec\": {\"containers\": [{\"name\": \"kaibai-user-deploy\",\"image\": \"$docker_tag\"}]}}}}"
 }
 
 case $1 in
