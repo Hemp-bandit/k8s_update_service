@@ -6,16 +6,16 @@ export docker_tag="$registry/$pkg_name:$git_hash"
 echo "docker_tag: $docker_tag"
 
 case $1 in
-"build_img")
+"build")
   docker build -t $docker_tag -f ./dockerfile .
   ;;
-"push_img")
+"push")
   docker push $docker_tag
   ;;
 "login_ali")
   docker login -u=15717827650 -p wyswill4290 registry.cn-hangzhou.aliyuncs.com
   ;;
-"update_img")
+"update")
   kubectl set image deployment/kaibai-user-deployment kaibai-user-deploy=registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:4b01dbe0
   ;;
 *)
