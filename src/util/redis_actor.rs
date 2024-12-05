@@ -10,9 +10,16 @@ pub struct RedisActor {
 impl RedisActor {
     pub async fn new() -> Self {
         let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
+        log::info!("redis_url {redis_url}");
         let client = Client::open(redis_url).unwrap(); // not recommended
-        let conn = client.get_multiplexed_async_connection().await.unwrap();
-        RedisActor { conn }
+        let conn = client.get_multiplexed_async_connection().await;
+        match conn {
+            Err(err) => {
+                let detail = err.detail().unwrap();
+                panic!("redis connection err {detail}");
+            }
+            Ok(conn) => RedisActor { conn },
+        }
     }
 }
 

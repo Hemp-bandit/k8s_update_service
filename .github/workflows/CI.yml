@@ -6,20 +6,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      docker_tag: "registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:$(git rev-parse --short=8 HEAD)"
     steps:
       - name: pull repo
         shell: bash
         run: |
           echo "git clone "
-          git clone  https://github.com/Hemp-bandit/kaibai_user_service .
+          git clone -b dev https://github.com/Hemp-bandit/kaibai_user_service .
           ls -al
+      - name: login_registry
+        run: docker login -u=${{ vars.REGISTRY_USER }} -p  ${{ secrets.REGISTRY_PASS }} registry.cn-hangzhou.aliyuncs.com
+
       - name: build_img
-        run: bash build.sh build_img
-      - name: login_ali
-        shell: bash
         run: |
-          bash build.sh login_ali
+          docker_tag=${{env.docker_tag}}
+          docker build -t $docker_tag -f ./dockerfile .
       - name: push_img
-        run: bash build.sh push_img
+        run: docker_tag=${{env.docker_tag}}; docker push $docker_tag
       - name: update_img
-        run: bash build.sh update_img
+        run: |
+          docker_tag=${{env.docker_tag}};
+          curl -k --request PATCH --url https://kaibai.cloud:6443/apis/apps/v1/namespaces/kaibai/deployments/kaibai-user-deployment --header "authorization: Bearer ${{ secrets.K8S_TOKEN }}" --header 'content-type: application/strategic-merge-patch+json' --header 'user-agent: vscode-restclient' --data "{\"spec\": {\"template\": {\"spec\": {\"containers\": [{\"name\": \"kaibai-user-deploy\",\"image\": \"$docker_tag\"}]}}}}"
