@@ -139,7 +139,7 @@ pub async fn update_user_by_id(
         }
     }
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
 
     let user_id = id.into_inner();
     let db_res: Option<UserEntity> = UserEntity::select_by_id(&tx, user_id)
@@ -194,10 +194,9 @@ pub async fn update_user_by_id(
 )]
 #[delete("/delete_user/{id}")]
 pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> {
-    let ex_db = RB.acquire().await.expect("msg");
-
+    let tx = get_transaction_tx().await.unwrap();
     let user_id = id.into_inner();
-    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&tx, user_id)
         .await
         .expect("查询用户失败");
 
@@ -206,7 +205,6 @@ pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> 
             return Err(MyError::UserNotExist);
         }
         Some(mut db_user) => {
-            let mut tx = get_transaction_tx().await.unwrap();
             db_user.status = Status::DEACTIVE as i16;
             let update_res: Result<Option<()>, rbs::Error> = tx
                 .query_decode(
