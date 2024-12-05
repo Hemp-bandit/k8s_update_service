@@ -11,7 +11,6 @@ FROM debian:stable-slim
 WORKDIR /app
 COPY --from=builder /app/target/release/kaibai_user_service . 
 COPY ./run.sh .
-COPY .env .
 EXPOSE 3000
 
-CMD ["./kaibai_user_service"]
+CMD ["sh","run.sh"]

@@ -22,20 +22,20 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
         - name: aliregistry
-      env:
-        - name: DATABASE_URL
-          value: mysql://root:wyswill4290@1.94.186.245:3309/kaibai
-        - name: REDIS_URL
-          value: redis://:wyswill4290@1.94.186.245:6380
-        - name: RUST_LOG
-          value: kaibai_user_service,actix_web,rbatis,redis,redis-macros
-        - name: RUST_BACKTRACE
-          value: 1
-        - name: JWT_SECRET
-          value: QWERTYUOas;ldfj;4u1023740^&&*()_)*&^
       containers:
         - name: kaibai-user-deploy
-          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:9daadcbe
+          env:
+            - name: DATABASE_URL
+              value: mysql://root:wyswill4290@10.1.45.200:3306/kaibai
+            - name: REDIS_URL
+              value: redis://:wyswill4290@10.1.7.108:6379
+            - name: RUST_LOG
+              value: kaibai_user_service,actix_web,rbatis,redis,redis-macros
+            - name: RUST_BACKTRACE
+              value: "1"
+            - name: JWT_SECRET
+              value: QWERTYUOas;ldfj;4u1023740^&&*()_)*&^
+          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:61e699b7
           ports:
             - containerPort: 3000
           resources:
