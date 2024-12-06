@@ -290,38 +290,36 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyE
   )]
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
-    let ex_db = RB.acquire().await.expect("get ex err");
-    let opt: Vec<OptionData> = ex_db
-        .query_decode("select id, name from role where status=1", vec![])
+    let rds = REDIS_ADDR.get().expect("get addr err");
+    let ids = rds
+        .send(SmembersData {
+            key: RedisKeys::RoleIds.to_string(),
+        })
         .await
-        .expect("select db err");
-    for ele in opt.iter() {
-        sync_opt::sync(SyncOptData::default(
-            RedisKeys::RoleIds,
-            RedisKeys::RoleInfo,
-            ele.id,
-            ele.clone(),
-        ))
+        .expect("msg")
+        .expect("msg");
+    if !ids.is_empty() {
+        let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {
+            let user_data: OptionData = serde_json::from_str(&val).expect("msg");
+            user_data
+        })
         .await;
+        ResponseBody::default(Some(res))
+    } else {
+        let ex_db = RB.acquire().await.expect("get ex err");
+        let opt: Vec<OptionData> = ex_db
+            .query_decode("select id, name from role where status=1", vec![])
+            .await
+            .expect("select db err");
+        for ele in opt.iter() {
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::RoleIds,
+                RedisKeys::RoleInfo,
+                ele.id,
+                ele.clone(),
+            ))
+            .await;
+        }
+        ResponseBody::default(Some(opt))
     }
-    ResponseBody::default(Some(opt))
-
-    // let rds = REDIS_ADDR.get().expect("get addr err");
-    // let ids = rds
-    //     .send(SmembersData {
-    //         key: RedisKeys::RoleIds.to_string(),
-    //     })
-    //     .await
-    //     .expect("msg")
-    //     .expect("msg");
-    // if !ids.is_empty() {
-    //     let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {
-    //         let user_data: OptionData = serde_json::from_str(&val).expect("msg");
-    //         user_data
-    //     })
-    //     .await;
-    //     ResponseBody::default(Some(res))
-    // } else {
-
-    // }
 }

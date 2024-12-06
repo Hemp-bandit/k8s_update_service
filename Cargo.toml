@@ -6,7 +6,9 @@ version = "0.1.0"
 [dependencies]
 # mimalloc = "0.1.43"
 
+actix = "0.13.5"
 actix-cors = "0.7.0"
+actix-rt = "2.10.0"
 actix-web = "4"
 
 chrono = "0.4.31"
@@ -15,9 +17,11 @@ env_logger = "0.11.5"
 lazy-regex = "3.3.0"
 lazy_static = "1.5.0"
 log = {version = "0.4.20", features = ["std", "serde"]}
-
+once_cell = "1.20.2"
 serde = {version = "1", features = ["derive"]}
 serde_json = "1"
+simple-base64 = "0.23.2"
+tokio_schedule = "0.3.2"
 
 utoipa = {version = "5.2.0", features = ["actix_extras"]}
 utoipa-actix-web = "0.1"
@@ -28,10 +32,5 @@ rbdc-mysql = "4.5.0"
 rbs = {version = "4.5"}
 redis = {version = "0.27.5", features = ["tokio-comp", "cluster"]}
 redis-macros = "0.4.2"
-
-cron-job = "0.2.0"
 derive_more = {version = "1.0.0", features = ['full']}
 futures-util = "0.3.31"
-actix = "0.13.5"
-once_cell = "1.20.2"
-simple-base64 = "0.23.2"
