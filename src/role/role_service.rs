@@ -13,7 +13,7 @@ use crate::{
         role_access_service::{bind_role_access, check_role_access_bind, unbind_access_from_cache},
         CreateByData, RoleListListData,
     },
-    user::{check_user_by_user_id, OptionData},
+    user::{check_user_by_user_id, user_role_service::sync_user_auth, OptionData},
     util::{
         common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
         redis_actor::{SaddData, SmembersData},
@@ -126,7 +126,7 @@ pub async fn update_role_by_id(
         Some(mut role) => {
             role.name = req_data.name.clone().unwrap_or(role.name);
             role.update_time = get_current_time_fmt();
-            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
             tx.commit().await.expect("msg");
 
@@ -184,7 +184,7 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     if db_access.is_none() {
         return Err(MyError::AccessNotExist);
     }
-    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let tx = get_transaction_tx().await.expect("get tx error");
     let (add_ids, sub_ids) = check_role_access_bind(&req_data.role_id, &req_data.access_ids).await;
 
     log::debug!("add_ids {add_ids:?}");
@@ -231,6 +231,13 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
             return Err(MyError::DelRoleAccessError);
         }
     }
+
+    let user_list :Vec<OptionData> = tx.query_decode("select user.name, user.id from user_role left join user on user.id = user_role.user_id  where role_id = ?;", vec![to_value!(req_data.role_id)]).await.expect("msg");
+    tx.commit().await.expect("msg");
+    for ele in user_list.into_iter() {
+        sync_user_auth(ele.name).await?;
+    }
+
     Ok(ResponseBody::success("绑定成功"))
 }
 
@@ -283,36 +290,38 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyE
   )]
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
-    let rds = REDIS_ADDR.get().expect("get addr err");
-    let ids = rds
-        .send(SmembersData {
-            key: RedisKeys::RoleIds.to_string(),
-        })
+    let ex_db = RB.acquire().await.expect("get ex err");
+    let opt: Vec<OptionData> = ex_db
+        .query_decode("select id, name from role where status=1", vec![])
         .await
-        .expect("msg")
-        .expect("msg");
-    if !ids.is_empty() {
-        let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {
-            let user_data: OptionData = serde_json::from_str(&val).expect("msg");
-            user_data
-        })
+        .expect("select db err");
+    for ele in opt.iter() {
+        sync_opt::sync(SyncOptData::default(
+            RedisKeys::RoleIds,
+            RedisKeys::RoleInfo,
+            ele.id,
+            ele.clone(),
+        ))
         .await;
-        ResponseBody::default(Some(res))
-    } else {
-        let ex_db = RB.acquire().await.expect("get ex err");
-        let opt: Vec<OptionData> = ex_db
-            .query_decode("select id, name from role where status=1", vec![])
-            .await
-            .expect("select db err");
-        for ele in opt.iter() {
-            sync_opt::sync(SyncOptData::default(
-                RedisKeys::RoleIds,
-                RedisKeys::RoleInfo,
-                ele.id,
-                ele.clone(),
-            ))
-            .await;
-        }
-        ResponseBody::default(Some(opt))
     }
+    ResponseBody::default(Some(opt))
+
+    // let rds = REDIS_ADDR.get().expect("get addr err");
+    // let ids = rds
+    //     .send(SmembersData {
+    //         key: RedisKeys::RoleIds.to_string(),
+    //     })
+    //     .await
+    //     .expect("msg")
+    //     .expect("msg");
+    // if !ids.is_empty() {
+    //     let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {
+    //         let user_data: OptionData = serde_json::from_str(&val).expect("msg");
+    //         user_data
+    //     })
+    //     .await;
+    //     ResponseBody::default(Some(res))
+    // } else {
+
+    // }
 }

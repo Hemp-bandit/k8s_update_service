@@ -147,13 +147,13 @@ impl Handler<SremData> for RedisActor {
 }
 
 #[derive(Message, Debug)]
-#[rtype(result = "Result< RedisLoginData , redis::RedisError>")]
+#[rtype(result = "Result< Option<RedisLoginData> , redis::RedisError>")]
 pub struct GetRedisLogin {
     pub key: String,
 }
 
 impl Handler<GetRedisLogin> for RedisActor {
-    type Result = ResponseFuture<Result<RedisLoginData, redis::RedisError>>;
+    type Result = ResponseFuture<Result<Option<RedisLoginData>, redis::RedisError>>;
 
     fn handle(&mut self, msg: GetRedisLogin, _ctx: &mut Self::Context) -> Self::Result {
         let mut rds = self.conn.clone();
@@ -199,6 +199,32 @@ impl Handler<DelData> for RedisActor {
         let mut set_cmd = redis::cmd(&RedisCmd::Del.to_string());
         set_cmd.arg(msg.key);
         let fut = async move { set_cmd.query_async(&mut rds).await };
+        Box::pin(fut)
+    }
+}
+
+#[derive(Message, Debug)]
+#[rtype(result = "Result< () , redis::RedisError>")]
+pub struct UpdateLoginData {
+    pub key: String,
+    pub data: RedisLoginData,
+}
+
+impl Handler<UpdateLoginData> for RedisActor {
+    type Result = ResponseFuture<Result<(), redis::RedisError>>;
+
+    fn handle(&mut self, msg: UpdateLoginData, _ctx: &mut Self::Context) -> Self::Result {
+        let mut rds = self.conn.clone();
+        let mut cmd = redis::cmd(&RedisCmd::SETEX.to_string());
+        let key = msg.key;
+        let data = msg.data;
+        cmd.arg(&key);
+        let fut = async move {
+            let ex: i32 = rds.ttl(key).await.expect("msg");
+            log::info!("ex {ex}");
+            cmd.arg(ex).arg(data);
+            cmd.query_async(&mut rds).await
+        };
         Box::pin(fut)
     }
 }

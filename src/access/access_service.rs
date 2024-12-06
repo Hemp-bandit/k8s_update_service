@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{AccessListQuery, AccessMapItem, AccessUpdateData, CreateAccessData};
 use crate::{
     access::{check_access_by_id, AccessListListData},
@@ -193,7 +191,6 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
 #[get("/access_map")]
 pub async fn get_access_map() -> Result<impl Responder, MyError> {
     let rds = REDIS_ADDR.get().expect("msg");
-
     let cache_ids: Vec<i32> = rds
         .send(SmembersData {
             key: RedisKeys::AccessMapIds.to_string(),
@@ -201,14 +198,6 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
         .await
         .expect("msg")
         .expect("msg");
-
-    let list_handler = |list: Vec<AccessMapItem>| -> HashMap<String, u64> {
-        let mut map: HashMap<String, u64> = HashMap::new();
-        list.into_iter().for_each(|item| {
-            map.insert(item.name, item.value);
-        });
-        map
-    };
 
     if cache_ids.is_empty() {
         let list = get_access().await;
@@ -221,16 +210,14 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
             ))
             .await;
         }
-        let map = list_handler(list);
-        Ok(ResponseBody::default(Some(map)))
+        Ok(ResponseBody::default(Some(list)))
     } else {
         let list: Vec<AccessMapItem> = rds_str_to_list(cache_ids, RedisKeys::AccessMap, |val| {
             let item: AccessMapItem = serde_json::from_str(&val).expect("msg");
             item
         })
         .await;
-        let map = list_handler(list);
-        Ok(ResponseBody::default(Some(map)))
+        Ok(ResponseBody::default(Some(list)))
     }
 }
 

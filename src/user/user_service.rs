@@ -2,7 +2,7 @@ use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
 use crate::response::MyError;
 use crate::user::user_role_service::{
-    bind_user_role, check_role_exists, check_user_role_bind, unbind_role_from_cache,
+    bind_user_role, check_role_exists, check_user_role_bind, sync_user_auth, unbind_role_from_cache,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
 use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
@@ -218,6 +218,7 @@ pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> 
                 tx.rollback().await.expect("msg");
                 return Err(MyError::UpdateUserError);
             }
+
             // TODOl: delete user from cache
         }
     }
@@ -337,7 +338,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
             return Err(MyError::BindUserRoleError);
         }
     }
-
+    sync_user_auth(db_user.unwrap().name).await?;
     Ok(ResponseBody::success("绑定成功"))
 }
 
