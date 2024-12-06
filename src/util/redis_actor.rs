@@ -77,12 +77,34 @@ pub struct HgetById {
 
 impl Handler<HgetById> for RedisActor {
     type Result = ResponseFuture<Result<Option<String>, redis::RedisError>>;
-
     fn handle(&mut self, msg: HgetById, _ctx: &mut Self::Context) -> Self::Result {
         let mut rds = self.conn.clone();
         let mut set_cmd = redis::cmd(&RedisCmd::Hget.to_string());
         set_cmd.arg(msg.key).arg(msg.id);
         let fut = async move { set_cmd.query_async(&mut rds).await };
+        Box::pin(fut)
+    }
+}
+
+#[derive(Message, Debug)]
+#[rtype(result = "Result<Option<i32>, redis::RedisError>")]
+pub struct HdelData {
+    pub key: String,
+    pub id: Vec<i32>,
+}
+
+impl Handler<HdelData> for RedisActor {
+    type Result = ResponseFuture<Result<Option<i32>, redis::RedisError>>;
+    fn handle(&mut self, msg: HdelData, _ctx: &mut Self::Context) -> Self::Result {
+        let mut rds = self.conn.clone();
+        let mut cmd = redis::cmd(&RedisCmd::Hdel.to_string());
+        cmd.arg(msg.key);
+
+        msg.id.iter().for_each(|val| {
+            cmd.arg(val);
+        });
+
+        let fut = async move { cmd.query_async(&mut rds).await };
         Box::pin(fut)
     }
 }
@@ -131,7 +153,7 @@ impl Handler<ExistsData> for RedisActor {
 #[rtype(result = "Result< () , redis::RedisError>")]
 pub struct SremData {
     pub key: String,
-    pub value: String,
+    pub value: Vec<i32>,
 }
 
 impl Handler<SremData> for RedisActor {
@@ -139,9 +161,14 @@ impl Handler<SremData> for RedisActor {
 
     fn handle(&mut self, msg: SremData, _ctx: &mut Self::Context) -> Self::Result {
         let mut rds = self.conn.clone();
-        let mut set_cmd = redis::cmd(&RedisCmd::Srem.to_string());
-        set_cmd.arg(msg.key).arg(msg.value);
-        let fut = async move { set_cmd.query_async(&mut rds).await };
+        let mut cmd = redis::cmd(&RedisCmd::Srem.to_string());
+        cmd.arg(msg.key);
+
+        msg.value.iter().for_each(|val| {
+            cmd.arg(val);
+        });
+
+        let fut = async move { cmd.query_async(&mut rds).await };
         Box::pin(fut)
     }
 }

@@ -11,7 +11,7 @@ use crate::{
         redis_actor::SmembersData,
         sql_tool::{SqlTool, SqlToolPageData},
         structs::{CreateByData, Status},
-        sync_opt::{self, SyncOptData},
+        sync_opt::{self, DelOptData, SyncOptData},
     },
     RB, REDIS_ADDR,
 };
@@ -137,6 +137,7 @@ pub async fn update_access_by_id(
             return Err(MyError::AccessNotExist);
         }
         Some(mut access) => {
+            //sync db first
             access.name = req_data.name.clone().unwrap_or(access.name);
             access.update_time = get_current_time_fmt();
             let tx = get_transaction_tx().await.expect("get tx err");
@@ -148,6 +149,20 @@ pub async fn update_access_by_id(
                 tx.rollback().await.expect("rollback error");
                 return Err(MyError::UpdateAccessError);
             }
+            // sync cache
+            let item = AccessMapItem {
+                id: access.id.unwrap(),
+                name: access.name,
+                value: access.value,
+            };
+
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::AccessMapIds,
+                RedisKeys::AccessMap,
+                item.id,
+                item,
+            ))
+            .await;
         }
     }
 
@@ -178,6 +193,14 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
                 tx.rollback().await.expect("rollback error");
                 return Err(MyError::UpdateAccessError);
             }
+
+            sync_opt::del(DelOptData::default(
+                RedisKeys::AccessMapIds,
+                RedisKeys::AccessMap,
+                vec![id],
+            ))
+            .await;
+        
         }
     }
 
@@ -200,7 +223,7 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
         .expect("msg");
 
     if cache_ids.is_empty() {
-        let list = get_access().await;
+        let list: Vec<AccessMapItem> = get_access().await;
         for ele in &list {
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::UserIds,

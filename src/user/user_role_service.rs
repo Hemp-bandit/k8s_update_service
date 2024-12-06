@@ -110,15 +110,13 @@ pub async fn bind_user_role(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleE
 pub async fn unbind_role_from_cache(user_id: &i32, role_ids: &Vec<i32>) {
     let rds = REDIS_ADDR.get().expect("msg");
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
-    for id in role_ids {
-        let _ = rds
-            .send(SremData {
-                key: key.clone(),
-                value: id.to_string(),
-            })
-            .await
-            .expect("sub new user_role error");
-    }
+    let _ = rds
+        .send(SremData {
+            key: key.clone(),
+            value: role_ids.to_vec(),
+        })
+        .await
+        .expect("sub new user_role error");
 }
 
 pub async fn sync_user_auth(name: String) -> Result<(), MyError> {

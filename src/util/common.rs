@@ -82,6 +82,9 @@ pub enum RedisCmd {
     #[display("HSET")]
     Hset,
 
+    #[display("HDEL")]
+    Hdel,
+
     #[display("SADD")]
     Sadd,
 
