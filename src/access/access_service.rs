@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::{AccessListQuery, AccessMapItem, AccessUpdateData, CreateAccessData};
 use crate::{
     access::{check_access_by_id, AccessListListData},
@@ -38,7 +40,7 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> Result<impl Res
         value: 0,
     };
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
     let insert_res = AccessEntity::insert(&tx, &new_access).await;
     tx.commit().await.expect("commit error");
     match insert_res {
@@ -139,7 +141,7 @@ pub async fn update_access_by_id(
         Some(mut access) => {
             access.name = req_data.name.clone().unwrap_or(access.name);
             access.update_time = get_current_time_fmt();
-            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
             tx.commit().await.expect("msg");
 
@@ -169,7 +171,7 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
         Some(mut access) => {
             access.status = Status::DEACTIVE as i8;
             access.update_time = get_current_time_fmt();
-            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
             tx.commit().await.expect("msg");
 
@@ -199,6 +201,15 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
         .await
         .expect("msg")
         .expect("msg");
+
+    let list_handler = |list: Vec<AccessMapItem>| -> HashMap<String, u64> {
+        let mut map: HashMap<String, u64> = HashMap::new();
+        list.into_iter().for_each(|item| {
+            map.insert(item.name, item.value);
+        });
+        map
+    };
+
     if cache_ids.is_empty() {
         let list = get_access().await;
         for ele in &list {
@@ -210,14 +221,16 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
             ))
             .await;
         }
-        Ok(ResponseBody::default(Some(list)))
+        let map = list_handler(list);
+        Ok(ResponseBody::default(Some(map)))
     } else {
-        let res: Vec<AccessMapItem> = rds_str_to_list(cache_ids, RedisKeys::AccessMap, |val| {
+        let list: Vec<AccessMapItem> = rds_str_to_list(cache_ids, RedisKeys::AccessMap, |val| {
             let item: AccessMapItem = serde_json::from_str(&val).expect("msg");
             item
         })
         .await;
-        Ok(ResponseBody::default(Some(res)))
+        let map = list_handler(list);
+        Ok(ResponseBody::default(Some(map)))
     }
 }
 

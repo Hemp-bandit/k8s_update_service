@@ -147,7 +147,7 @@ async fn get_user_access_val(user_id: i32) -> u64 {
     let ex = RB.acquire().await.expect("get ex error");
     let access_ids: Option<Vec<AccessData>> = ex
         .query_decode(
-            "select role_access.access_id from role_access where role_id in (select user_role.role_id from user_role where user_id=?);",
+            "select role_access.access_id from role_access where role_id in (select user_role.role_id from user_role where user_id=?)",
             vec![to_value!(user_id)],
         )
         .await
