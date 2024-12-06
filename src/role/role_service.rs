@@ -19,7 +19,7 @@ use crate::{
         redis_actor::{SaddData, SmembersData},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
-        sync_opt::{self, SyncOptData},
+        sync_opt::{self, DelOptData, SyncOptData},
     },
     RB, REDIS_ADDR,
 };
@@ -43,7 +43,7 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> Result<impl Respond
         status: Status::ACTIVE as i8,
     };
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
     let insert_res = RoleEntity::insert(&tx, &new_role).await;
     tx.commit().await.expect("commit error");
 
@@ -52,6 +52,18 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> Result<impl Respond
         tx.rollback().await.expect("rollback error");
         return Err(MyError::CreateRoleError);
     }
+
+    let opt = OptionData::default(
+        &req_data.name,
+        insert_res.expect("msg").last_insert_id.as_i64().expect("msg") as i32,
+    );
+    sync_opt::sync(SyncOptData::default(
+        RedisKeys::RoleIds,
+        RedisKeys::RoleInfo,
+        opt.id,
+        opt,
+    ))
+    .await;
 
     Ok(ResponseBody::success("角色创建成功"))
 }
@@ -135,6 +147,20 @@ pub async fn update_role_by_id(
                 tx.rollback().await.expect("msg");
                 return Err(MyError::UpdateRoleError);
             }
+
+            let item = OptionData {
+                id: role.id.unwrap(),
+                name: role.name,
+            };
+
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::RoleIds,
+                RedisKeys::RoleInfo,
+                item.id,
+                item,
+            ))
+            .await;
+
         }
     }
 
@@ -166,6 +192,13 @@ pub async fn delete_role_by_id(id: web::Path<i32>) -> Result<impl Responder, MyE
             }
         }
     }
+
+    sync_opt::del(DelOptData::default(
+        RedisKeys::RoleIds,
+        RedisKeys::RoleInfo,
+        vec![id],
+    ))
+    .await;
 
     Ok(ResponseBody::success("角色删除成功"))
 }

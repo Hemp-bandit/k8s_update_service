@@ -6,6 +6,7 @@ use crate::user::user_role_service::{
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
 use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
+use crate::util::sync_opt::DelOptData;
 use crate::REDIS_ADDR;
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
@@ -218,10 +219,15 @@ pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> 
                 tx.rollback().await.expect("msg");
                 return Err(MyError::UpdateUserError);
             }
-
-            // TODOl: delete user from cache
         }
     }
+
+    sync_opt::del(DelOptData::default(
+        RedisKeys::RoleIds,
+        RedisKeys::RoleInfo,
+        vec![user_id],
+    ))
+    .await;
 
     Ok(ResponseBody::success("删除用户成功"))
 }

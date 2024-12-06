@@ -60,6 +60,19 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> Result<impl Res
                 tx.rollback().await.expect("rollback error");
                 return Err(MyError::UpdateAccessError);
             }
+
+            let item = AccessMapItem {
+                id: update_access.id.unwrap(),
+                name: update_access.name,
+                value: update_access.value,
+            };
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::AccessMapIds,
+                RedisKeys::AccessMap,
+                item.id,
+                item,
+            ))
+            .await;
         }
     }
 
