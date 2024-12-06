@@ -2,10 +2,11 @@ use super::{BindRoleData, UserCreateData, UserListQuery, UserUpdateData};
 use crate::entity::role_entity::RoleEntity;
 use crate::response::MyError;
 use crate::user::user_role_service::{
-    bind_user_role, check_role_exists, check_user_role_bind, unbind_role_from_cache,
+    bind_user_role, check_role_exists, check_user_role_bind, sync_user_auth, unbind_role_from_cache,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
 use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
+use crate::util::sync_opt::DelOptData;
 use crate::REDIS_ADDR;
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
@@ -45,7 +46,7 @@ pub async fn create_user(req_data: web::Json<UserCreateData>) -> Result<impl Res
         status: Status::ACTIVE as i16,
     };
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
     let insert_res = UserEntity::insert(&tx, &insert_user).await;
     tx.commit().await.expect("commit transaction error ");
     match insert_res {
@@ -139,7 +140,7 @@ pub async fn update_user_by_id(
         }
     }
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
 
     let user_id = id.into_inner();
     let db_res: Option<UserEntity> = UserEntity::select_by_id(&tx, user_id)
@@ -194,10 +195,9 @@ pub async fn update_user_by_id(
 )]
 #[delete("/delete_user/{id}")]
 pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> {
-    let ex_db = RB.acquire().await.expect("msg");
-
+    let tx = get_transaction_tx().await.unwrap();
     let user_id = id.into_inner();
-    let db_res: Option<UserEntity> = UserEntity::select_by_id(&ex_db, user_id)
+    let db_res: Option<UserEntity> = UserEntity::select_by_id(&tx, user_id)
         .await
         .expect("查询用户失败");
 
@@ -206,7 +206,6 @@ pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> 
             return Err(MyError::UserNotExist);
         }
         Some(mut db_user) => {
-            let mut tx = get_transaction_tx().await.unwrap();
             db_user.status = Status::DEACTIVE as i16;
             let update_res: Result<Option<()>, rbs::Error> = tx
                 .query_decode(
@@ -220,9 +219,15 @@ pub async fn delete_user(id: web::Path<i32>) -> Result<impl Responder, MyError> 
                 tx.rollback().await.expect("msg");
                 return Err(MyError::UpdateUserError);
             }
-            // TODOl: delete user from cache
         }
     }
+
+    sync_opt::del(DelOptData::default(
+        RedisKeys::RoleIds,
+        RedisKeys::RoleInfo,
+        vec![user_id],
+    ))
+    .await;
 
     Ok(ResponseBody::success("删除用户成功"))
 }
@@ -292,7 +297,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
         return Err(MyError::UserNotExist);
     }
 
-    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let tx = get_transaction_tx().await.expect("get tx error");
     let (add_ids, sub_ids) = check_user_role_bind(&req_data.user_id, &req_data.role_id).await;
 
     log::debug!("add_ids {add_ids:?}");
@@ -339,7 +344,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
             return Err(MyError::BindUserRoleError);
         }
     }
-
+    sync_user_auth(db_user.unwrap().name).await?;
     Ok(ResponseBody::success("绑定成功"))
 }
 

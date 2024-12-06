@@ -46,15 +46,14 @@ pub async fn check_role_access_bind(role_id: &i32, access_ids: &Vec<i32>) -> (Ve
 pub async fn unbind_access_from_cache(role_id: &i32, role_ids: &Vec<i32>) {
     let rds = REDIS_ADDR.get().expect("msg");
     let key = format!("{}_{}", RedisKeys::RoleAccess.to_string(), role_id);
-    for id in role_ids {
-        let _ = rds
-            .send(SremData {
-                key: key.clone(),
-                value: id.to_string(),
-            })
-            .await
-            .expect("sub new user_role error");
-    }
+
+    let _ = rds
+    .send(SremData {
+        key: key.clone(),
+        value: role_ids.to_vec(),
+    })
+    .await
+    .expect("sub new user_role error");
 }
 
 

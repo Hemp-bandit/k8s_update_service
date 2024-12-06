@@ -11,7 +11,7 @@ use crate::{
         redis_actor::SmembersData,
         sql_tool::{SqlTool, SqlToolPageData},
         structs::{CreateByData, Status},
-        sync_opt::{self, SyncOptData},
+        sync_opt::{self, DelOptData, SyncOptData},
     },
     RB, REDIS_ADDR,
 };
@@ -38,7 +38,7 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> Result<impl Res
         value: 0,
     };
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
     let insert_res = AccessEntity::insert(&tx, &new_access).await;
     tx.commit().await.expect("commit error");
     match insert_res {
@@ -60,6 +60,19 @@ async fn create_access(req_data: web::Json<CreateAccessData>) -> Result<impl Res
                 tx.rollback().await.expect("rollback error");
                 return Err(MyError::UpdateAccessError);
             }
+
+            let item = AccessMapItem {
+                id: update_access.id.unwrap(),
+                name: update_access.name,
+                value: update_access.value,
+            };
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::AccessMapIds,
+                RedisKeys::AccessMap,
+                item.id,
+                item,
+            ))
+            .await;
         }
     }
 
@@ -137,9 +150,10 @@ pub async fn update_access_by_id(
             return Err(MyError::AccessNotExist);
         }
         Some(mut access) => {
+            //sync db first
             access.name = req_data.name.clone().unwrap_or(access.name);
             access.update_time = get_current_time_fmt();
-            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
             tx.commit().await.expect("msg");
 
@@ -148,6 +162,20 @@ pub async fn update_access_by_id(
                 tx.rollback().await.expect("rollback error");
                 return Err(MyError::UpdateAccessError);
             }
+            // sync cache
+            let item = AccessMapItem {
+                id: access.id.unwrap(),
+                name: access.name,
+                value: access.value,
+            };
+
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::AccessMapIds,
+                RedisKeys::AccessMap,
+                item.id,
+                item,
+            ))
+            .await;
         }
     }
 
@@ -169,7 +197,7 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
         Some(mut access) => {
             access.status = Status::DEACTIVE as i8;
             access.update_time = get_current_time_fmt();
-            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = AccessEntity::update_by_column(&tx, &access, "id").await;
             tx.commit().await.expect("msg");
 
@@ -178,6 +206,14 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
                 tx.rollback().await.expect("rollback error");
                 return Err(MyError::UpdateAccessError);
             }
+
+            sync_opt::del(DelOptData::default(
+                RedisKeys::AccessMapIds,
+                RedisKeys::AccessMap,
+                vec![id],
+            ))
+            .await;
+        
         }
     }
 
@@ -191,7 +227,6 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
 #[get("/access_map")]
 pub async fn get_access_map() -> Result<impl Responder, MyError> {
     let rds = REDIS_ADDR.get().expect("msg");
-
     let cache_ids: Vec<i32> = rds
         .send(SmembersData {
             key: RedisKeys::AccessMapIds.to_string(),
@@ -199,8 +234,9 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
         .await
         .expect("msg")
         .expect("msg");
+
     if cache_ids.is_empty() {
-        let list = get_access().await;
+        let list: Vec<AccessMapItem> = get_access().await;
         for ele in &list {
             sync_opt::sync(SyncOptData::default(
                 RedisKeys::UserIds,
@@ -212,12 +248,12 @@ pub async fn get_access_map() -> Result<impl Responder, MyError> {
         }
         Ok(ResponseBody::default(Some(list)))
     } else {
-        let res: Vec<AccessMapItem> = rds_str_to_list(cache_ids, RedisKeys::AccessMap, |val| {
+        let list: Vec<AccessMapItem> = rds_str_to_list(cache_ids, RedisKeys::AccessMap, |val| {
             let item: AccessMapItem = serde_json::from_str(&val).expect("msg");
             item
         })
         .await;
-        Ok(ResponseBody::default(Some(res)))
+        Ok(ResponseBody::default(Some(list)))
     }
 }
 

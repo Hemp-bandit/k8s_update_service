@@ -67,24 +67,30 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
     };
 
     if is_login {
-        let user_info: RedisLoginData = rds
+        let user_info = rds
             .send(GetRedisLogin { key })
             .await
             .expect("get user info from redis error")
             .expect("get user info from redis error");
-        match check_user_pass_by_name(user_info.name.clone()).await {
+        match user_info {
             None => {
                 return Err(MyError::UserNotExist);
             }
-            Some(pass_data) => {
-                if !pass_data.password.eq(&req_data.password) {
-                    return Err(MyError::PassWordError);
+            Some(info) => {
+                match check_user_pass_by_name(info.name.clone()).await {
+                    None => {
+                        return Err(MyError::UserNotExist);
+                    }
+                    Some(pass_data) => {
+                        if !pass_data.password.eq(&req_data.password) {
+                            return Err(MyError::PassWordError);
+                        }
+                    }
                 }
+                let jwt_token = gen_jwt_token(info.clone());
+                return Ok(ResponseBody::default(Some(jwt_token)));
             }
         }
-
-        let jwt_token = gen_jwt_token(user_info.clone());
-        return Ok(ResponseBody::default(Some(jwt_token)));
     }
 
     let db_user = check_user_pass_by_name(req_data.name.clone()).await;
@@ -142,12 +148,12 @@ async fn logout(id: web::Path<i32>, req: HttpRequest) -> Result<impl Responder, 
     Ok(ResponseBody::success("退出成功!"))
 }
 
-async fn get_user_access_val(user_id: i32) -> u64 {
+pub async fn get_user_access_val(user_id: i32) -> u64 {
     let mut vals: u64 = 0;
     let ex = RB.acquire().await.expect("get ex error");
     let access_ids: Option<Vec<AccessData>> = ex
         .query_decode(
-            "select role_access.access_id from role_access where role_id in (select user_role.role_id from user_role where user_id=?);",
+            "select role_access.access_id from role_access where role_id in (select user_role.role_id from user_role where user_id=?)",
             vec![to_value!(user_id)],
         )
         .await

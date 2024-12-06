@@ -1,8 +1,12 @@
 use crate::entity::user_role_entity::UserRoleEntity;
+use crate::response::MyError;
 use crate::role::check_role_by_id;
+use crate::user::auth_service::get_user_access_val;
 use crate::util::common::{RedisCmd, RedisKeys};
-use crate::util::redis_actor::{ExistsData, SaddData, SmembersData, SremData};
-use crate::REDIS_ADDR;
+use crate::util::redis_actor::{
+    ExistsData, GetRedisLogin, SaddData, SmembersData, SremData, UpdateLoginData,
+};
+use crate::{REDIS_ADDR, REDIS_KEY};
 
 ///检查角色是否存在于cache & db
 pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
@@ -106,13 +110,37 @@ pub async fn bind_user_role(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleE
 pub async fn unbind_role_from_cache(user_id: &i32, role_ids: &Vec<i32>) {
     let rds = REDIS_ADDR.get().expect("msg");
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
-    for id in role_ids {
-        let _ = rds
-            .send(SremData {
-                key: key.clone(),
-                value: id.to_string(),
-            })
-            .await
-            .expect("sub new user_role error");
+    let _ = rds
+        .send(SremData {
+            key: key.clone(),
+            value: role_ids.to_vec(),
+        })
+        .await
+        .expect("sub new user_role error");
+}
+
+pub async fn sync_user_auth(name: String) -> Result<(), MyError> {
+    let key = format!("{}_{}", REDIS_KEY.to_string(), name);
+    let rds = REDIS_ADDR.get().expect("msg");
+    let cache_info = rds
+        .send(GetRedisLogin { key: key.clone() })
+        .await
+        .expect("msg")
+        .expect("msg");
+
+    log::info!("key {key}");
+    log::info!("cache_info {cache_info:#?}");
+
+    if let Some(mut info) = cache_info {
+        let new_auth = get_user_access_val(info.id).await;
+        info.auth = new_auth;
+        rds.send(UpdateLoginData {
+            key: key.clone(),
+            data: info,
+        })
+        .await
+        .expect("msg")
+        .expect("msg");
     }
+    Ok(())
 }

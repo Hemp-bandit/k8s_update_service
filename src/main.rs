@@ -2,12 +2,15 @@ use actix::{Actor, Addr};
 use actix_cors::Cors;
 use actix_web::middleware::{from_fn, Compress, Logger};
 use actix_web::{http, web, App, HttpServer};
+use chrono::Utc;
+use cron::sync_auth::{sync_role_access, sync_user_role};
 use env::dotenv;
 use env_logger;
 use middleware::jwt_mw;
 use once_cell::sync::OnceCell;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
+use tokio_schedule::{every, Job};
 use util::common::JWT;
 use util::redis_actor::RedisActor;
 use utoipa::OpenApi;
@@ -49,12 +52,14 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
 
-    let actor =  RedisActor::new().await;
+    let actor = RedisActor::new().await;
     let addr: Addr<RedisActor> = actor.start();
 
     REDIS_ADDR.set(addr.clone()).expect("set redis addr error");
 
     init_db().await;
+
+    init_corn().await;
 
     let _ = HttpServer::new(move || {
         App::new()
@@ -99,7 +104,18 @@ fn gen_server_url() -> String {
 
 async fn init_db() {
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    log::info!("database_url {database_url}");
     if let Err(e) = RB.link(MysqlDriver {}, &database_url).await {
         panic!("db err: {}", e.to_string());
     }
+}
+
+async fn init_corn() {
+    actix_rt::spawn(async move {
+        let user_role_corn = every(10).seconds().in_timezone(&Utc).perform(|| async {
+            sync_user_role().await;
+            sync_role_access().await;
+        });
+        user_role_corn.await;
+    });
 }

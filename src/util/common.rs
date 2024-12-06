@@ -82,6 +82,9 @@ pub enum RedisCmd {
     #[display("HSET")]
     Hset,
 
+    #[display("HDEL")]
+    Hdel,
+
     #[display("SADD")]
     Sadd,
 
@@ -132,7 +135,7 @@ pub fn check_phone(phone: &str) -> bool {
 
 pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
     let tx = RB.acquire_begin().await.unwrap();
-    let tx: RBatisTxExecutorGuard = tx.defer_async(|mut tx| async move {
+    let tx: RBatisTxExecutorGuard = tx.defer_async(|tx| async move {
         if tx.done() {
             log::info!("transaction [{}] complete.", tx.tx_id);
         } else {
@@ -154,21 +157,21 @@ pub fn gen_access_value(bit: u64) -> u64 {
     last_number
 }
 
-pub fn marge_access(arr: Vec<u64>) -> u64 {
-    let mut res = 0;
-    arr.into_iter().for_each(|val| {
-        res += val;
-    });
-    res
-}
+// pub fn marge_access(arr: Vec<u64>) -> u64 {
+//     let mut res = 0;
+//     arr.into_iter().for_each(|val| {
+//         res += val;
+//     });
+//     res
+// }
 
-pub fn has_access(auth: u64, access: Vec<u64>) -> bool {
-    let mut res = false;
-    access.into_iter().for_each(|val| {
-        res = val & auth > 0;
-    });
-    res
-}
+// pub fn has_access(auth: u64, access: Vec<u64>) -> bool {
+//     let mut res = false;
+//     access.into_iter().for_each(|val| {
+//         res = val & auth > 0;
+//     });
+//     res
+// }
 
 pub fn gen_jwt_token(login_data: RedisLoginData) -> String {
     let json_str = serde_json::to_string(&login_data).expect("msg");

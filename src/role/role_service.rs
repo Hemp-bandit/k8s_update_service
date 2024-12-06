@@ -13,13 +13,13 @@ use crate::{
         role_access_service::{bind_role_access, check_role_access_bind, unbind_access_from_cache},
         CreateByData, RoleListListData,
     },
-    user::{check_user_by_user_id, OptionData},
+    user::{check_user_by_user_id, user_role_service::sync_user_auth, OptionData},
     util::{
         common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
         redis_actor::{SaddData, SmembersData},
         sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
-        sync_opt::{self, SyncOptData},
+        sync_opt::{self, DelOptData, SyncOptData},
     },
     RB, REDIS_ADDR,
 };
@@ -43,7 +43,7 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> Result<impl Respond
         status: Status::ACTIVE as i8,
     };
 
-    let mut tx = get_transaction_tx().await.unwrap();
+    let tx = get_transaction_tx().await.unwrap();
     let insert_res = RoleEntity::insert(&tx, &new_role).await;
     tx.commit().await.expect("commit error");
 
@@ -52,6 +52,18 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> Result<impl Respond
         tx.rollback().await.expect("rollback error");
         return Err(MyError::CreateRoleError);
     }
+
+    let opt = OptionData::default(
+        &req_data.name,
+        insert_res.expect("msg").last_insert_id.as_i64().expect("msg") as i32,
+    );
+    sync_opt::sync(SyncOptData::default(
+        RedisKeys::RoleIds,
+        RedisKeys::RoleInfo,
+        opt.id,
+        opt,
+    ))
+    .await;
 
     Ok(ResponseBody::success("角色创建成功"))
 }
@@ -126,7 +138,7 @@ pub async fn update_role_by_id(
         Some(mut role) => {
             role.name = req_data.name.clone().unwrap_or(role.name);
             role.update_time = get_current_time_fmt();
-            let mut tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
             tx.commit().await.expect("msg");
 
@@ -135,6 +147,20 @@ pub async fn update_role_by_id(
                 tx.rollback().await.expect("msg");
                 return Err(MyError::UpdateRoleError);
             }
+
+            let item = OptionData {
+                id: role.id.unwrap(),
+                name: role.name,
+            };
+
+            sync_opt::sync(SyncOptData::default(
+                RedisKeys::RoleIds,
+                RedisKeys::RoleInfo,
+                item.id,
+                item,
+            ))
+            .await;
+
         }
     }
 
@@ -167,6 +193,13 @@ pub async fn delete_role_by_id(id: web::Path<i32>) -> Result<impl Responder, MyE
         }
     }
 
+    sync_opt::del(DelOptData::default(
+        RedisKeys::RoleIds,
+        RedisKeys::RoleInfo,
+        vec![id],
+    ))
+    .await;
+
     Ok(ResponseBody::success("角色删除成功"))
 }
 
@@ -184,7 +217,7 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     if db_access.is_none() {
         return Err(MyError::AccessNotExist);
     }
-    let mut tx = get_transaction_tx().await.expect("get tx error");
+    let tx = get_transaction_tx().await.expect("get tx error");
     let (add_ids, sub_ids) = check_role_access_bind(&req_data.role_id, &req_data.access_ids).await;
 
     log::debug!("add_ids {add_ids:?}");
@@ -231,6 +264,13 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
             return Err(MyError::DelRoleAccessError);
         }
     }
+
+    let user_list :Vec<OptionData> = tx.query_decode("select user.name, user.id from user_role left join user on user.id = user_role.user_id  where role_id = ?;", vec![to_value!(req_data.role_id)]).await.expect("msg");
+    tx.commit().await.expect("msg");
+    for ele in user_list.into_iter() {
+        sync_user_auth(ele.name).await?;
+    }
+
     Ok(ResponseBody::success("绑定成功"))
 }
 

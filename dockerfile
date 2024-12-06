@@ -11,6 +11,7 @@ FROM debian:stable-slim
 WORKDIR /app
 COPY --from=builder /app/target/release/kaibai_user_service . 
 COPY ./run.sh .
+RUN touch .env
 EXPOSE 3000
 
 CMD ["sh","run.sh"]
