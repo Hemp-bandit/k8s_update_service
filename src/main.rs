@@ -13,7 +13,7 @@ use rbdc_mysql::MysqlDriver;
 use rs_service_util::jwt::JWT;
 use rs_service_util::redis::RedisActor;
 use tokio_schedule::{every, Job};
-use user::adm::check_adm;
+use user::admin::check_adm;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
@@ -113,6 +113,11 @@ async fn init_db() {
 }
 
 async fn init_corn() {
+    let CORN = std::env::var("CORN").expect("CORN must be set");
+    if !CORN.eq("true") {
+        log::info!("corn is close");
+        return;
+    }
     actix_rt::spawn(async move {
         let user_role_corn = every(10).seconds().in_timezone(&Utc).perform(|| async {
             sync_user_role().await;

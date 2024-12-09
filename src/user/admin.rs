@@ -22,8 +22,8 @@ pub async fn check_adm() -> Result<(), MyError> {
     // check db user
     let db_adm_user: Option<IdRes> = tx
         .query_decode(
-            "select id from user where name=? ",
-            vec![to_value!("ADMIN")],
+            "select id from user where name='ADMIN' and phone='15717827650' ",
+            vec![],
         )
         .await
         .expect("msg");
@@ -40,7 +40,7 @@ pub async fn check_adm() -> Result<(), MyError> {
 
     // check db role
     let db_role: Option<IdRes> = tx
-        .query_decode("select id from role where name=?", vec![to_value!("ADMIN")])
+        .query_decode("select id from role where name='ADMIN'", vec![])
         .await
         .expect("msg");
     log::info!("db_role {db_role:?}");
@@ -56,8 +56,8 @@ pub async fn check_adm() -> Result<(), MyError> {
     // check db access
     let db_access: Option<IdRes> = tx
         .query_decode(
-            "select id from access where name=?",
-            vec![to_value!("ADMIN")],
+            "select id from access where name='ADMIN'",
+            vec![],
         )
         .await
         .expect("msg");

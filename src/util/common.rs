@@ -1,9 +1,11 @@
 use crate::response::MyError;
+use crate::user::RedisLoginData;
 use crate::{RB, REDIS_ADDR};
+use actix_web::HttpRequest;
 use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
-use rbatis::Error;
+use rs_service_util::jwt::jwt_token_to_data;
 
 use super::redis_actor::HgetById;
 #[derive(Debug, Display, Clone)]
@@ -63,7 +65,6 @@ pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, MyError> {
     Ok(tx)
 }
 
-
 pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
     ids: Vec<i32>,
     key: RedisKeys,
@@ -86,6 +87,15 @@ pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
         }
     }
     res
+}
+
+pub fn get_jwt_from_req(req: HttpRequest) -> RedisLoginData {
+    let token = req.headers().get("Authorization").expect("get token error");
+    let binding = token.to_owned();
+    let jwt_token = binding.to_str().expect("msg").to_string();
+    let slice = &jwt_token[7..];
+    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
+    jwt_user
 }
 
 #[cfg(test)]
