@@ -26,7 +26,7 @@ pub async fn jwt_mw(
 fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
     let path = req.path();
     // 白名单不校验
-    let white_list: Vec<&str> = vec!["/api/auth/login", "/doc"];
+    let white_list: Vec<&str> = vec!["/api/auth/login", "/doc","/api/user/create_user"];
     let is_in_white_list = white_list
         .iter()
         .find(|val| val.to_string() == path.to_string());

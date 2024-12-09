@@ -26,13 +26,13 @@ spec:
         - name: kaibai-user-deploy
           env:
             - name: DATABASE_URL
-              value: mysql://root:WYSwill4290@10.1.45.200:3306/kaibai_user
+              value: mysql://root:WYSwill4290@10.1.135.74:3309/kaibai_user
             - name: REDIS_URL
-              value: redis://:wyswill4290@10.1.7.108:6379
+              value: redis://:WYSwill4290@10.1.7.108:6379
             - name: RUST_LOG
               value: kaibai_user_service,actix_web,rbatis,rs_service_util
             - name: RUST_BACKTRACE
-              value: "1"
+              value: "full"
           image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:608dbb50
           ports:
             - containerPort: 3000
