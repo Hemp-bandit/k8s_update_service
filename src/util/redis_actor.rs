@@ -1,6 +1,6 @@
 use crate::user::RedisLoginData;
 use actix::prelude::*;
-use redis::{aio::MultiplexedConnection, AsyncCommands, Client};
+use redis::AsyncCommands;
 use rs_service_util::redis::{RedisActor, RedisCmd};
 
 #[derive(Message, Debug)]
