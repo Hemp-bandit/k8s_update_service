@@ -1,4 +1,5 @@
 use rbs::to_value;
+use rs_service_util::auth::gen_access_value;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -7,7 +8,7 @@ use crate::{
         user_entity::UserEntity, user_role_entity::UserRoleEntity,
     },
     response::MyError,
-    util::common::{gen_access_value, get_transaction_tx},
+    util::common::get_transaction_tx,
 };
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct IdRes {
