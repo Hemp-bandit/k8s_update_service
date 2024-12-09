@@ -3,35 +3,8 @@ use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
-use serde::Serialize;
-use utoipa::{
-    openapi::{
-        self,
-        security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
-    },
-    Modify,
-};
 
 use super::redis_actor::HgetById;
-#[derive(Debug, Serialize)]
-pub struct JWT;
-
-impl Modify for JWT {
-    fn modify(&self, openapi: &mut openapi::OpenApi) {
-        if let Some(schema) = openapi.components.as_mut() {
-            schema.add_security_scheme(
-                "JWT",
-                SecurityScheme::Http(
-                    HttpBuilder::new()
-                        .scheme(HttpAuthScheme::Bearer)
-                        .bearer_format("JWT")
-                        .build(),
-                ),
-            );
-        }
-    }
-}
-
 #[derive(Debug, Display, Clone)]
 pub enum RedisKeys {
     #[display("user_ids")]

@@ -2004,7 +2004,7 @@ dependencies = [
 [[package]]
 name = "rs_service_util"
 version = "0.1.0"
-source = "git+https://github.com/Hemp-bandit/rs_service_util.git#54098cbfb7d304a697ea980b02542eebd0ad0768"
+source = "git+https://github.com/Hemp-bandit/rs_service_util.git#25a5291249e4640e8967de527ea8207a6f0c5393"
 dependencies = [
  "actix",
  "actix-web",
@@ -2020,6 +2020,7 @@ dependencies = [
  "serde",
  "serde_json",
  "simple-base64",
+ "utoipa",
 ]
 
 [[package]]
