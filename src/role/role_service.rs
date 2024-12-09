@@ -1,5 +1,9 @@
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use rs_service_util::{
+    sql_tool::{SqlTool, SqlToolPageData},
+    time::get_current_time_fmt,
+};
 
 use super::{BindAccessData, CreateRoleData, RoleListQueryData, RoleUpdateData};
 use crate::{
@@ -15,9 +19,8 @@ use crate::{
     },
     user::{check_user_by_user_id, user_role_service::sync_user_auth, OptionData},
     util::{
-        common::{get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys},
+        common::{get_transaction_tx, rds_str_to_list, RedisKeys},
         redis_actor::{SaddData, SmembersData},
-        sql_tool::{SqlTool, SqlToolPageData},
         structs::Status,
         sync_opt::{self, DelOptData, SyncOptData},
     },
@@ -55,7 +58,11 @@ async fn create_role(req_data: web::Json<CreateRoleData>) -> Result<impl Respond
 
     let opt = OptionData::default(
         &req_data.name,
-        insert_res.expect("msg").last_insert_id.as_i64().expect("msg") as i32,
+        insert_res
+            .expect("msg")
+            .last_insert_id
+            .as_i64()
+            .expect("msg") as i32,
     );
     sync_opt::sync(SyncOptData::default(
         RedisKeys::RoleIds,
@@ -160,7 +167,6 @@ pub async fn update_role_by_id(
                 item,
             ))
             .await;
-
         }
     }
 

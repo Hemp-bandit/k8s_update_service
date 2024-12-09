@@ -2,11 +2,12 @@ use crate::entity::user_role_entity::UserRoleEntity;
 use crate::response::MyError;
 use crate::role::check_role_by_id;
 use crate::user::auth_service::get_user_access_val;
-use crate::util::common::{RedisCmd, RedisKeys};
+use crate::util::common::RedisKeys;
 use crate::util::redis_actor::{
     ExistsData, GetRedisLogin, SaddData, SmembersData, SremData, UpdateLoginData,
 };
 use crate::{REDIS_ADDR, REDIS_KEY};
+use rs_service_util::redis::RedisCmd;
 
 ///检查角色是否存在于cache & db
 pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {

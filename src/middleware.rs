@@ -1,11 +1,4 @@
-use crate::{
-    response::MyError,
-    util::{
-        common::{jwt_token_to_data, RedisCmd},
-        redis_actor::ExistsData,
-    },
-    REDIS_ADDR, REDIS_KEY,
-};
+use crate::{response::MyError, util::redis_actor::ExistsData, REDIS_ADDR, REDIS_KEY};
 use actix_web::{
     body::MessageBody,
     dev::{ServiceRequest, ServiceResponse},
@@ -13,6 +6,7 @@ use actix_web::{
     middleware::Next,
     Error,
 };
+use rs_service_util::{jwt::jwt_token_to_data, redis::RedisCmd, structs::RedisLoginData};
 
 pub async fn jwt_mw(
     req: ServiceRequest,
@@ -56,7 +50,8 @@ async fn has_permission(req: &ServiceRequest) -> Result<bool, MyError> {
     let jwt_token = binding.to_str().expect("msg").to_string();
     let slice = &jwt_token[7..];
     log::info!("jwt {slice}");
-    let jwt_user = jwt_token_to_data(slice.to_owned())?;
+    let jwt_user = jwt_token_to_data::<RedisLoginData>(slice.to_owned())
+        .expect(&MyError::AuthError.to_string());
     log::info!("jwt_user {jwt_user:?}");
     // jwt_user.name
     check_is_login_redis(jwt_user.name).await

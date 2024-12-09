@@ -1,11 +1,9 @@
-use crate::{response::MyError, user::RedisLoginData, RB, REDIS_ADDR};
-use chrono::{DateTime, Local, Utc};
+use crate::{RB, REDIS_ADDR};
 use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
 use rbatis::Error;
 use serde::Serialize;
-use simple_base64::{decode, encode};
 use utoipa::{
     openapi::{
         self,
@@ -15,7 +13,6 @@ use utoipa::{
 };
 
 use super::redis_actor::HgetById;
-
 #[derive(Debug, Serialize)]
 pub struct JWT;
 
@@ -62,65 +59,6 @@ pub enum RedisKeys {
     AccessMapIds,
 }
 
-#[derive(Debug, Display, Clone)]
-pub enum RedisCmd {
-    #[display("sismember")]
-    Sismember,
-
-    #[display("hexists")]
-    Hexists,
-
-    #[display("exists")]
-    Exists,
-
-    #[display("smembers")]
-    Smembers,
-
-    #[display("HGET")]
-    Hget,
-
-    #[display("HSET")]
-    Hset,
-
-    #[display("HDEL")]
-    Hdel,
-
-    #[display("SADD")]
-    Sadd,
-
-    #[display("srem")]
-    Srem,
-
-    #[display("get")]
-    Get,
-
-    #[display("del")]
-    Del,
-
-    #[display("setex")]
-    SETEX,
-}
-
-/**
- * 获取当前时间的时间戳
- * 格式: YYYY-MM-DD HH:mm:ss
- */
-pub fn get_current_time_fmt() -> String {
-    let dt = Utc::now();
-    let local_dt: DateTime<Local> = dt.with_timezone(&Local);
-    return local_dt.format("%Y-%m-%d %H:%M:%S").to_string();
-}
-
-/**
- * 获取当前时间戳
- * 秒
- */
-pub fn get_current_timestamp() -> i64 {
-    let dt = Utc::now();
-    let local_dt: DateTime<Local> = dt.with_timezone(&Local);
-    local_dt.timestamp()
-}
-
 /// 检测手机号是否合法
 pub fn check_phone(phone: &str) -> bool {
     let max_len = 11;
@@ -147,7 +85,7 @@ pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
             }
         }
     });
-    log::info!("transaction [{}] start", tx.tx.as_ref().unwrap().tx_id);
+    log::info!("transaction [{}] start", tx.tx_id());
     Ok(tx)
 }
 
@@ -172,30 +110,6 @@ pub fn gen_access_value(bit: u64) -> u64 {
 //     });
 //     res
 // }
-
-pub fn gen_jwt_token(login_data: RedisLoginData) -> String {
-    let json_str = serde_json::to_string(&login_data).expect("msg");
-    let base64_string = encode(json_str);
-    base64_string
-}
-
-pub fn jwt_token_to_data(jwt_token: String) -> Result<RedisLoginData, MyError> {
-    if jwt_token.is_empty() {
-        return Err(MyError::AuthError);
-    }
-
-    match decode(jwt_token) {
-        Err(err) => {
-            log::error!("{err}");
-            return Err(MyError::AuthError);
-        }
-        Ok(res) => {
-            let str: String = String::from_utf8(res).unwrap();
-            let data: RedisLoginData = serde_json::from_str(&str).expect("msg");
-            Ok(data)
-        }
-    }
-}
 
 pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
     ids: Vec<i32>,
@@ -224,9 +138,9 @@ pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
 #[cfg(test)]
 mod test {
 
-    use crate::{user::RedisLoginData, util::common::check_phone};
+    use rs_service_util::auth::gen_access_value;
 
-    use super::{gen_access_value, gen_jwt_token, jwt_token_to_data};
+    use crate::util::common::check_phone;
 
     #[test]
     fn test_check_phone_length_less() {
@@ -263,32 +177,5 @@ mod test {
 
         let rs = gen_access_value(9999999);
         println!("res=== {rs}");
-    }
-    #[test]
-    fn get_gen_jwt() {
-        let login_data = RedisLoginData {
-            auth: 123123123123,
-            last_login_time: 12312312,
-            name: "asdf".to_string(),
-            id: 123,
-        };
-        let token_res = gen_jwt_token(login_data);
-        println!("token_res {token_res}");
-        let token = "eyJhdXRoIjoxMjMxMjMxMjMxMjMsImxhc3RfbG9naW5fdGltZSI6MTIzMTIzMTIsIm5hbWUiOiJhc2RmIiwiaWQiOjEyM30=".to_string();
-        assert_eq!(token_res, token)
-    }
-
-    #[test]
-    fn test_jwt_token_to_data() {
-        let token = "eyJhdXRoIjoxMjMxMjMxMjMxMjMsImxhc3RfbG9naW5fdGltZSI6MTIzMTIzMTIsIm5hbWUiOiJhc2RmIiwiaWQiOjEyM30=".to_string();
-        let login_data = RedisLoginData {
-            auth: 123123123123,
-            last_login_time: 12312312,
-            name: "asdf".to_string(),
-            id: 123,
-        };
-        let user_info = jwt_token_to_data(token);
-        println!("{user_info:#?}")
-        // assert_eq!(login_data, user_info.unwrap());
     }
 }

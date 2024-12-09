@@ -10,9 +10,9 @@ use middleware::jwt_mw;
 use once_cell::sync::OnceCell;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
+use rs_service_util::redis::RedisActor;
 use tokio_schedule::{every, Job};
 use util::common::JWT;
-use util::redis_actor::RedisActor;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
@@ -51,8 +51,8 @@ lazy_static::lazy_static! {
 async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
-
-    let actor = RedisActor::new().await;
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
+    let actor = RedisActor::new(redis_url).await;
     let addr: Addr<RedisActor> = actor.start();
 
     REDIS_ADDR.set(addr.clone()).expect("set redis addr error");

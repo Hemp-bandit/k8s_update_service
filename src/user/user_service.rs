@@ -13,8 +13,7 @@ use crate::{
     response::ResponseBody,
     user::{check_user_by_user_id, OptionData},
     util::{
-        common::{check_phone, get_current_time_fmt, get_transaction_tx},
-        sql_tool::{SqlTool, SqlToolPageData},
+        common::{check_phone, get_transaction_tx},
         structs::Status,
         sync_opt::{self, SyncOptData},
     },
@@ -22,6 +21,8 @@ use crate::{
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use rs_service_util::sql_tool::{SqlTool, SqlToolPageData};
+use rs_service_util::time::get_current_time_fmt;
 #[utoipa::path(
     tag = "user",
     responses( (status = 200) )
