@@ -1,7 +1,7 @@
 use actix::{Actor, Addr};
 use actix_cors::Cors;
 use actix_web::middleware::{from_fn, Compress, Logger};
-use actix_web::{http, web, App, HttpServer};
+use actix_web::{http, App, HttpServer};
 use chrono::Utc;
 use cron::sync_auth::{sync_role_access, sync_user_role};
 use env::dotenv;
@@ -71,7 +71,6 @@ async fn main() {
             .service(utoipa_actix_web::scope("/api/auth").configure(user::auth_configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
-            .app_data(web::Data::new(addr.clone()))
             .wrap(
                 Cors::default()
                     .allow_any_origin()
