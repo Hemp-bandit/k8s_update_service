@@ -1,8 +1,11 @@
+use crate::response::MyError;
+use crate::user::RedisLoginData;
 use crate::{RB, REDIS_ADDR};
+use actix_web::HttpRequest;
 use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
-use rbatis::Error;
+use rs_service_util::jwt::jwt_token_to_data;
 
 use super::redis_actor::HgetById;
 #[derive(Debug, Display, Clone)]
@@ -44,7 +47,7 @@ pub fn check_phone(phone: &str) -> bool {
     r.is_match(phone)
 }
 
-pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
+pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, MyError> {
     let tx = RB.acquire_begin().await.unwrap();
     let tx: RBatisTxExecutorGuard = tx.defer_async(|tx| async move {
         if tx.done() {
@@ -61,28 +64,6 @@ pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
     log::info!("transaction [{}] start", tx.tx_id());
     Ok(tx)
 }
-
-pub fn gen_access_value(bit: u64) -> u64 {
-    let mod_val = bit % 31;
-    let last_number = 1 << (mod_val.min(31) - 1);
-    last_number
-}
-
-// pub fn marge_access(arr: Vec<u64>) -> u64 {
-//     let mut res = 0;
-//     arr.into_iter().for_each(|val| {
-//         res += val;
-//     });
-//     res
-// }
-
-// pub fn has_access(auth: u64, access: Vec<u64>) -> bool {
-//     let mut res = false;
-//     access.into_iter().for_each(|val| {
-//         res = val & auth > 0;
-//     });
-//     res
-// }
 
 pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
     ids: Vec<i32>,
@@ -106,6 +87,15 @@ pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
         }
     }
     res
+}
+
+pub fn get_jwt_from_req(req: HttpRequest) -> RedisLoginData {
+    let token = req.headers().get("Authorization").expect("get token error");
+    let binding = token.to_owned();
+    let jwt_token = binding.to_str().expect("msg").to_string();
+    let slice = &jwt_token[7..];
+    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
+    jwt_user
 }
 
 #[cfg(test)]

@@ -1,21 +1,19 @@
+use super::LoginData;
 use crate::{
     access::AccessValueData,
     response::{MyError, ResponseBody},
     role::AccessData,
     user::{check_user_by_user_id, RedisLoginData},
-    util::redis_actor::{DelData, ExistsData, GetRedisLogin, SetRedisLogin},
+    util::{
+        common::get_jwt_from_req,
+        redis_actor::{DelData, ExistsData, GetRedisLogin, SetRedisLogin, UpdateLoginData},
+    },
     RB, REDIS_ADDR, REDIS_KEY,
 };
 use actix_web::{get, post, web, HttpRequest, Responder};
 use rbs::to_value;
-use rs_service_util::{
-    jwt::{gen_jwt_token, jwt_token_to_data},
-    redis::RedisCmd,
-    time::get_current_timestamp,
-};
+use rs_service_util::{jwt::gen_jwt_token, redis::RedisCmd, time::get_current_timestamp};
 use serde::{Deserialize, Serialize};
-
-use super::LoginData;
 
 const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
 
@@ -30,16 +28,34 @@ struct PasswordData {
   tag = "auth",
   responses( (status = 200))
 )]
-#[get("/get_user_permission/{user_id}")]
-async fn get_user_permission(path: web::Path<i32>) -> Result<impl Responder, MyError> {
-    let user_id = path.into_inner();
-
-    let check_res = check_user_by_user_id(user_id).await;
+#[get("/get_user_permission/{id}")]
+async fn get_user_permission(id: web::Path<i32>) -> Result<impl Responder, MyError> {
+    let id = id.into_inner();
+    let check_res = check_user_by_user_id(id).await;
     if check_res.is_none() {
         return Err(MyError::UserNotExist);
     }
+    let vals = get_user_access_val(id).await;
 
-    let vals = get_user_access_val(user_id).await;
+    let db_uer = check_res.unwrap();
+
+    let key = format!("{}_{}", REDIS_KEY.to_string(), db_uer.name.clone());
+    let rds = REDIS_ADDR.get().expect("msg");
+
+    let mut user = rds
+        .send(GetRedisLogin { key: key.clone() })
+        .await
+        .expect("get user info from redis error")
+        .expect("get user info from redis error")
+        .unwrap();
+
+    user.auth = vals;
+
+    rds.send(UpdateLoginData { key, data: user })
+        .await
+        .expect("msg")
+        .expect("msg");
+
     Ok(ResponseBody::default(Some(vals)))
 }
 
@@ -137,11 +153,7 @@ async fn logout(id: web::Path<i32>, req: HttpRequest) -> Result<impl Responder, 
     if check_res.is_none() {
         return Err(MyError::UserNotExist);
     }
-    let token = req.headers().get("Authorization").expect("get token error");
-    let binding = token.to_owned();
-    let jwt_token = binding.to_str().expect("msg").to_string();
-    let slice = &jwt_token[7..];
-    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
+    let jwt_user = get_jwt_from_req(req);
     if jwt_user.id != user_id {
         return Err(MyError::UserIsWrong);
     }
@@ -150,6 +162,7 @@ async fn logout(id: web::Path<i32>, req: HttpRequest) -> Result<impl Responder, 
     Ok(ResponseBody::success("退出成功!"))
 }
 
+/// 根据用户id 获取所有权限值
 pub async fn get_user_access_val(user_id: i32) -> u64 {
     let mut vals: u64 = 0;
     let ex = RB.acquire().await.expect("get ex error");
@@ -169,13 +182,13 @@ pub async fn get_user_access_val(user_id: i32) -> u64 {
         let ids = ids.join(",");
         let access_values: Option<Vec<AccessValueData>> = ex
             .query_decode(
-                "select value from access where id in (?)",
-                vec![to_value!(ids)],
+                &format!("select value from access where id in ({ids})"),
+                vec![],
             )
             .await
             .expect("查询权限值错误");
 
-        println!("access_values {access_values:?}");
+        log::info!("access_values {access_values:?}");
         if let Some(access_values) = access_values {
             access_values.into_iter().for_each(|val| {
                 vals += val.value;

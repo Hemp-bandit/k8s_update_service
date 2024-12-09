@@ -12,6 +12,7 @@ pub struct CreateByData {
 pub enum UserType {
     BIZ = 0,
     CLIENT = 1,
+    ADMIN = 2,
 }
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename = "Enum")]

@@ -5,7 +5,7 @@ use crate::{
     response::{MyError, ResponseBody},
     user::check_user_by_user_id,
     util::{
-        common::{gen_access_value, get_transaction_tx, rds_str_to_list, RedisKeys},
+        common::{get_transaction_tx, rds_str_to_list, RedisKeys},
         redis_actor::SmembersData,
         structs::{CreateByData, Status},
         sync_opt::{self, DelOptData, SyncOptData},
@@ -15,6 +15,7 @@ use crate::{
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
 use rs_service_util::{
+    auth::gen_access_value,
     sql_tool::{SqlTool, SqlToolPageData},
     time::get_current_time_fmt,
 };

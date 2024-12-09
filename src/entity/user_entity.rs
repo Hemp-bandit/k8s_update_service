@@ -1,5 +1,8 @@
 use rbatis::{crud, impl_select};
+use rs_service_util::time::get_current_time_fmt;
 use serde::{Deserialize, Serialize};
+
+use crate::util::structs::{Status, UserType};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UserEntity {
@@ -13,6 +16,23 @@ pub struct UserEntity {
     pub introduce: Option<String>,
     pub user_type: i16,
     pub status: i16,
+}
+
+impl UserEntity {
+    pub fn default_adm_user() -> Self {
+        Self {
+            id: None,
+            create_time: get_current_time_fmt(),
+            update_time: get_current_time_fmt(),
+            name: "ADMIN".to_string(),
+            password: "ADMIN".to_string(),
+            picture: None,
+            phone: "15717827650".to_string(),
+            introduce: None,
+            user_type: UserType::ADMIN as i16,
+            status: Status::ACTIVE as i16,
+        }
+    }
 }
 
 crud!(UserEntity {}, "user");

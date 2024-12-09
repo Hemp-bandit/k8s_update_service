@@ -1,5 +1,8 @@
 use rbatis::{crud, impl_select, impl_select_page};
+use rs_service_util::time::get_current_time_fmt;
 use serde::{Deserialize, Serialize};
+
+use crate::util::structs::Status;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AccessEntity {
@@ -11,7 +14,19 @@ pub struct AccessEntity {
     pub status: i8,
     pub value: u64,
 }
-
+impl AccessEntity {
+    pub fn default_adm_access(adm_user_id: i32) -> Self {
+        Self {
+            id: None,
+            create_by: adm_user_id,
+            status: Status::ACTIVE as i8,
+            create_time: get_current_time_fmt(),
+            update_time: get_current_time_fmt(),
+            name: "ADMIN".to_string(),
+            value: 0,
+        }
+    }
+}
 crud!(AccessEntity {}, "access");
 impl_select_page!(AccessEntity{select_page() => "`where status=1 order by create_time desc`" }, "access" );
 impl_select_page!(AccessEntity{select_page_by_name(name:&str) => "`where status=1 and name = #{name} order by create_time desc`" }, "access" );

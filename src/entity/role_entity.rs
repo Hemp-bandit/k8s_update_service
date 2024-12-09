@@ -1,5 +1,8 @@
 use rbatis::{crud, impl_select};
+use rs_service_util::time::get_current_time_fmt;
 use serde::{Deserialize, Serialize};
+
+use crate::util::structs::Status;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RoleEntity {
@@ -9,6 +12,19 @@ pub struct RoleEntity {
     pub name: String,
     pub create_by: i32, // 创建的用户id
     pub status: i8,
+}
+
+impl RoleEntity {
+    pub fn default_adm(adm_user_id: i32) -> Self {
+        Self {
+            id: None,
+            create_time: get_current_time_fmt(),
+            update_time: get_current_time_fmt(),
+            name: "ADMIN".to_string(),
+            create_by: adm_user_id,
+            status: Status::ACTIVE as i8,
+        }
+    }
 }
 
 crud!(RoleEntity {}, "role");
