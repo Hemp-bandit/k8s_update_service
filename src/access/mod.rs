@@ -1,14 +1,11 @@
+use rs_service_util::redis::RedisCmd;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
 use crate::{
     entity::access_entity::AccessEntity,
-    util::{
-        common::{RedisCmd, RedisKeys},
-        redis_actor::ExistsData,
-        structs::CreateByData,
-    },
+    util::{common::RedisKeys, redis_actor::ExistsData, structs::CreateByData},
     RB, REDIS_ADDR,
 };
 

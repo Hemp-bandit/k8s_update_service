@@ -5,11 +5,8 @@ use crate::{
     response::{MyError, ResponseBody},
     user::check_user_by_user_id,
     util::{
-        common::{
-            gen_access_value, get_current_time_fmt, get_transaction_tx, rds_str_to_list, RedisKeys,
-        },
+        common::{gen_access_value, get_transaction_tx, rds_str_to_list, RedisKeys},
         redis_actor::SmembersData,
-        sql_tool::{SqlTool, SqlToolPageData},
         structs::{CreateByData, Status},
         sync_opt::{self, DelOptData, SyncOptData},
     },
@@ -17,6 +14,10 @@ use crate::{
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use rs_service_util::{
+    sql_tool::{SqlTool, SqlToolPageData},
+    time::get_current_time_fmt,
+};
 
 #[utoipa::path(
     tag = "access",
@@ -213,7 +214,6 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
                 vec![id],
             ))
             .await;
-        
         }
     }
 

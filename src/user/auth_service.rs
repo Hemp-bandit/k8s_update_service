@@ -3,14 +3,16 @@ use crate::{
     response::{MyError, ResponseBody},
     role::AccessData,
     user::{check_user_by_user_id, RedisLoginData},
-    util::{
-        common::{gen_jwt_token, get_current_timestamp, jwt_token_to_data, RedisCmd},
-        redis_actor::{DelData, ExistsData, GetRedisLogin, SetRedisLogin},
-    },
+    util::redis_actor::{DelData, ExistsData, GetRedisLogin, SetRedisLogin},
     RB, REDIS_ADDR, REDIS_KEY,
 };
 use actix_web::{get, post, web, HttpRequest, Responder};
 use rbs::to_value;
+use rs_service_util::{
+    jwt::{gen_jwt_token, jwt_token_to_data},
+    redis::RedisCmd,
+    time::get_current_timestamp,
+};
 use serde::{Deserialize, Serialize};
 
 use super::LoginData;
@@ -139,7 +141,7 @@ async fn logout(id: web::Path<i32>, req: HttpRequest) -> Result<impl Responder, 
     let binding = token.to_owned();
     let jwt_token = binding.to_str().expect("msg").to_string();
     let slice = &jwt_token[7..];
-    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned())?;
+    let jwt_user: RedisLoginData = jwt_token_to_data(slice.to_owned()).expect("msg");
     if jwt_user.id != user_id {
         return Err(MyError::UserIsWrong);
     }

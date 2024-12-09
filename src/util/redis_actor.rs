@@ -1,31 +1,7 @@
-use super::common::RedisCmd;
 use crate::user::RedisLoginData;
 use actix::prelude::*;
-use redis::{aio::MultiplexedConnection, AsyncCommands, Client};
-
-pub struct RedisActor {
-    conn: MultiplexedConnection,
-}
-
-impl RedisActor {
-    pub async fn new() -> Self {
-        let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
-        log::info!("redis_url {redis_url}");
-        let client = Client::open(redis_url).unwrap(); // not recommended
-        let conn = client.get_multiplexed_async_connection().await;
-        match conn {
-            Err(err) => {
-                let detail = err.detail().unwrap();
-                panic!("redis connection err {detail}");
-            }
-            Ok(conn) => RedisActor { conn },
-        }
-    }
-}
-
-impl Actor for RedisActor {
-    type Context = Context<Self>;
-}
+use redis::AsyncCommands;
+use rs_service_util::redis::{RedisActor, RedisCmd};
 
 #[derive(Message, Debug)]
 #[rtype(result = "Result<(), redis::RedisError>")]
