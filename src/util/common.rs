@@ -1,3 +1,4 @@
+use crate::response::MyError;
 use crate::{RB, REDIS_ADDR};
 use derive_more::derive::Display;
 use lazy_regex::regex;
@@ -44,7 +45,7 @@ pub fn check_phone(phone: &str) -> bool {
     r.is_match(phone)
 }
 
-pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, Error> {
+pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, MyError> {
     let tx = RB.acquire_begin().await.unwrap();
     let tx: RBatisTxExecutorGuard = tx.defer_async(|tx| async move {
         if tx.done() {

@@ -13,6 +13,7 @@ use rbdc_mysql::MysqlDriver;
 use rs_service_util::jwt::JWT;
 use rs_service_util::redis::RedisActor;
 use tokio_schedule::{every, Job};
+use user::adm::check_adm;
 use utoipa::OpenApi;
 use utoipa_actix_web::AppExt;
 use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
@@ -60,6 +61,8 @@ async fn main() {
     init_db().await;
 
     init_corn().await;
+
+    let _ = check_adm().await;
 
     let _ = HttpServer::new(move || {
         App::new()
