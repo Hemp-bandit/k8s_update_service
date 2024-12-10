@@ -324,7 +324,6 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
     } else {
         if req_data.role_id.is_empty() {
             let sub_res = UserRoleEntity::delete_by_column(&tx, "user_id", req_data.user_id).await;
-            tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = sub_res {
                 log::error!("删除用户角色失败, {error}");
                 tx.rollback().await.expect("msg");
@@ -338,7 +337,6 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
         log::debug!("add_tabs {add_tabs:#?}");
         let add_res = UserRoleEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
 
-        tx.commit().await.expect("msg");
         if let Err(rbs::Error::E(error)) = add_res {
             log::error!("绑定用户角色失败, {error}");
             tx.rollback().await.expect("msg");
@@ -346,6 +344,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
         }
     }
     sync_user_auth(db_user.unwrap().name).await?;
+    tx.commit().await.expect("msg");
     Ok(ResponseBody::success("绑定成功"))
 }
 
