@@ -33,6 +33,8 @@ spec:
               value: kaibai_user_service,actix_web,rbatis,rs_service_util
             - name: RUST_BACKTRACE
               value: "full"
+            - name: CORN
+              value: "false"
           image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:608dbb50
           ports:
             - containerPort: 3000

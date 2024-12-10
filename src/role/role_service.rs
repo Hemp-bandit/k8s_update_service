@@ -238,7 +238,6 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
                     vec![to_value!(id), to_value!(req_data.role_id)],
                 )
                 .await;
-            tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = sub_res {
                 log::error!("{}, {error}", MyError::DelRoleAccessError);
                 tx.rollback().await.expect("msg");
@@ -249,7 +248,6 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
         if req_data.access_ids.is_empty() {
             let sub_res =
                 RoleAccessEntity::delete_by_column(&tx, "role_id", req_data.role_id).await;
-            tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = sub_res {
                 log::error!("{}, {error}", MyError::DelRoleAccessError);
                 tx.rollback().await.expect("msg");
@@ -263,7 +261,6 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
         log::debug!("add_tabs {add_tabs:#?}");
         let add_res = RoleAccessEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
 
-        tx.commit().await.expect("msg");
         if let Err(rbs::Error::E(error)) = add_res {
             log::error!("{}, {error}", MyError::DelRoleAccessError);
             tx.rollback().await.expect("msg");
@@ -272,11 +269,11 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     }
 
     let user_list :Vec<OptionData> = tx.query_decode("select user.name, user.id from user_role left join user on user.id = user_role.user_id  where role_id = ?;", vec![to_value!(req_data.role_id)]).await.expect("msg");
-    tx.commit().await.expect("msg");
     for ele in user_list.into_iter() {
         sync_user_auth(ele.name).await?;
     }
 
+    tx.commit().await.expect("msg");
     Ok(ResponseBody::success("绑定成功"))
 }
 
