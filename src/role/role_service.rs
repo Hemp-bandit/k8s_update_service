@@ -272,10 +272,8 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
         }
         tx.commit().await.expect("msg");
     }
-
-    let tx = RB.acquire_begin().await.expect("msg");
+    let tx = RB.acquire().await.expect("msg");
     let user_list :Vec<OptionData> = tx.query_decode("select user.name, user.id from user_role left join user on user.id = user_role.user_id  where role_id = ?;", vec![to_value!(req_data.role_id)]).await.expect("msg");
-    tx.commit().await.expect("msg");
     for ele in user_list.into_iter() {
         sync_user_auth(ele.name).await?;
     }
