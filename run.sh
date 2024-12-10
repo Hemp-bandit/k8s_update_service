@@ -1,3 +1,2 @@
-ls -al 
-touch .env
-./kaibai_user_service
+ls -al
+# ./kaibai_user_service
