@@ -298,7 +298,7 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
         return Err(MyError::UserNotExist);
     }
 
-    let tx = get_transaction_tx().await.expect("get tx error");
+    let tx = RB.acquire_begin().await.expect("msg");
     let (add_ids, sub_ids) = check_user_role_bind(&req_data.user_id, &req_data.role_id).await;
 
     log::debug!("add_ids {add_ids:?}");

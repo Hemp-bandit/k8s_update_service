@@ -187,7 +187,7 @@ pub async fn delete_role_by_id(id: web::Path<i32>) -> Result<impl Responder, MyE
         Some(mut role) => {
             role.status = Status::DEACTIVE as i8;
             role.update_time = get_current_time_fmt();
-            let  tx = get_transaction_tx().await.expect("get tx err");
+            let tx = get_transaction_tx().await.expect("get tx err");
             let update_res = RoleEntity::update_by_column(&tx, &role, "id").await;
             tx.commit().await.expect("msg");
 
@@ -223,7 +223,7 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     if db_access.is_none() {
         return Err(MyError::AccessNotExist);
     }
-    let tx = get_transaction_tx().await.expect("get tx error");
+    let tx = RB.acquire_begin().await.expect("msg");
     let (add_ids, sub_ids) = check_role_access_bind(&req_data.role_id, &req_data.access_ids).await;
 
     log::debug!("add_ids {add_ids:?}");
@@ -270,11 +270,10 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
 
     let user_list :Vec<OptionData> = tx.query_decode("select user.name, user.id from user_role left join user on user.id = user_role.user_id  where role_id = ?;", vec![to_value!(req_data.role_id)]).await.expect("msg");
     tx.commit().await.expect("msg");
-    
+
     for ele in user_list.into_iter() {
         sync_user_auth(ele.name).await?;
     }
-
 
     Ok(ResponseBody::success("绑定成功"))
 }

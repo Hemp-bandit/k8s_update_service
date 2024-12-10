@@ -1,2 +1,2 @@
 ls -al
-# ./kaibai_user_service
+./kaibai_user_service
