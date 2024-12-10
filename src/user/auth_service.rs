@@ -75,6 +75,7 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
         })
         .await
         .expect("msg");
+    log::info!("redis_login {redis_login:?}");
     let is_login = match redis_login {
         Err(err) => {
             let detail = err.detail().expect("msg");
