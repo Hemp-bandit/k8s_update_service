@@ -314,7 +314,6 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
                     vec![to_value!(id), to_value!(req_data.user_id)],
                 )
                 .await;
-            tx.commit().await.expect("msg");
             if let Err(rbs::Error::E(error)) = sub_res {
                 log::error!("删除用户角色失败, {error}");
                 tx.rollback().await.expect("msg");
@@ -343,8 +342,9 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
             return Err(MyError::BindUserRoleError);
         }
     }
-    sync_user_auth(db_user.unwrap().name).await?;
     tx.commit().await.expect("msg");
+    sync_user_auth(db_user.unwrap().name).await?;
+
     Ok(ResponseBody::success("绑定成功"))
 }
 
