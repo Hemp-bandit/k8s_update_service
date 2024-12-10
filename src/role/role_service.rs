@@ -223,7 +223,6 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
     if db_access.is_none() {
         return Err(MyError::AccessNotExist);
     }
-    let tx = RB.acquire_begin().await.expect("msg");
     let (add_ids, sub_ids) = check_role_access_bind(&req_data.role_id, &req_data.access_ids).await;
 
     log::debug!("add_ids {add_ids:?}");
@@ -231,6 +230,7 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
 
     if !sub_ids.is_empty() {
         unbind_access_from_cache(&req_data.role_id, &sub_ids).await;
+        let tx = RB.acquire_begin().await.expect("msg");
         for id in sub_ids {
             let sub_res: Result<Option<()>, rbs::Error> = tx
                 .query_decode(
@@ -243,9 +243,11 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
                 tx.rollback().await.expect("msg");
                 return Err(MyError::DelRoleAccessError);
             }
+            tx.commit().await.expect("msg");
         }
     } else {
         if req_data.access_ids.is_empty() {
+            let tx = RB.acquire_begin().await.expect("msg");
             let sub_res =
                 RoleAccessEntity::delete_by_column(&tx, "role_id", req_data.role_id).await;
             if let Err(rbs::Error::E(error)) = sub_res {
@@ -253,12 +255,14 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
                 tx.rollback().await.expect("msg");
                 return Err(MyError::DelRoleAccessError);
             }
+            tx.commit().await.expect("msg");
         }
     }
 
     if !add_ids.is_empty() {
         let add_tabs: Vec<RoleAccessEntity> = bind_role_access(&req_data.role_id, &add_ids).await;
         log::debug!("add_tabs {add_tabs:#?}");
+        let tx = RB.acquire_begin().await.expect("msg");
         let add_res = RoleAccessEntity::insert_batch(&tx, &add_tabs, add_tabs.len() as u64).await;
 
         if let Err(rbs::Error::E(error)) = add_res {
@@ -266,11 +270,12 @@ pub async fn bind_access(req_data: web::Json<BindAccessData>) -> Result<impl Res
             tx.rollback().await.expect("msg");
             return Err(MyError::DelRoleAccessError);
         }
+        tx.commit().await.expect("msg");
     }
 
+    let tx = RB.acquire_begin().await.expect("msg");
     let user_list :Vec<OptionData> = tx.query_decode("select user.name, user.id from user_role left join user on user.id = user_role.user_id  where role_id = ?;", vec![to_value!(req_data.role_id)]).await.expect("msg");
     tx.commit().await.expect("msg");
-
     for ele in user_list.into_iter() {
         sync_user_auth(ele.name).await?;
     }
