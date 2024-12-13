@@ -49,15 +49,15 @@ pub fn check_phone(phone: &str) -> bool {
 
 pub async fn get_transaction_tx() -> Result<RBatisTxExecutorGuard, MyError> {
     let tx = RB.acquire_begin().await.unwrap();
-    let tx: RBatisTxExecutorGuard = tx.defer_async(|tx| async move {
-        if tx.done() {
-            log::info!("transaction [{}] complete.", tx.tx_id);
+    let tx: RBatisTxExecutorGuard = tx.defer_async(|ex| async move {
+        if ex.done() {
+            log::info!("transaction [{}] complete.", ex.tx_id);
         } else {
-            let r = tx.rollback().await;
+            let r = ex.rollback().await;
             if let Err(e) = r {
-                log::error!("transaction [{}] rollback fail={}", tx.tx_id, e);
+                log::error!("transaction [{}] rollback fail={}", ex.tx_id, e);
             } else {
-                log::info!("transaction [{}] rollback", tx.tx_id);
+                log::info!("transaction [{}] rollback", ex.tx_id);
             }
         }
     });

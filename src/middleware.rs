@@ -32,6 +32,7 @@ fn check_is_in_whitelist(req: &ServiceRequest) -> bool {
         .find(|val| val.to_string() == path.to_string());
     is_in_white_list.is_some()
 }
+
 async fn has_permission(req: &ServiceRequest) -> Result<bool, MyError> {
     let value: HeaderValue = HeaderValue::from_str("").unwrap();
 
@@ -59,6 +60,7 @@ async fn has_permission(req: &ServiceRequest) -> Result<bool, MyError> {
 
 pub async fn check_is_login_redis(user_name: String) -> Result<bool, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
+
     let rds = REDIS_ADDR.get().expect("msg");
     let redis_login: Result<bool, redis::RedisError> = rds
         .send(ExistsData {
