@@ -35,7 +35,7 @@ spec:
               value: "full"
             - name: CORN
               value: "false"
-          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:608dbb50
+          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:20ca7e3f
           ports:
             - containerPort: 3000
           resources:
