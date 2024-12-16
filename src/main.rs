@@ -46,6 +46,7 @@ lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
     static ref RB:RBatis=RBatis::new();
     static ref REDIS_ADDR: OnceCell<Addr<RedisActor>> = OnceCell::new();
+    static ref REDIS: OnceCell<RedisActor> = OnceCell::new();
 }
 
 #[actix_web::main]
@@ -57,6 +58,7 @@ async fn main() {
     let addr: Addr<RedisActor> = actor.start();
 
     REDIS_ADDR.set(addr.clone()).expect("set redis addr error");
+    // REDIS.set(actor.clone());
 
     init_db().await;
 
