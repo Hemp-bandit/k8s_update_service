@@ -54,11 +54,10 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
-    let actor = RedisActor::new(redis_url).await;
+    let actor = RedisActor::new(redis_url.clone()).await;
+    let _ = REDIS.set(RedisActor::new(redis_url).await);
     let addr: Addr<RedisActor> = actor.start();
-
     REDIS_ADDR.set(addr.clone()).expect("set redis addr error");
-    // REDIS.set(actor.clone());
 
     init_db().await;
 

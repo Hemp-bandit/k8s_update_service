@@ -6,13 +6,14 @@ use crate::{
     user::{check_user_by_user_id, RedisLoginData},
     util::{
         common::get_jwt_from_req,
-        redis_actor::{DelData, ExistsData, GetRedisLogin, SetRedisLogin, UpdateLoginData},
+        redis_actor::{DelData, GetRedisLogin, UpdateLoginData},
     },
-    RB, REDIS_ADDR, REDIS_KEY,
+    RB, REDIS, REDIS_ADDR, REDIS_KEY,
 };
 use actix_web::{get, post, web, HttpRequest, Responder};
 use rbs::to_value;
-use rs_service_util::{jwt::gen_jwt_token, redis::RedisCmd, time::get_current_timestamp};
+use redis::AsyncCommands;
+use rs_service_util::{jwt::gen_jwt_token, time::get_current_timestamp};
 use serde::{Deserialize, Serialize};
 
 const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
@@ -66,15 +67,10 @@ async fn get_user_permission(id: web::Path<i32>) -> Result<impl Responder, MyErr
 #[post("/login")]
 async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), req_data.name.clone());
-    let rds = REDIS_ADDR.get().expect("msg");
-    let redis_login: Result<bool, redis::RedisError> = rds
-        .send(ExistsData {
-            key: key.clone(),
-            cmd: RedisCmd::Exists,
-            data: None,
-        })
-        .await
-        .expect("msg");
+    let rds = REDIS.get().expect("msg");
+    let mut conn = rds.conn.clone();
+
+    let redis_login = conn.exists(key.clone()).await;
     log::info!("redis_login {redis_login:?}");
     let is_login = match redis_login {
         Err(err) => {
@@ -85,11 +81,9 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
     };
 
     if is_login {
-        let user_info = rds
-            .send(GetRedisLogin { key })
-            .await
-            .expect("get user info from redis error")
-            .expect("get user info from redis error");
+        let user_info: Option<RedisLoginData> =
+            conn.get(key).await.map_err(|_| MyError::AuthError)?;
+
         match user_info {
             None => {
                 return Err(MyError::UserNotExist);
@@ -130,14 +124,10 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
         id: db_user.id.clone(),
     };
 
-    let _ = rds
-        .send(SetRedisLogin {
-            key: key.clone(),
-            data: redis_data.clone(),
-            ex_data: LOGIN_EX_TIME,
-        })
+    conn.set_ex(key.clone(), redis_data.clone(), LOGIN_EX_TIME)
         .await
-        .expect("set user login error");
+        .map_err(|_| MyError::AuthError)?;
+
     let jwt_token = gen_jwt_token(redis_data);
     return Ok(ResponseBody::default(Some(jwt_token)));
 }
