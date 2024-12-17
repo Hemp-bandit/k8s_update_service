@@ -10,8 +10,9 @@ use middleware::jwt_mw;
 use once_cell::sync::OnceCell;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
+use redis::Client;
 use rs_service_util::jwt::JWT;
-use rs_service_util::redis::RedisActor;
+use rs_service_util::redis::RedisTool;
 use tokio_schedule::{every, Job};
 use user::admin::check_adm;
 use utoipa::OpenApi;
@@ -45,8 +46,7 @@ struct ApiDoc;
 lazy_static::lazy_static! {
     static ref REDIS_KEY:String = "user_service".to_string();
     static ref RB:RBatis=RBatis::new();
-    static ref REDIS_ADDR: OnceCell<Addr<RedisActor>> = OnceCell::new();
-    static ref REDIS: OnceCell<RedisActor> = OnceCell::new();
+    static ref REDIS: OnceCell<RedisTool> = OnceCell::new();
 }
 
 #[actix_web::main]
@@ -54,10 +54,8 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
-    let actor = RedisActor::new(redis_url.clone()).await;
-    let _ = REDIS.set(RedisActor::new(redis_url).await);
-    let addr: Addr<RedisActor> = actor.start();
-    REDIS_ADDR.set(addr.clone()).expect("set redis addr error");
+    let actor = RedisTool::new(redis_url.clone()).await;
+    let _ = REDIS.set(RedisTool::new(redis_url).await);
 
     init_db().await;
 
@@ -114,8 +112,8 @@ async fn init_db() {
 }
 
 async fn init_corn() {
-    let CORN = std::env::var("CORN").expect("CORN must be set");
-    if !CORN.eq("true") {
+    let corn = std::env::var("CORN").expect("CORN must be set");
+    if !corn.eq("true") {
         log::info!("corn is close");
         return;
     }

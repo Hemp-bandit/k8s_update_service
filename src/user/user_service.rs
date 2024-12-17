@@ -5,9 +5,7 @@ use crate::user::user_role_service::{
     bind_user_role, check_role_exists, check_user_role_bind, sync_user_auth, unbind_role_from_cache,
 };
 use crate::util::common::{rds_str_to_list, RedisKeys};
-use crate::util::redis_actor::{HsetData, SaddData, SmembersData};
 use crate::util::sync_opt::DelOptData;
-use crate::REDIS_ADDR;
 use crate::{
     entity::{user_entity::UserEntity, user_role_entity::UserRoleEntity},
     response::ResponseBody,
@@ -21,6 +19,8 @@ use crate::{
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use redis::AsyncCommands;
+use rs_service_util::redis_conn;
 use rs_service_util::sql_tool::{SqlTool, SqlToolPageData};
 use rs_service_util::time::get_current_time_fmt;
 #[utoipa::path(
@@ -175,15 +175,15 @@ pub async fn update_user_by_id(
                 return Err(MyError::UpdateUserError);
             }
             let opt = OptionData::default(&db_user.name, db_user.id.clone().expect("msg"));
-            let _ = REDIS_ADDR
-                .get()
-                .expect("get redis addr error")
-                .send(HsetData {
-                    key: RedisKeys::UserInfo.to_string(),
-                    opt_data: serde_json::to_string(&opt).expect("msg"),
-                    id: db_user.id.clone().expect("msg"),
-                })
-                .await;
+            let mut conn = redis_conn!().await;
+            let _: () = conn
+                .hset(
+                    RedisKeys::UserInfo.to_string(),
+                    serde_json::to_string(&opt).expect("msg"),
+                    db_user.id.clone().expect("msg"),
+                )
+                .await
+                .expect("msg");
         }
     }
     Ok(ResponseBody::success("更新用户成功"))
@@ -248,14 +248,9 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
             data: None,
         };
     }
-
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     let key: String = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
-    let cache_ids: Vec<i32> = rds
-        .send(SmembersData { key })
-        .await
-        .expect("获取角色绑定失败")
-        .expect("msg");
+    let cache_ids: Vec<i32> = conn.smembers(key).await.expect("msg");
 
     let ex = RB.acquire().await.expect("msg");
 
@@ -263,13 +258,7 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> impl Responder {
         let roles:Vec<RoleEntity> = ex.query_decode("select role.* from user_role left join role on user_role.role_id = role.id where user_id=? and role.status = 1;",vec![to_value!(id)]).await.expect("获取用户绑定角色失败");
         let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), id);
         for ele in roles.iter() {
-            let _ = rds
-                .send(SaddData {
-                    key: key.clone(),
-                    id: ele.id.unwrap(),
-                })
-                .await
-                .expect("add new user_role error");
+            let _: () = conn.sadd(key.clone(), ele.id.unwrap()).await.expect("msg");
         }
         roles
     } else {
@@ -359,14 +348,11 @@ pub async fn bind_role(req_data: web::Json<BindRoleData>) -> Result<impl Respond
   )]
 #[get("/get_user_option")]
 pub async fn get_user_option() -> Result<impl Responder, MyError> {
-    let rds = REDIS_ADDR.get().expect("msg");
-    let ids: Vec<i32> = rds
-        .send(SmembersData {
-            key: RedisKeys::UserIds.to_string(),
-        })
+    let mut conn = redis_conn!().await;
+    let ids: Vec<i32> = conn
+        .smembers(RedisKeys::UserIds.to_string())
         .await
-        .expect("get user_id rds err")
-        .expect("get user_id rds err");
+        .expect("msg");
     if !ids.is_empty() {
         let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::UserInfo, |val| {
             let user_data: OptionData = serde_json::from_str(&val).expect("msg");

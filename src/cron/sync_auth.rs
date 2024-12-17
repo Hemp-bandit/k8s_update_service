@@ -1,10 +1,10 @@
+use redis::AsyncCommands;
+use rs_service_util::redis_conn;
+
 use crate::{
     entity::{role_access_entity::RoleAccessEntity, user_role_entity::UserRoleEntity},
-    util::{
-        common::RedisKeys,
-        redis_actor::{DelData, SaddData},
-    },
-    RB, REDIS_ADDR,
+    util::common::RedisKeys,
+    RB,
 };
 use std::collections::{hash_set::HashSet, HashMap};
 
@@ -53,24 +53,14 @@ pub async fn sync_role_access() {
 }
 
 async fn redis_action(key: String, map: &HashMap<i32, HashSet<i32>>) {
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     for (id, set) in map.into_iter() {
         let key = format!("{key}_{id}");
         let ids: Vec<i32> = set.to_owned().into_iter().map(|val| val).collect();
         log::info!("key {key}");
-        rds.send(DelData { key: key.clone() })
-            .await
-            .expect("msg")
-            .expect("msg");
-
+        let _: () = conn.del(key.clone()).await.expect("msg");
         for id in ids {
-            rds.send(SaddData {
-                key: key.clone(),
-                id,
-            })
-            .await
-            .expect("msg")
-            .expect("msg");
+            let _: () = conn.sadd(key.clone(), id).await.expect("msg");
         }
     }
 }

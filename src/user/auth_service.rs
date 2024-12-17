@@ -3,17 +3,14 @@ use crate::{
     access::AccessValueData,
     response::{MyError, ResponseBody},
     role::AccessData,
-    user::{check_user_by_user_id, RedisLoginData},
-    util::{
-        common::get_jwt_from_req,
-        redis_actor::{DelData, GetRedisLogin, UpdateLoginData},
-    },
-    RB, REDIS, REDIS_ADDR, REDIS_KEY,
+    user::{check_user_by_user_id, user_role_service::sync_user_auth, RedisLoginData},
+    util::common::get_jwt_from_req,
+    RB, REDIS_KEY,
 };
 use actix_web::{get, post, web, HttpRequest, Responder};
 use rbs::to_value;
 use redis::AsyncCommands;
-use rs_service_util::{jwt::gen_jwt_token, time::get_current_timestamp};
+use rs_service_util::{jwt::gen_jwt_token, redis_conn, time::get_current_timestamp};
 use serde::{Deserialize, Serialize};
 
 const LOGIN_EX_TIME: u64 = 60 * 60 * 24 * 10;
@@ -36,28 +33,10 @@ async fn get_user_permission(id: web::Path<i32>) -> Result<impl Responder, MyErr
     if check_res.is_none() {
         return Err(MyError::UserNotExist);
     }
-    let vals = get_user_access_val(id).await;
-
     let db_uer = check_res.unwrap();
+    let auth = sync_user_auth(db_uer.name.clone()).await?;
 
-    let key = format!("{}_{}", REDIS_KEY.to_string(), db_uer.name.clone());
-    let rds = REDIS_ADDR.get().expect("msg");
-
-    let mut user = rds
-        .send(GetRedisLogin { key: key.clone() })
-        .await
-        .expect("get user info from redis error")
-        .expect("get user info from redis error")
-        .unwrap();
-
-    user.auth = vals;
-
-    rds.send(UpdateLoginData { key, data: user })
-        .await
-        .expect("msg")
-        .expect("msg");
-
-    Ok(ResponseBody::default(Some(vals)))
+    Ok(ResponseBody::default(Some(auth)))
 }
 
 #[utoipa::path(
@@ -67,18 +46,11 @@ async fn get_user_permission(id: web::Path<i32>) -> Result<impl Responder, MyErr
 #[post("/login")]
 async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), req_data.name.clone());
-    let rds = REDIS.get().expect("msg");
-    let mut conn = rds.conn.clone();
-
-    let redis_login = conn.exists(key.clone()).await;
-    log::info!("redis_login {redis_login:?}");
-    let is_login = match redis_login {
-        Err(err) => {
-            log::error!("{err:?}");
-            return Ok(ResponseBody::error("login error"));
-        }
-        Ok(res) => res,
-    };
+    let mut conn = redis_conn!().await;
+    let is_login: bool = conn
+        .exists(key.clone())
+        .await
+        .map_err(|_| MyError::NotLogin)?;
 
     if is_login {
         let user_info: Option<RedisLoginData> =
@@ -203,6 +175,6 @@ async fn check_user_pass_by_name(name: String) -> Option<PasswordData> {
 
 async fn delete_user_from_redis(user_name: String) {
     let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
-    let rds = REDIS_ADDR.get().expect("msg");
-    let _ = rds.send(DelData { key }).await.expect("delete error");
+    let mut conn = redis_conn!().await;
+    let _: () = conn.del(key).await.expect("msg");
 }

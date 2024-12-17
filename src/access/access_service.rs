@@ -6,16 +6,17 @@ use crate::{
     user::check_user_by_user_id,
     util::{
         common::{get_transaction_tx, rds_str_to_list, RedisKeys},
-        redis_actor::SmembersData,
         structs::{CreateByData, Status},
         sync_opt::{self, DelOptData, SyncOptData},
     },
-    RB, REDIS_ADDR,
+    RB,
 };
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use redis::AsyncCommands;
 use rs_service_util::{
     auth::gen_access_value,
+    redis_conn,
     sql_tool::{SqlTool, SqlToolPageData},
     time::get_current_time_fmt,
 };
@@ -227,13 +228,10 @@ pub async fn delete_access(id: web::Path<i32>) -> Result<impl Responder, MyError
 )]
 #[get("/access_map")]
 pub async fn get_access_map() -> Result<impl Responder, MyError> {
-    let rds = REDIS_ADDR.get().expect("msg");
-    let cache_ids: Vec<i32> = rds
-        .send(SmembersData {
-            key: RedisKeys::AccessMapIds.to_string(),
-        })
+    let mut conn = redis_conn!().await;
+    let cache_ids: Vec<i32> = conn
+        .smembers(RedisKeys::AccessMapIds.to_string())
         .await
-        .expect("msg")
         .expect("msg");
 
     if cache_ids.is_empty() {

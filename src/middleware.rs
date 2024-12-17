@@ -1,4 +1,4 @@
-use crate::{response::MyError, util::redis_actor::ExistsData, REDIS_ADDR, REDIS_KEY};
+use crate::{response::MyError, REDIS_KEY};
 use actix_web::{
     body::MessageBody,
     dev::{ServiceRequest, ServiceResponse},
@@ -6,7 +6,8 @@ use actix_web::{
     middleware::Next,
     Error,
 };
-use rs_service_util::{jwt::jwt_token_to_data, redis::RedisCmd, structs::RedisLoginData};
+use redis::AsyncCommands;
+use rs_service_util::{jwt::jwt_token_to_data, redis_conn, RedisLoginData};
 
 pub async fn jwt_mw(
     req: ServiceRequest,
@@ -61,15 +62,8 @@ async fn has_permission(req: &ServiceRequest) -> Result<bool, MyError> {
 pub async fn check_is_login_redis(user_name: String) -> Result<bool, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), user_name);
 
-    let rds = REDIS_ADDR.get().expect("msg");
-    let redis_login: Result<bool, redis::RedisError> = rds
-        .send(ExistsData {
-            key,
-            cmd: RedisCmd::Exists,
-            data: None,
-        })
-        .await
-        .expect("msg"); //.exists(key.clone());
+    let mut conn = redis_conn!().await;
+    let redis_login: Result<bool, redis::RedisError> = conn.exists(key).await;
     let is_login = match redis_login {
         Err(err) => {
             let detail = err.detail();
