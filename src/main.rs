@@ -1,4 +1,3 @@
-use actix::{Actor, Addr};
 use actix_cors::Cors;
 use actix_web::middleware::{from_fn, Compress, Logger};
 use actix_web::{http, App, HttpServer};
@@ -10,7 +9,6 @@ use middleware::jwt_mw;
 use once_cell::sync::OnceCell;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
-use redis::Client;
 use rs_service_util::jwt::JWT;
 use rs_service_util::redis::RedisTool;
 use tokio_schedule::{every, Job};
@@ -54,7 +52,6 @@ async fn main() {
     dotenv().expect("Failed to load .env file");
     env_logger::init();
     let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL must be set");
-    let actor = RedisTool::new(redis_url.clone()).await;
     let _ = REDIS.set(RedisTool::new(redis_url).await);
 
     init_db().await;
