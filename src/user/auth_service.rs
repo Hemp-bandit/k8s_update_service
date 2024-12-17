@@ -96,7 +96,8 @@ async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError
         id: db_user.id.clone(),
     };
 
-    conn.set_ex(key.clone(), redis_data.clone(), LOGIN_EX_TIME)
+    let _: () = conn
+        .set_ex(key.clone(), redis_data.clone(), LOGIN_EX_TIME)
         .await
         .map_err(|_| MyError::AuthError)?;
 
