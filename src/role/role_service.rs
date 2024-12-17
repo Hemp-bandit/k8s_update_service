@@ -1,6 +1,8 @@
 use actix_web::{delete, get, post, web, Responder};
 use rbs::to_value;
+use redis::AsyncCommands;
 use rs_service_util::{
+    redis_conn,
     sql_tool::{SqlTool, SqlToolPageData},
     time::get_current_time_fmt,
 };
@@ -20,11 +22,10 @@ use crate::{
     user::{check_user_by_user_id, user_role_service::sync_user_auth, OptionData},
     util::{
         common::{get_transaction_tx, rds_str_to_list, RedisKeys},
-        redis_actor::{SaddData, SmembersData},
         structs::Status,
         sync_opt::{self, DelOptData, SyncOptData},
     },
-    RB, REDIS_ADDR,
+    RB,
 };
 
 #[utoipa::path(
@@ -294,26 +295,16 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyE
         return Err(MyError::UserNotExist);
     }
 
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     let key: String = format!("{}_{}", RedisKeys::RoleAccess.to_string(), id);
-    let cache_ids: Vec<i32> = rds
-        .send(SmembersData { key })
-        .await
-        .expect("获取权限绑定失败")
-        .expect("msg");
+    let cache_ids: Vec<i32> = conn.smembers(key).await.expect("msg");
 
     let ex = RB.acquire().await.expect("msg");
     let search_res: Vec<AccessEntity> = if cache_ids.is_empty() {
         let access :Vec<AccessEntity>=  ex.query_decode("select access.* from role_access left join access on role_access.access_id = access.id where role_id=? and access.status = 1;", vec![to_value!(id)]).await.expect("msg");
         let key = format!("{}_{}", RedisKeys::RoleAccess.to_string(), id);
         for ele in access.iter() {
-            let _ = rds
-                .send(SaddData {
-                    key: key.clone(),
-                    id: ele.id.unwrap(),
-                })
-                .await
-                .expect("add new role_access error");
+            let _: () = conn.sadd(key.clone(), ele.id.unwrap()).await.expect("msg");
         }
         access
     } else {
@@ -331,13 +322,10 @@ pub async fn get_role_binds(parma: web::Path<i32>) -> Result<impl Responder, MyE
   )]
 #[get("/get_role_option")]
 pub async fn get_role_option() -> impl Responder {
-    let rds = REDIS_ADDR.get().expect("get addr err");
-    let ids = rds
-        .send(SmembersData {
-            key: RedisKeys::RoleIds.to_string(),
-        })
+    let mut conn = redis_conn!().await;
+    let ids: Vec<i32> = conn
+        .smembers(RedisKeys::RoleIds.to_string())
         .await
-        .expect("msg")
         .expect("msg");
     if !ids.is_empty() {
         let res: Vec<OptionData> = rds_str_to_list(ids, RedisKeys::RoleInfo, |val| {

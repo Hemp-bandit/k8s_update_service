@@ -1,13 +1,14 @@
 use crate::response::MyError;
 use crate::user::RedisLoginData;
-use crate::{RB, REDIS_ADDR};
+use crate::RB;
 use actix_web::HttpRequest;
 use derive_more::derive::Display;
 use lazy_regex::regex;
 use rbatis::executor::RBatisTxExecutorGuard;
+use redis::AsyncCommands;
 use rs_service_util::jwt::jwt_token_to_data;
+use rs_service_util::redis_conn;
 
-use super::redis_actor::HgetById;
 #[derive(Debug, Display, Clone)]
 pub enum RedisKeys {
     #[display("user_ids")]
@@ -70,17 +71,10 @@ pub async fn rds_str_to_list<T, U: Fn(String) -> T>(
     key: RedisKeys,
     cb: U,
 ) -> Vec<T> {
-    let rds = REDIS_ADDR.get().expect("get addr err");
+    let mut conn = redis_conn!().await;
     let mut res: Vec<T> = vec![];
     for id in ids {
-        let data = rds
-            .send(HgetById {
-                key: key.clone().to_string(),
-                id,
-            })
-            .await
-            .expect("msg")
-            .expect("msg");
+        let data = conn.hget(key.clone().to_string(), id).await.expect("msg");
         if let Some(str) = data {
             let item: T = cb(str);
             res.push(item);

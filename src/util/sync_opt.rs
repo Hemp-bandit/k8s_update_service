@@ -1,9 +1,7 @@
-use crate::REDIS_ADDR;
+use super::common::RedisKeys;
 
-use super::{
-    common::RedisKeys,
-    redis_actor::{HdelData, HsetData, SaddData, SremData},
-};
+use redis::AsyncCommands;
+use rs_service_util::redis_conn;
 use serde::Serialize;
 
 pub struct SyncOptData<T> {
@@ -24,22 +22,16 @@ impl<T: Serialize> SyncOptData<T> {
 }
 
 pub async fn sync<T: Serialize>(data: SyncOptData<T>) {
-    let rds = REDIS_ADDR.get().expect("msg");
-
-    let msg = SaddData {
-        key: data.set_key,
-        id: data.id,
-    };
-
-    rds.send(msg).await.expect("msg").expect("msg");
-
-    let msg = HsetData {
-        key: data.hmap_key,
-        id: data.id,
-        opt_data: serde_json::to_string(&data.opt_data).expect("msg"),
-    };
-
-    rds.send(msg).await.expect("msg").expect("msg");
+    let mut conn = redis_conn!().await;
+    let _: () = conn.sadd(data.set_key, data.id).await.expect("msg");
+    let _: () = conn
+        .hset(
+            data.hmap_key,
+            data.id,
+            serde_json::to_string(&data.opt_data).expect("msg"),
+        )
+        .await
+        .expect("msg");
 }
 
 pub struct DelOptData {
@@ -59,17 +51,7 @@ impl DelOptData {
 }
 
 pub async fn del(data: DelOptData) {
-    let rds = REDIS_ADDR.get().expect("msg");
-
-    let msg = SremData {
-        key: data.set_key,
-        value: data.id.clone(),
-    };
-    rds.send(msg).await.expect("msg").expect("msg");
-
-    let msg = HdelData {
-        id: data.id,
-        key: data.hmap_key,
-    };
-    rds.send(msg).await.expect("msg").expect("msg");
+    let mut conn = redis_conn!().await;
+    let _: () = conn.srem(data.set_key, &data.id).await.expect("msg");
+    let _: () = conn.hdel(data.hmap_key, &data.id).await.expect("msg");
 }

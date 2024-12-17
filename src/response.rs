@@ -53,6 +53,9 @@ impl<T: Serialize> Responder for ResponseBody<T> {
 pub enum MyError {
     // #[display("internal error")]
     // InternalError = 0,
+    #[display("未登录")]
+    NotLogin,
+
     #[display("用户不存在")]
     UserNotExist,
 

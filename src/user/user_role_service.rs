@@ -1,36 +1,25 @@
+use redis::AsyncCommands;
+use rs_service_util::{redis_conn, RedisLoginData};
+
 use crate::entity::user_role_entity::UserRoleEntity;
 use crate::response::MyError;
 use crate::role::check_role_by_id;
 use crate::user::auth_service::get_user_access_val;
 use crate::util::common::RedisKeys;
-use crate::util::redis_actor::{
-    ExistsData, GetRedisLogin, SaddData, SmembersData, SremData, UpdateLoginData,
-};
-use crate::{REDIS_ADDR, REDIS_KEY};
-use rs_service_util::redis::RedisCmd;
+use crate::REDIS_KEY;
 
 ///检查角色是否存在于cache & db
 pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
     //  check in cache
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     for id in role_ids {
-        let in_ids_cache: bool = rds
-            .send(ExistsData {
-                key: RedisKeys::RoleIds.to_string(),
-                cmd: RedisCmd::Sismember,
-                data: Some(id.to_string()),
-            })
+        let in_ids_cache: bool = conn
+            .sismember(RedisKeys::RoleIds.to_string(), id)
             .await
-            .expect("msg")
             .expect("msg");
-        let in_info_cache: bool = rds
-            .send(ExistsData {
-                key: RedisKeys::RoleInfo.to_string(),
-                cmd: RedisCmd::Hexists,
-                data: Some(id.to_string()),
-            })
+        let in_info_cache: bool = conn
+            .hexists(RedisKeys::RoleInfo.to_string(), id)
             .await
-            .expect("msg")
             .expect("msg");
         if !in_ids_cache && !in_info_cache {
             let db_role = check_role_by_id(id.clone()).await;
@@ -46,18 +35,14 @@ pub async fn check_role_exists(role_ids: &Vec<i32>) -> Option<bool> {
 /// role_ids    cache_id
 ///
 /// [1,2]       [1,2,3,4]    remove 3,4
-///   
+///
 /// [1,2 ,5]    [1,2,3,4]    remove 3,4 add 5
 ///
 ///
 pub async fn check_user_role_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i32>, Vec<i32>) {
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
-    let cache_ids: Vec<i32> = rds
-        .send(SmembersData { key })
-        .await
-        .expect("获取角色绑定失败")
-        .expect("获取角色绑定失败");
+    let cache_ids: Vec<i32> = conn.smembers(key).await.expect("msg");
     log::info!("cache_user bind role ids {cache_ids:?}");
     if cache_ids.is_empty() {
         return (role_ids.clone(), vec![]);
@@ -86,18 +71,11 @@ pub async fn check_user_role_bind(user_id: &i32, role_ids: &Vec<i32>) -> (Vec<i3
 }
 
 pub async fn bind_user_role(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleEntity> {
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
     let mut tabs: Vec<UserRoleEntity> = vec![];
     for id in role_ids {
-        let _ = rds
-            .send(SaddData {
-                key: key.clone(),
-                id: id.clone(),
-            })
-            .await
-            .expect("add new user_role error");
-
+        let _: () = conn.sadd(key.clone(), id).await.expect("msg");
         tabs.push(UserRoleEntity {
             id: None,
             user_id: *user_id,
@@ -109,39 +87,31 @@ pub async fn bind_user_role(user_id: &i32, role_ids: &Vec<i32>) -> Vec<UserRoleE
 }
 
 pub async fn unbind_role_from_cache(user_id: &i32, role_ids: &Vec<i32>) {
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     let key = format!("{}_{}", RedisKeys::UserRoles.to_string(), user_id);
-    let _ = rds
-        .send(SremData {
-            key: key.clone(),
-            value: role_ids.to_vec(),
-        })
+    let _: () = conn
+        .srem(key.clone(), role_ids.to_vec())
         .await
-        .expect("sub new user_role error");
+        .expect("msg");
 }
 
-pub async fn sync_user_auth(name: String) -> Result<(), MyError> {
+pub async fn sync_user_auth(name: String) -> Result<u64, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), name);
-    let rds = REDIS_ADDR.get().expect("msg");
-    let cache_info = rds
-        .send(GetRedisLogin { key: key.clone() })
-        .await
-        .expect("msg")
-        .expect("msg");
+    let mut conn = redis_conn!().await;
+    let cache_info: Option<String> = conn.get(&key).await.expect("msg");
 
     log::info!("key {key}");
     log::info!("cache_info {cache_info:#?}");
 
-    if let Some(mut info) = cache_info {
-        let new_auth = get_user_access_val(info.id).await;
-        info.auth = new_auth;
-        rds.send(UpdateLoginData {
-            key: key.clone(),
-            data: info,
-        })
-        .await
-        .expect("msg")
-        .expect("msg");
+    if let Some(info) = cache_info {
+        let mut login_info: RedisLoginData = serde_json::from_str(&info).expect("msg");
+        let new_auth = get_user_access_val(login_info.id).await;
+        login_info.auth = new_auth;
+
+        let ttl: u64 = conn.ttl(&key).await.expect("msg");
+        let json = serde_json::to_string(&login_info).unwrap();
+        let _: () = conn.set_ex(key, json, ttl).await.expect("msg");
+        return Ok(new_auth);
     }
-    Ok(())
+    Ok(0)
 }

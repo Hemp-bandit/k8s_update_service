@@ -1,12 +1,13 @@
-use rs_service_util::redis::RedisCmd;
+use redis::AsyncCommands;
+use rs_service_util::redis_conn;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
 use crate::{
     entity::access_entity::AccessEntity,
-    util::{common::RedisKeys, redis_actor::ExistsData, structs::CreateByData},
-    RB, REDIS_ADDR,
+    util::{common::RedisKeys, structs::CreateByData},
+    RB,
 };
 
 mod access_service;
@@ -73,25 +74,15 @@ pub async fn check_access_by_id(id: i32) -> Option<AccessEntity> {
 }
 
 pub async fn check_access_by_ids(list: &Vec<i32>) -> Option<bool> {
-    let rds = REDIS_ADDR.get().expect("msg");
+    let mut conn = redis_conn!().await;
     for id in list {
-        let in_ids_cache: bool = rds
-            .send(ExistsData {
-                key: RedisKeys::AccessMapIds.to_string(),
-                cmd: RedisCmd::Sismember,
-                data: Some(id.to_string()),
-            })
+        let in_ids_cache: bool = conn
+            .sismember(RedisKeys::AccessMapIds.to_string(), id)
             .await
-            .expect("msg")
             .expect("msg");
-        let in_info_cache: bool = rds
-            .send(ExistsData {
-                key: RedisKeys::AccessMap.to_string(),
-                cmd: RedisCmd::Hexists,
-                data: Some(id.to_string()),
-            })
+        let in_info_cache: bool = conn
+            .hexists(RedisKeys::AccessMap.to_string(), id)
             .await
-            .expect("msg")
             .expect("msg");
         if !in_ids_cache && !in_info_cache {
             let db_role = check_access_by_id(id.clone()).await;
