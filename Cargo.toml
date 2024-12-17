@@ -4,9 +4,6 @@ name = "kaibai_user_service"
 version = "0.1.0"
 
 [dependencies]
-# mimalloc = "0.1.43"
-
-actix = "0.13.5"
 actix-cors = "0.7.0"
 actix-rt = "2.10.0"
 actix-web = "4"
