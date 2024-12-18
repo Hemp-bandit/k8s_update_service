@@ -4,12 +4,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use utoipa_actix_web::service_config::ServiceConfig;
 
+mod obs;
+mod user_service;
+
+pub mod admin;
 pub mod auth_service;
 pub mod user_role_service;
-
-mod user_service;
-pub mod admin;
-
 
 pub fn configure() -> impl FnOnce(&mut ServiceConfig) {
     |config: &mut ServiceConfig| {
@@ -32,6 +32,13 @@ pub fn auth_configure() -> impl FnOnce(&mut ServiceConfig) {
         config.service(auth_service::get_user_permission);
     }
 }
+
+pub fn obs_configure() -> impl FnOnce(&mut ServiceConfig) {
+    |config: &mut ServiceConfig| {
+        config.service(obs::get_keys);
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct UserCreateData {
     pub name: String,

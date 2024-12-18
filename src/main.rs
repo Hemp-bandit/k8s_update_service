@@ -68,6 +68,7 @@ async fn main() {
             .service(utoipa_actix_web::scope("/api/role").configure(role::configure()))
             .service(utoipa_actix_web::scope("/api/access").configure(access::configure()))
             .service(utoipa_actix_web::scope("/api/auth").configure(user::auth_configure()))
+            .service(utoipa_actix_web::scope("/api/obs").configure(user::obs_configure()))
             .openapi_service(|api| Scalar::with_url("/doc", api))
             .into_app()
             .wrap(
