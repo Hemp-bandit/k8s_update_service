@@ -22,6 +22,7 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
         - name: aliregistry
+      dnsPolicy: Default
       containers:
         - name: kaibai-user-deploy
           env:
@@ -35,7 +36,9 @@ spec:
               value: "full"
             - name: CORN
               value: "true"
-          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:b3f3988c
+            - name: OBS_DOMAIN
+              value: "http://10.1.4.111:81"
+          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:489d50eb
           ports:
             - containerPort: 3000
           resources:
