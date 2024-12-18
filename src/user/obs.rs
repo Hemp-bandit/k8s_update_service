@@ -50,8 +50,9 @@ pub async fn get_keys() -> Result<impl Responder, MyError> {
 
     let body ="{\"auth\":{\"identity\":{\"methods\":[\"password\"],\"password\":{\"user\":{\"domain\":{\"name\":\"wyswill\"},\"name\":\"wyswill\",\"password\":\"wyswill4290\"}}},\"scope\":{\"domain\":{\"name\":\"wyswill\"},\"project\":{\"name\":\"cn-east-3\"}}}}";
 
+    let domain = std::env::var("OBS_DOMAIN").expect("REDIS_URL must be set");
     let res = client
-        .post("https://iam.cn-east-3.myhuaweicloud.com/v3/auth/tokens")
+        .post(format!("{domain}/v3/auth/tokens"))
         .body(body)
         .send()
         .await
@@ -72,7 +73,7 @@ pub async fn get_keys() -> Result<impl Responder, MyError> {
             let body = "{\"auth\":{\"identity\":{\"policy\":{\"Version\":\"1.1\",\"Statement\":[{\"Action\":[\"obs:object:PutObject\"],\"Resource\":[\"obs:*:*:object:kaibai-admin/store/*\"],\"Effect\":\"Allow\"}]},\"methods\":[\"token\"]}}}";
 
             let res = client
-                .post("https://iam.cn-east-3.myhuaweicloud.com/v3.0/OS-CREDENTIAL/securitytokens")
+                .post(format!("{domain}/v3.0/OS-CREDENTIAL/securitytokens"))
                 .headers(headers)
                 .body(body)
                 .send()
