@@ -47,10 +47,14 @@ async fn get_user_permission(id: web::Path<i32>) -> Result<impl Responder, MyErr
 async fn login(req_data: web::Json<LoginData>) -> Result<impl Responder, MyError> {
     let key = format!("{}_{}", REDIS_KEY.to_string(), req_data.name.clone());
     let mut conn = redis_conn!().await;
-    let is_login: bool = conn
-        .exists(key.clone())
-        .await
-        .map_err(|_| MyError::NotLogin)?;
+    let is_login: Result<bool, redis::RedisError> = conn.exists(key.clone()).await;
+    let is_login = match is_login {
+        Err(e) => {
+            log::error!("{e:?}");
+            return Err(MyError::RedisError);
+        }
+        Ok(res) => res,
+    };
 
     if is_login {
         let user_info: Option<RedisLoginData> =

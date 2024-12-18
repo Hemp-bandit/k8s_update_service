@@ -51,8 +51,9 @@ impl<T: Serialize> Responder for ResponseBody<T> {
 
 #[derive(Debug, Display, Error)]
 pub enum MyError {
-    // #[display("internal error")]
-    // InternalError = 0,
+    #[display("redis error")]
+    RedisError,
+
     #[display("未登录")]
     NotLogin,
 
