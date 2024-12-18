@@ -71,7 +71,7 @@ pub async fn get_keys() -> Result<impl Responder, MyError> {
                 "X-Auth-Token",
                 header::HeaderValue::from_str(token).unwrap(),
             );
-            let body = "{\"auth\":{\"identity\":{\"policy\":{\"Version\":\"1.1\",\"Statement\":[{\"Action\":[\"obs:object:PutObject\"],\"Resource\":[\"obs:*:*:object:kaibai-admin/store/*\"],\"Effect\":\"Allow\"}]},\"methods\":[\"token\"]}}}";
+            let body = "{\"auth\":{\"identity\":{\"policy\":{\"Version\":\"1.1\",\"Statement\":[{\"Action\":[\"obs:object:PutObject\"],\"Resource\":[\"obs:*:*:object:kaibai-admin/store/*\",\"obs:*:*:object:kaibai-admin/adm/*\"],\"Effect\":\"Allow\"}]},\"methods\":[\"token\"]}}}";
 
             let res = client
                 .post(format!("{domain}/v3.0/OS-CREDENTIAL/securitytokens"))
