@@ -34,8 +34,8 @@ spec:
             - name: RUST_BACKTRACE
               value: "full"
             - name: CORN
-              value: "false"
-          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:20ca7e3f
+              value: "true"
+          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:b3f3988c
           ports:
             - containerPort: 3000
           resources:
