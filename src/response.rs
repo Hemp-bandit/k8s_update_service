@@ -54,6 +54,16 @@ pub enum MyError {
     #[display("redis error")]
     RedisError,
 
+    #[display("Obs token 获取失败")]
+    ObsTokenError,
+
+    #[display("Obs AKSK 获取失败")]
+    ObsAkSkError,
+
+    #[display("Obs AKSK cache失败")]
+    CacheObsAkSkError,
+
+
     #[display("未登录")]
     NotLogin,
 
