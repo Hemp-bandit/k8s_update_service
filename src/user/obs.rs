@@ -50,7 +50,8 @@ pub async fn get_keys() -> Result<impl Responder, MyError> {
 
     let body ="{\"auth\":{\"identity\":{\"methods\":[\"password\"],\"password\":{\"user\":{\"domain\":{\"name\":\"wyswill\"},\"name\":\"wyswill\",\"password\":\"wyswill4290\"}}},\"scope\":{\"domain\":{\"name\":\"wyswill\"},\"project\":{\"name\":\"cn-east-3\"}}}}";
 
-    let domain = std::env::var("OBS_DOMAIN").expect("REDIS_URL must be set");
+    let domain = std::env::var("OBS_DOMAIN").expect("OBS_DOMAIN must be set");
+    log::debug!("domain {domain}");
     let res = client
         .post(format!("{domain}/v3/auth/tokens"))
         .body(body)
