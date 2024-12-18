@@ -10,7 +10,10 @@ FROM debian:stable-slim
 
 COPY --from=builder /app/target/x86_64-unknown-linux-gnu/release/kaibai_user_service /bin/kaibai_user_service
 COPY ./run.sh .
-RUN touch .env ;
-EXPOSE 3000
+COPY sources.list /etc/apt/sources.list
+RUN apt update && apt  install -y openssl
 
+RUN touch .env ;
+
+EXPOSE 3000
 CMD ["sh","run.sh"]
