@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use crate::{
     response::{MyError, ResponseBody},
     REDIS_KEY,
