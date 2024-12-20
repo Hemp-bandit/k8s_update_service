@@ -5,7 +5,6 @@ use chrono::Utc;
 use cron::sync_auth::{sync_role_access, sync_user_role};
 use env::dotenv;
 use env_logger;
-use middleware::jwt_mw;
 use once_cell::sync::OnceCell;
 use rbatis::RBatis;
 use rbdc_mysql::MysqlDriver;
@@ -20,7 +19,6 @@ use utoipa_scalar::{Scalar, Servable as ScalarServiceable};
 mod access;
 mod cron;
 mod entity;
-mod middleware;
 mod response;
 mod role;
 mod user;
@@ -83,8 +81,12 @@ async fn main() {
             )
             .wrap(Compress::default())
             .wrap(Logger::default())
-            .wrap(Logger::new("%a %{Referer}i"))
-            .wrap(from_fn(jwt_mw))
+            .wrap(Logger::new("t %P %s %{service_call}i"))
+            .wrap(from_fn(|req, next| {
+                let rds = crate::REDIS.get().expect("msg");
+                let conn = rds.conn.clone();
+                rs_service_util::middleware::jwt_mw(req, next, conn)
+            }))
     })
     .keep_alive(None)
     .shutdown_timeout(5)
