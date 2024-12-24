@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kaibai-user-deployment
-  namespace: kaibai
+  namespace: default
 spec:
   selector:
     matchLabels:
@@ -22,7 +22,6 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
         - name: aliregistry
-      dnsPolicy: Default
       containers:
         - name: kaibai-user-deploy
           env:
@@ -38,7 +37,7 @@ spec:
               value: "true"
             - name: OBS_DOMAIN
               value: "http://10.1.4.111:81"
-          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:489d50eb
+          image: registry.cn-hangzhou.aliyuncs.com/wyswill_docker/kaibai_user_service:946d9a74
           ports:
             - containerPort: 3000
           resources:
@@ -53,14 +52,38 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kaibai-user-svc
-  namespace: kaibai
+  namespace: default
   labels:
     app: kaibai-user
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: kaibai-user
   ports:
     - port: 3000
       targetPort: 3000
-      nodePort: 30000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kaibai-user-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: kaibai-user-class
+  defaultBackend:
+    resource:
+      apiGroup: kaibai-user.com
+      kind: StorageBucket
+      name: static-assets
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kaibai-user-svc
+                port:
+                  number: 3000
